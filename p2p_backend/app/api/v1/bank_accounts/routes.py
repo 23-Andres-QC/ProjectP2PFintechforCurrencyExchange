@@ -1,10 +1,12 @@
 """Bank accounts — /api/v1/bank-accounts/*"""
+from email import errors
+
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.core.database import db
 from app.core.exceptions import NotFoundError, AuthorizationError
 from app.models import BankAccount
-
+from .schemas import CreateBankAccountSchema
 bank_accounts_bp = Blueprint('bank_accounts', __name__, url_prefix='/bank-accounts')
 
 
@@ -39,8 +41,26 @@ def create_account():
     user_id = get_jwt_identity()
     data = request.get_json() or {}
 
+    # Validar datos con el schema
+    schema = CreateBankAccountSchema(context={"bank_name": data.get("bank_name")})
+    errors = schema.validate(data)
+    if errors:
+     return {'error': errors}, 400
+
+    # Verificar cuenta duplicada
+    existing = BankAccount.query.filter_by(
+        user_id=user_id,
+        account_number=data.get('account_number')
+    ).first()
+    if existing:
+        return {'error': 'Ya tienes una cuenta con ese número registrada'}, 409
+
+    # Si es principal, quitar la anterior
     if data.get('is_primary'):
-        BankAccount.query.filter_by(user_id=user_id, is_primary=True).update({'is_primary': False})
+        BankAccount.query.filter_by(
+            user_id=user_id,
+            is_primary=True
+        ).update({'is_primary': False})
 
     account = BankAccount(
         user_id=user_id,
@@ -55,17 +75,63 @@ def create_account():
     db.session.commit()
     return _account_dict(account), 201
 
-
 @bank_accounts_bp.route('/<account_id>', methods=['DELETE'])
 @jwt_required()
+
 def delete_account(account_id):
     user_id = get_jwt_identity()
     account = db.session.get(BankAccount, account_id)
+
     if not account:
         raise NotFoundError('Account not found')
     if account.user_id != user_id:
         raise AuthorizationError('Not your account')
 
+    # Bloquear si hay transacción activa usando esta cuenta
+    from app.models import Transaction
+    active_tx = Transaction.query.filter(
+        Transaction.bank_account_id == account_id,
+        Transaction.status.in_([
+            'pending_payment',
+            'voucher_uploaded',
+            'disputed'
+        ])
+    ).first()
+
+    if active_tx:
+        return {
+            'error': 'No puedes eliminar esta cuenta porque tiene una transacción activa'
+        }, 409
+
     db.session.delete(account)
     db.session.commit()
-    return {'message': 'Account deleted'}, 200
+    return {'message': 'Cuenta eliminada correctamente'}, 200
+
+@bank_accounts_bp.route('/<account_id>/set-default', methods=['PATCH'])
+@jwt_required()
+def set_default_account(account_id):
+    user_id = get_jwt_identity()
+    account = db.session.get(BankAccount, account_id)
+
+    # Verificar que existe
+    if not account:
+        raise NotFoundError('Account not found')
+
+    # Verificar que es tuya
+    if account.user_id != user_id:
+        raise AuthorizationError('Not your account')
+
+    # Quitar la cuenta principal anterior
+    BankAccount.query.filter_by(
+        user_id=user_id,
+        is_primary=True
+    ).update({'is_primary': False})
+
+    # Marcar esta como principal
+    account.is_primary = True
+    db.session.commit()
+
+    return {
+        'message': 'Cuenta marcada como principal',
+        'data': _account_dict(account)
+    }, 200
