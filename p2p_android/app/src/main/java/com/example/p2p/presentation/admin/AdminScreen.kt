@@ -31,6 +31,7 @@ import com.example.p2p.data.remote.model.Dispute
 import com.example.p2p.ui.theme.BackgroundApp
 import com.example.p2p.ui.theme.BorderColor
 import com.example.p2p.ui.theme.DangerColor
+import com.example.p2p.ui.theme.DarkSurface
 import com.example.p2p.ui.theme.InfoColor
 import com.example.p2p.ui.theme.Primary
 import com.example.p2p.ui.theme.PrimaryMint
@@ -66,6 +67,7 @@ fun AdminScreen(
                     Text(
                         text = "Panel Administrador",
                         fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp,
                         color = TextMain,
                     )
                 },
@@ -78,7 +80,9 @@ fun AdminScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkSurface
+                ),
             )
         },
         containerColor = BackgroundApp,
@@ -120,20 +124,7 @@ fun AdminScreen(
                 )
             }
 
-            // Section title
-            item {
-                Spacer(Modifier.height(20.dp))
-                Text(
-                    text = "Disputas Activas",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = TextMain,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-                Spacer(Modifier.height(12.dp))
-            }
 
-            // Dispute cards
             // Content by tab
             when (selectedTab) {
                 0 -> {
