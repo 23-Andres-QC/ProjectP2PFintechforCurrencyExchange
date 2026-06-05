@@ -1,6 +1,4 @@
 """Bank accounts — /api/v1/bank-accounts/*"""
-from email import errors
-
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.core.database import db
@@ -87,10 +85,11 @@ def delete_account(account_id):
     if account.user_id != user_id:
         raise AuthorizationError('Not your account')
 
-    # Bloquear si hay transacción activa usando esta cuenta
+    # Bloquear si hay transacción activa usando esta cuenta (buyer_payment_account guarda el texto de la cuenta)
     from app.models import Transaction
+    account_label = f"{account.bank_name} · {account.account_number}"
     active_tx = Transaction.query.filter(
-        Transaction.bank_account_id == account_id,
+        Transaction.buyer_payment_account == account_label,
         Transaction.status.in_([
             'pending_payment',
             'voucher_uploaded',
