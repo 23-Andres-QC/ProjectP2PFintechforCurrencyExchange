@@ -101,6 +101,7 @@ class TransactionViewModel(
             when (val result = transactionRepository.confirmTransaction(id)) {
                 is NetworkResult.Success -> {
                     loadTransaction(id)
+                    loadPendingTransactions()
                 }
                 is NetworkResult.Error -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)

@@ -2,6 +2,7 @@ package com.example.p2p.presentation.history
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -27,6 +28,7 @@ import com.example.p2p.ui.theme.*
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 private data class Transaction(
+    val rawId: String,
     val id: String,
     val status: String,
     val statusColor: Color,
@@ -39,11 +41,11 @@ private data class Transaction(
 )
 
 private val sampleTransactions = listOf(
-    Transaction("#TX-9982", "Completado", SuccessColor, "Carlos", "Victor",  "$ 200.00 USD", "S/ 3.780", "25 May 2026", Icons.Default.SwapHoriz),
-    Transaction("#TX-9881", "Completado", SuccessColor, "Carlos", "Ana",     "€ 150.00 EUR", "S/ 4.110", "24 May 2026", Icons.Default.SwapHoriz),
-    Transaction("#TX-9756", "Pendiente",  WarningColor, "Carlos", "Luis",    "$ 500.00 USD", "S/ 3.775", "23 May 2026", Icons.Default.Schedule),
-    Transaction("#TX-9654", "Disputa",    DangerColor,  "Carlos", "María",   "$ 100.00 USD", "S/ 3.780", "20 May 2026", Icons.Default.Gavel),
-    Transaction("#TX-9521", "Completado", SuccessColor, "Carlos", "Víctor",  "$ 300.00 USD", "S/ 3.780", "18 May 2026", Icons.Default.SwapHoriz)
+    Transaction("", "#TX-9982", "Completado", SuccessColor, "Carlos", "Victor",  "$ 200.00 USD", "S/ 3.780", "25 May 2026", Icons.Default.SwapHoriz),
+    Transaction("", "#TX-9881", "Completado", SuccessColor, "Carlos", "Ana",     "€ 150.00 EUR", "S/ 4.110", "24 May 2026", Icons.Default.SwapHoriz),
+    Transaction("", "#TX-9756", "Pendiente",  WarningColor, "Carlos", "Luis",    "$ 500.00 USD", "S/ 3.775", "23 May 2026", Icons.Default.Schedule),
+    Transaction("", "#TX-9654", "Disputa",    DangerColor,  "Carlos", "María",   "$ 100.00 USD", "S/ 3.780", "20 May 2026", Icons.Default.Gavel),
+    Transaction("", "#TX-9521", "Completado", SuccessColor, "Carlos", "Víctor",  "$ 300.00 USD", "S/ 3.780", "18 May 2026", Icons.Default.SwapHoriz)
 )
 
 private val filterChips = listOf("Todos", "Completados", "Pendientes", "Disputas")
@@ -54,7 +56,8 @@ private val filterChips = listOf("Todos", "Completados", "Pendientes", "Disputas
 @Composable
 fun HistoryScreen(
     viewModel: HistoryViewModel? = null,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onNavigateToTransaction: (String) -> Unit = {}
 ) {
     val uiState by viewModel?.uiState?.collectAsState(initial = HistoryUiState()) ?: remember { mutableStateOf(HistoryUiState()) }
     var selectedFilter by remember { mutableStateOf(0) }
@@ -92,6 +95,7 @@ fun HistoryScreen(
         }
 
         Transaction(
+            rawId = dto.id,
             id = "#TX-${dto.id.takeLast(4).uppercase()}",
             status = statusName,
             statusColor = sColor,
@@ -227,15 +231,54 @@ fun HistoryScreen(
             }
 
             // ── Transaction list ──────────────────────────────────────────────
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
-            ) {
-                items(filteredList) { tx ->
-                    TransactionCard(tx)
+            if (filteredList.isEmpty() && !uiState.isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.History,
+                            contentDescription = null,
+                            tint = BorderColor,
+                            modifier = Modifier.size(52.dp)
+                        )
+                        Text(
+                            "Sin operaciones",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = TextMain
+                        )
+                        Text(
+                            "Tus transacciones aparecerán aquí",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp)
+                ) {
+                    if (uiState.isLoading) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = Primary)
+                            }
+                        }
+                    }
+                    items(filteredList) { tx ->
+                        TransactionCard(tx, onNavigateToTransaction)
+                    }
                 }
             }
         }
@@ -260,13 +303,22 @@ private fun SummaryChip(text: String, color: Color) {
 // ─── Transaction Card ─────────────────────────────────────────────────────────
 
 @Composable
-private fun TransactionCard(tx: Transaction) {
+private fun TransactionCard(tx: Transaction, onNavigateToTransaction: (String) -> Unit = {}) {
+    val isActive = tx.status == "Pendiente" || tx.status == "En Proceso"
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor),
+        border = androidx.compose.foundation.BorderStroke(
+            width = if (isActive) 1.5.dp else 1.dp,
+            color = if (isActive) WarningColor.copy(alpha = 0.5f) else BorderColor
+        ),
         elevation = CardDefaults.cardElevation(1.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (tx.rawId.isNotBlank()) Modifier.clickable { onNavigateToTransaction(tx.rawId) }
+                else Modifier
+            )
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             // Row 1: icon + ID + status badge
@@ -288,7 +340,12 @@ private fun TransactionCard(tx: Transaction) {
                         modifier = Modifier.size(20.dp)
                     )
                 }
-                Text(tx.id, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextMain, modifier = Modifier.weight(1f))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(tx.id, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextMain)
+                    if (isActive && tx.rawId.isNotBlank()) {
+                        Text("Toca para continuar →", fontSize = 10.sp, color = WarningColor, fontWeight = FontWeight.SemiBold)
+                    }
+                }
                 StatusBadge(tx.status, tx.statusColor)
             }
 

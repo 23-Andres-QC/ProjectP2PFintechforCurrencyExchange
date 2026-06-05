@@ -178,7 +178,8 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 val vm: com.example.p2p.presentation.history.HistoryViewModel = viewModel(factory = com.example.p2p.presentation.history.HistoryViewModel.Factory(txnRepo))
                 HistoryScreen(
                     viewModel = vm,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) }
                 )
             }
 
