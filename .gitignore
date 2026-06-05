@@ -1,3 +1,22 @@
+# IntelliJ IDEA / PyCharm / WebStorm
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+*.env
+venv/
+env/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
 # ═══════════════════════════════════════════════════════════════
 #  Android / Kotlin
 # ═══════════════════════════════════════════════════════════════
