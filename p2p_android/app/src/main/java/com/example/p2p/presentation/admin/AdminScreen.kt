@@ -175,35 +175,35 @@ fun AdminScreen(
                                                 context,
                                                 "Disputa resuelta :3",
                                                 Toast.LENGTH_SHORT
-                                            ).show()
-                                        },
-                                        onError = { err ->
-                                            Toast.makeText(
-                                                context,
-                                                "Error: $err",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        }
-                                    )
-                                },
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                            )
-                            Spacer(Modifier.height(12.dp))
-                        }
+                       ).show()
+                    },
+                    onError = { err ->
+                        Toast.makeText(
+                            context,
+                            "Error: $err",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
-                }
+                    )
+                },
+            modifier = Modifier.padding(horizontal = 16.dp),
+                )
+                Spacer(Modifier.height(12.dp))
+            }
+        }
+    }
 
-                1 -> {
-                    // ── Reclamos ───────────────────────────────────────────────
-                    item {
-                        Spacer(Modifier.height(20.dp))
-                        Text(
-                            text = "Reclamos de Usuarios",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = TextMain,
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                        )
+    1 -> {
+        // ── Reclamos ───────────────────────────────────────────────
+        item {
+            Spacer(Modifier.height(20.dp))
+            Text(
+                text = "Reclamos de Usuarios",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = TextMain,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
                         Spacer(Modifier.height(12.dp))
                     }
 
@@ -716,3 +716,4 @@ private fun ComplaintAdminCard(
         }
     }
 }
+

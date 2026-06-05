@@ -50,11 +50,21 @@ fun ProfileScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // ── User hero card ────────────────────────────────────────────────────
+        // ── User hero card ────────────────────────────────────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
-                .background(Brush.verticalGradient(listOf(Primary, PrimaryLight)))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFF1A2340), Color(0xFF0D1117))
+                    )
+                )
+                .border(
+                    width = 1.dp,
+                    brush = Brush.verticalGradient(listOf(Primary.copy(alpha = 0.3f), Color.Transparent)),
+                    shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp)
+                )
                 .padding(top = 48.dp, bottom = 28.dp, start = 20.dp, end = 20.dp)
         ) {
             Column(
@@ -66,19 +76,19 @@ fun ProfileScreen(
                     modifier = Modifier
                         .size(74.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.25f))
-                        .border(3.dp, Color.White.copy(alpha = 0.5f), CircleShape),
+                        .background(Primary.copy(alpha = 0.15f))
+                        .border(3.dp, Primary.copy(alpha = 0.5f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(initials, color = Color.White, fontWeight = FontWeight.Black, fontSize = 24.sp)
+                    Text(initials, color = Primary, fontWeight = FontWeight.Black, fontSize = 24.sp)
                 }
-                Text(fullName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text(email, color = PrimaryMint, fontSize = 12.sp)
+                Text(fullName, color = TextMain, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(email, color = TextMuted, fontSize = 12.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    ProfileBadge("⭐ $ratingStr", Color.White.copy(alpha = 0.2f), Color.White)
-                    ProfileBadge(roleStr, PrimaryMint.copy(alpha = 0.2f), PrimaryMint)
+                    ProfileBadge("⭐ $ratingStr", Primary.copy(alpha = 0.12f), Primary)
+                    ProfileBadge(roleStr, SuccessColor.copy(alpha = 0.12f), SuccessColor)
                     if (isVerified) {
-                        ProfileBadge("✓ Verificado", Color.White.copy(alpha = 0.15f), Color.White)
+                        ProfileBadge("✓ Verificado", SuccessColor.copy(alpha = 0.1f), SuccessColor)
                     }
                 }
                 Spacer(Modifier.height(4.dp))
@@ -86,7 +96,8 @@ fun ProfileScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Color.White.copy(alpha = 0.15f))
+                        .background(Color.White.copy(alpha = 0.05f))
+                        .border(1.dp, BorderColor, RoundedCornerShape(14.dp))
                         .padding(vertical = 14.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
@@ -277,14 +288,14 @@ private fun ProfileBadge(text: String, bg: Color, textColor: Color) {
 @Composable
 private fun StatColumn(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(value, color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
-        Text(label, color = Color.White.copy(alpha = 0.8f), fontSize = 10.sp)
+        Text(value, color = TextMain, fontWeight = FontWeight.Black, fontSize = 18.sp)
+        Text(label, color = TextMuted, fontSize = 10.sp)
     }
 }
 
 @Composable
 private fun VerticalDividerLine() {
-    Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.3f)))
+    Box(modifier = Modifier.width(1.dp).height(32.dp).background(BorderColor))
 }
 
 @Composable
