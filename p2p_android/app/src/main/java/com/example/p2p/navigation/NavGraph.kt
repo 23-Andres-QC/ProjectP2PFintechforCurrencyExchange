@@ -158,27 +158,24 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                     userName = tokenManager.getUserName() ?: "Usuario"
                 }
 
-                val offerRepo = com.example.p2p.data.repository.OfferRepositoryImpl(com.example.p2p.core.network.ApiClient.offerApi)
-                val txnRepo = com.example.p2p.data.repository.TransactionRepositoryImpl(com.example.p2p.core.network.ApiClient.transactionApi)
-                val bankRepo = com.example.p2p.data.repository.BankAccountRepositoryImpl(com.example.p2p.core.network.ApiClient.bankAccountsApi)
-                val vm: com.example.p2p.presentation.market.MarketViewModel = viewModel(factory = com.example.p2p.presentation.market.MarketViewModel.Factory(offerRepo, txnRepo, bankRepo, com.example.p2p.core.network.ApiClient.exchangeApi))
-                MarketScreen(
-                    viewModel = vm,
-                    userName = userName,
-                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
-                    onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) },
-                    onNavigateToAddBankAccount = { navController.navigate(Screen.BankAccounts.route) }
                 val offerRepo  = com.example.p2p.data.repository.OfferRepositoryImpl(com.example.p2p.core.network.ApiClient.offerApi)
                 val txnRepo    = com.example.p2p.data.repository.TransactionRepositoryImpl(com.example.p2p.core.network.ApiClient.transactionApi)
+                val bankRepo   = com.example.p2p.data.repository.BankAccountRepositoryImpl(com.example.p2p.core.network.ApiClient.bankAccountsApi)
                 val notifRepo  = com.example.p2p.data.repository.NotificationRepositoryImpl(com.example.p2p.core.network.ApiClient.notificationApi)
-                val vm: com.example.p2p.presentation.market.MarketViewModel = viewModel(factory = com.example.p2p.presentation.market.MarketViewModel.Factory(offerRepo, txnRepo, com.example.p2p.core.network.ApiClient.exchangeApi, notifRepo))
+                val vm: com.example.p2p.presentation.market.MarketViewModel = viewModel(
+                    factory = com.example.p2p.presentation.market.MarketViewModel.Factory(
+                        offerRepo, txnRepo, bankRepo, com.example.p2p.core.network.ApiClient.exchangeApi, notifRepo
+                    )
+                )
                 MarketScreen(
                     viewModel = vm,
                     userName = userName,
                     onNavigateToNotifications = {
+                        vm.loadUnreadCount()
                         navController.navigate(Screen.Notifications.route)
                     },
-                    onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) }
+                    onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) },
+                    onNavigateToAddBankAccount = { navController.navigate(Screen.BankAccounts.route) }
                 )
             }
 
