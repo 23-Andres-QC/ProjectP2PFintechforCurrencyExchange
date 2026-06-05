@@ -1,6 +1,7 @@
 package com.example.p2p.presentation.complaints
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -234,10 +235,10 @@ fun ComplaintsScreen(
 @Composable
 private fun ComplaintItem(complaint: Complaint) {
     val statusColor = when (complaint.status) {
-        ComplaintStatus.IN_REVIEW.name  -> WarningColor
-        ComplaintStatus.RESOLVED.name   -> SuccessColor
-        ComplaintStatus.CLOSED.name     -> TextMuted
-        else                            -> WarningColor
+        ComplaintStatus.IN_REVIEW.name -> WarningColor
+        ComplaintStatus.RESOLVED.name  -> SuccessColor
+        ComplaintStatus.CLOSED.name    -> TextMuted
+        else                           -> WarningColor
     }
     val statusLabel = ComplaintStatus.entries
         .firstOrNull { it.name == complaint.status }?.label ?: complaint.status
@@ -245,37 +246,42 @@ private fun ComplaintItem(complaint: Complaint) {
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(1.dp),
+        border = BorderStroke(1.dp, BorderColor),
+        elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("#${complaint.id}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextMain)
-                Text(
-                    ComplaintType.entries.firstOrNull { it.name == complaint.type }?.label ?: complaint.type,
-                    fontSize = 12.sp,
-                    color = TextMuted
-                )
-                Text(complaint.created_at.take(10), fontSize = 11.sp, color = TextMuted)
-            }
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = statusColor.copy(alpha = 0.15f)
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    statusLabel,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = statusColor
+                    "#RCL-${complaint.id.takeLast(4).uppercase()}",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Primary
                 )
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = statusColor.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, statusColor.copy(alpha = 0.35f))
+                ) {
+                    Text(
+                        statusLabel,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = statusColor
+                    )
+                }
             }
+            Text(
+                ComplaintType.entries.firstOrNull { it.name == complaint.type }?.label ?: complaint.type,
+                fontSize = 12.sp,
+                color = TextMuted
+            )
+            Text("📅  ${complaint.created_at.take(10)}", fontSize = 11.sp, color = TextSubtle)
         }
     }
 }

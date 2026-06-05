@@ -1,4 +1,5 @@
 package com.example.p2p.presentation.dispute
+import androidx.compose.foundation.BorderStroke
 import com.example.p2p.data.remote.model.DisputeReason
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -108,15 +109,26 @@ fun DisputeDetailScreen(
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-                elevation = CardDefaults.cardElevation(1.dp),
+                border = BorderStroke(1.dp, BorderColor),
+                elevation = CardDefaults.cardElevation(0.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                    Row(modifier = Modifier.padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Primary.copy(alpha = 0.12f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text("DETALLE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Primary, letterSpacing = 1.sp)
+                        }
+                    }
                     DetailRow("Transacción:", "#TX-${(dispute?.transaction_id ?: "--").takeLast(4).uppercase()}")
                     DetailRow("Motivo:", DisputeReason.label(dispute?.reason ?: ""))
                     DetailRow("Descripción:", dispute?.description ?: "Sin descripción")
                     DetailRow("Iniciada por:", dispute?.initiator_name ?: dispute?.initiator_id?.take(8)?.uppercase() ?: "--")
-                    DetailRow("Fecha:", dispute?.created_at?.take(10) ?: "--")
+                    DetailRow("Fecha:", dispute?.created_at?.take(10) ?: "--", isLast = true)
                 }
             }
 
@@ -148,25 +160,29 @@ fun DisputeDetailScreen(
             if (dispute?.status == "resolved") {
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SuccessColor.copy(alpha = 0.08f)),
+                    colors = CardDefaults.cardColors(containerColor = SuccessColor.copy(alpha = 0.06f)),
+                    border = BorderStroke(1.dp, SuccessColor.copy(alpha = 0.25f)),
                     elevation = CardDefaults.cardElevation(0.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Resolución", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = SuccessColor)
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("✓", fontSize = 14.sp, color = SuccessColor)
+                            Text("Resolución", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = SuccessColor)
+                        }
                         Text(
                             when (dispute.resolution) {
-                                "favour_buyer"  -> "✓ Resuelta a favor del comprador"
-                                "favour_vendor" -> "✓ Resuelta a favor del vendedor"
+                                "favour_buyer"  -> "Resuelta a favor del comprador"
+                                "favour_vendor" -> "Resuelta a favor del vendedor"
                                 else -> dispute.resolution ?: "--"
                             },
-                            fontSize = 13.sp, color = TextMain
+                            fontSize = 13.sp, color = TextMain, fontWeight = FontWeight.SemiBold
                         )
                         dispute.resolution_note?.let {
                             Text(it, fontSize = 12.sp, color = TextMuted)
                         }
                         dispute.resolved_at?.let {
-                            Text("Fecha: ${it.take(10)}", fontSize = 12.sp, color = TextMuted)
+                            Text("📅  ${it.take(10)}", fontSize = 11.sp, color = TextSubtle)
                         }
                     }
                 }

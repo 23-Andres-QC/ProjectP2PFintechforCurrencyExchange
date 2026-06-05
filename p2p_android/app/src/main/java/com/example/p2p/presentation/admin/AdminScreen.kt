@@ -31,12 +31,15 @@ import com.example.p2p.data.remote.model.Dispute
 import com.example.p2p.ui.theme.BackgroundApp
 import com.example.p2p.ui.theme.BorderColor
 import com.example.p2p.ui.theme.DangerColor
+import com.example.p2p.ui.theme.InfoColor
 import com.example.p2p.ui.theme.Primary
 import com.example.p2p.ui.theme.PrimaryMint
 import com.example.p2p.ui.theme.SuccessColor
 import com.example.p2p.ui.theme.SurfaceColor
+import com.example.p2p.ui.theme.SurfaceElevated
 import com.example.p2p.ui.theme.TextMain
 import com.example.p2p.ui.theme.TextMuted
+import com.example.p2p.ui.theme.TextSubtle
 import com.example.p2p.ui.theme.WarningColor
 import java.util.Locale
 
@@ -276,51 +279,76 @@ private fun AdminHeaderCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(
-                Brush.horizontalGradient(
-                    colors = listOf(Color(0xFF1A2332), Color(0xFF0F172A)),
-                ),
+                Brush.linearGradient(
+                    colors = listOf(Color(0xFF1A2340), Color(0xFF0D1117)),
+                )
             )
+            .border(1.dp, Color(0xFFF59E0B).copy(alpha = 0.25f), RoundedCornerShape(20.dp))
             .padding(20.dp),
     ) {
         Column {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50.dp))
-                    .background(PrimaryMint)
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
-            ) {
-                Text(
-                    text = "CONTROL DE OPERACIONES",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0F172A),
-                    letterSpacing = 0.5.sp,
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0xFFF59E0B).copy(alpha = 0.15f))
+                        .border(1.dp, Color(0xFFF59E0B).copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                ) {
+                    Text(
+                        text = "⬡  CONTROL DE OPERACIONES",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF59E0B),
+                        letterSpacing = 1.sp,
+                    )
+                }
             }
-
-            Spacer(Modifier.height(12.dp))
-
-            Text(
-                text = "ADM · Perú Exchange",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-            )
 
             Spacer(Modifier.height(16.dp))
 
+            Text(
+                text = "Panel Administrador",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+            )
+            Text(
+                text = "Perú Exchange · Tiempo real",
+                fontSize = 12.sp,
+                color = Color(0xFF94A3B8),
+            )
+
+            Spacer(Modifier.height(20.dp))
+
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF0A0F1E).copy(alpha = 0.6f))
+                    .padding(vertical = 16.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                AdminStat(value = "S/ ${String.format(Locale.getDefault(), "%.1fK", volume / 1000)}", label = "Volumen", valueColor = Color.White)
+                AdminStat(
+                    value = "S/ ${String.format(Locale.getDefault(), "%.1fK", volume / 1000)}",
+                    label = "Volumen",
+                    valueColor = Color(0xFFF59E0B)
+                )
                 StatDivider()
-                AdminStat(value = disputesCount.toString(), label = "Disputas", valueColor = DangerColor)
+                AdminStat(
+                    value = disputesCount.toString(),
+                    label = "Disputas",
+                    valueColor = Color(0xFFEF4444)
+                )
                 StatDivider()
-                AdminStat(value = usersCount.toString(), label = "Usuarios", valueColor = Color.White)
+                AdminStat(
+                    value = usersCount.toString(),
+                    label = "Usuarios",
+                    valueColor = Color(0xFF10B981)
+                )
             }
         }
     }
@@ -364,9 +392,9 @@ private fun StatusPillsRow(
         modifier = modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        StatusPill(label = "⚖ $openCount En arbitraje", bgColor = DangerColor)
-        StatusPill(label = "🔍 $reviewCount En revisión", bgColor = WarningColor)
-        StatusPill(label = "✅ $resolvedCount Resueltas", bgColor = SuccessColor)
+        StatusPill(label = "⚖  $openCount En arbitraje", bgColor = Color(0xFFEF4444))
+        StatusPill(label = "🔍  $reviewCount En revisión", bgColor = Color(0xFFF59E0B))
+        StatusPill(label = "✅  $resolvedCount Resueltas", bgColor = Color(0xFF10B981))
     }
 }
 
@@ -374,15 +402,16 @@ private fun StatusPillsRow(
 private fun StatusPill(label: String, bgColor: Color) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(50.dp))
-            .background(bgColor)
-            .padding(horizontal = 14.dp, vertical = 6.dp),
+            .clip(RoundedCornerShape(8.dp))
+            .background(bgColor.copy(alpha = 0.15f))
+            .border(1.dp, bgColor.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+            .padding(horizontal = 14.dp, vertical = 8.dp),
     ) {
         Text(
             text = label,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Color.White,
+            color = bgColor,
         )
     }
 }
@@ -431,68 +460,101 @@ private fun DisputeCard(
     onResolve: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val statusColor = when (dispute.status) {
+        "open" -> DangerColor
+        "under_review" -> WarningColor
+        else -> SuccessColor
+    }
+    val statusLabel = when (dispute.status) {
+        "open" -> "ABIERTA"
+        "under_review" -> "EN REVISIÓN"
+        "resolved" -> "RESUELTA"
+        else -> dispute.status.uppercase()
+    }
+
     Card(
-        modifier = modifier.fillMaxWidth().clickable { onViewDetail(dispute.id) },
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onViewDetail(dispute.id) },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
         border = BorderStroke(1.dp, BorderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+
+            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(
-                    text = dispute.transaction_id.take(8).uppercase(),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = DangerColor,
-                )
-                StatusBadge(
-                    label = dispute.status.uppercase(),
-                    color = when (dispute.status) {
-                        "open" -> DangerColor
-                        "under_review" -> WarningColor
-                        else -> SuccessColor
-                    }
-                )
+                Column {
+                    Text(
+                        text = "#DSP-${dispute.id.takeLast(4).uppercase()}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = Primary,
+                    )
+                    Text(
+                        text = "#TX-${dispute.transaction_id.takeLast(4).uppercase()}",
+                        fontSize = 11.sp,
+                        color = TextMuted,
+                    )
+                }
+                StatusBadge(label = statusLabel, color = statusColor)
             }
 
-            Text(text = "Motivo: ${dispute.reason}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextMain)
+            HorizontalDivider(color = BorderColor, thickness = 0.5.dp)
+
+            // Motivo + descripción
+            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Primary.copy(alpha = 0.12f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(dispute.reason, fontSize = 11.sp, color = Primary, fontWeight = FontWeight.SemiBold)
+                }
+            }
+
             dispute.description?.let {
-                Text(text = it, fontSize = 12.sp, color = TextMuted)
+                Text(text = it, fontSize = 12.sp, color = TextMuted, maxLines = 2)
             }
 
+            // Fecha
             Text(
-                text = dispute.created_at.take(10),
-                fontSize = 12.sp,
-                color = TextMuted
+                text = "📅  ${dispute.created_at.take(10)}",
+                fontSize = 11.sp,
+                color = TextSubtle
             )
 
+            // Botones resolución
             if (dispute.status == "open" || dispute.status == "under_review") {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(top = 4.dp).fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Button(
                         onClick = { onResolve("favour_buyer") },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = SuccessColor),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                        modifier = Modifier.height(34.dp).weight(1f),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SuccessColor.copy(alpha = 0.15f)),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
+                        modifier = Modifier.weight(1f),
+                        border = BorderStroke(1.dp, SuccessColor.copy(alpha = 0.5f))
                     ) {
-                        Text("✓ Comprador", fontSize = 11.sp, color = Color.White)
+                        Text("✓ Comprador", fontSize = 12.sp, color = SuccessColor, fontWeight = FontWeight.SemiBold)
                     }
                     Button(
                         onClick = { onResolve("favour_vendor") },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = WarningColor),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                        modifier = Modifier.height(34.dp).weight(1f),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = WarningColor.copy(alpha = 0.15f)),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
+                        modifier = Modifier.weight(1f),
+                        border = BorderStroke(1.dp, WarningColor.copy(alpha = 0.5f))
                     ) {
-                        Text("✓ Vendedor", fontSize = 11.sp, color = Color.White)
+                        Text("✓ Vendedor", fontSize = 12.sp, color = WarningColor, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -529,17 +591,26 @@ private fun ComplaintAdminCard(
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Resolver Reclamo", fontWeight = FontWeight.Bold) },
+            containerColor = SurfaceElevated,
+            title = {
+                Text("Resolver Reclamo", fontWeight = FontWeight.Bold, color = TextMain)
+            },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Escribe una nota de resolución para el usuario:", fontSize = 13.sp, color = TextMuted)
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Escribe una nota de resolución:", fontSize = 13.sp, color = TextMuted)
                     OutlinedTextField(
                         value = adminNote,
                         onValueChange = { adminNote = it },
-                        placeholder = { Text("Nota de resolución...", fontSize = 13.sp) },
+                        placeholder = { Text("Nota de resolución...", fontSize = 13.sp, color = TextSubtle) },
                         modifier = Modifier.fillMaxWidth().height(100.dp),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(10.dp),
                         maxLines = 4,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Primary,
+                            unfocusedBorderColor = BorderColor,
+                            focusedTextColor = TextMain,
+                            unfocusedTextColor = TextMain
+                        )
                     )
                 }
             },
@@ -552,17 +623,35 @@ private fun ComplaintAdminCard(
                             adminNote = ""
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = SuccessColor)
+                    colors = ButtonDefaults.buttonColors(containerColor = SuccessColor),
+                    shape = RoundedCornerShape(10.dp)
                 ) {
                     Text("Resolver", color = Color.White)
                 }
             },
             dismissButton = {
-                OutlinedButton(onClick = { showDialog = false }) {
-                    Text("Cancelar")
+                OutlinedButton(
+                    onClick = { showDialog = false },
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, BorderColor)
+                ) {
+                    Text("Cancelar", color = TextMuted)
                 }
             }
         )
+    }
+
+    val statusColor = when (complaint.status) {
+        "pending" -> WarningColor
+        "under_review" -> InfoColor
+        "resolved" -> SuccessColor
+        else -> TextMuted
+    }
+    val statusLabel = when (complaint.status) {
+        "pending" -> "PENDIENTE"
+        "under_review" -> "EN REVISIÓN"
+        "resolved" -> "RESUELTO"
+        else -> complaint.status.uppercase()
     }
 
     Card(
@@ -570,9 +659,10 @@ private fun ComplaintAdminCard(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
         border = BorderStroke(1.dp, BorderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(0.dp),
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -581,62 +671,55 @@ private fun ComplaintAdminCard(
                 Text(
                     text = "#RCL-${complaint.id.takeLast(4).uppercase()}",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    fontSize = 15.sp,
                     color = Primary,
                 )
-                StatusBadge(
-                    label = when (complaint.status) {
-                        "pending"      -> "PENDIENTE"
-                        "under_review" -> "EN REVISIÓN"
-                        "resolved"     -> "RESUELTO"
-                        else           -> complaint.status.uppercase()
-                    },
-                    color = when (complaint.status) {
-                        "pending"      -> WarningColor
-                        "under_review" -> Primary
-                        "resolved"     -> SuccessColor
-                        else           -> TextMuted
-                    }
+                StatusBadge(label = statusLabel, color = statusColor)
+            }
+
+            HorizontalDivider(color = BorderColor, thickness = 0.5.dp)
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Primary.copy(alpha = 0.10f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    com.example.p2p.data.remote.model.ComplaintType.label(complaint.type),
+                    fontSize = 11.sp,
+                    color = Primary,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
-            Text(
-                text = "Tipo: ${com.example.p2p.data.remote.model.ComplaintType.label(complaint.type)}",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextMain
-            )
-
-            Text(
-                text = complaint.description,
-                fontSize = 12.sp,
-                color = TextMuted
-            )
+            Text(text = complaint.description, fontSize = 12.sp, color = TextMuted)
 
             complaint.admin_note?.let {
-                Text(
-                    text = "Nota admin: $it",
-                    fontSize = 12.sp,
-                    color = SuccessColor,
-                    fontWeight = FontWeight.Medium
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(SuccessColor.copy(alpha = 0.08f))
+                        .padding(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text("✓", color = SuccessColor, fontSize = 12.sp)
+                    Text(it, fontSize = 12.sp, color = SuccessColor)
+                }
             }
 
-            Text(
-                text = complaint.created_at.take(10),
-                fontSize = 12.sp,
-                color = TextMuted
-            )
+            Text(text = "📅  ${complaint.created_at.take(10)}", fontSize = 11.sp, color = TextSubtle)
 
             if (complaint.status != "resolved" && complaint.status != "closed") {
                 Button(
                     onClick = { showDialog = true },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = SuccessColor),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                    modifier = Modifier.fillMaxWidth().height(36.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = SuccessColor.copy(alpha = 0.15f)),
+                    border = BorderStroke(1.dp, SuccessColor.copy(alpha = 0.5f)),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Resolver Reclamo", fontSize = 12.sp, color = Color.White)
+                    Text("Resolver Reclamo", fontSize = 13.sp, color = SuccessColor, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
