@@ -7,6 +7,7 @@ from flask_jwt_extended import (
 from app.models.user import User
 from app.core.database import db
 from app.core.exceptions import ConflictError, AuthenticationError
+from app.core.notifications import notify
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -66,6 +67,14 @@ def login():
         raise AuthenticationError('Invalid email or password')
     if not user.is_active:
         raise AuthenticationError('Account is inactive')
+
+    notify(
+        user_id=user.id,
+        type='login',
+        title='Inicio de sesión exitoso',
+        body='Se detectó un nuevo inicio de sesión en tu cuenta.',
+    )
+    db.session.commit()
 
     return _user_with_tokens(user), 200
 

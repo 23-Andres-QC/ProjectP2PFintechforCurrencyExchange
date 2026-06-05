@@ -68,8 +68,10 @@ class TransactionRepositoryImpl(
         if (!errorBody.isNullOrBlank()) {
             return try {
                 val json = JSONObject(errorBody)
-                val errorCode = json.optString("error", "")
-                val message = json.optString("message", "")
+                // El backend retorna {"error": {"code": "...", "message": "..."}}
+                val errorObj = json.optJSONObject("error")
+                val errorCode = errorObj?.optString("code", "") ?: ""
+                val message = errorObj?.optString("message", "") ?: ""
                 when (errorCode) {
                     "OWN_OFFER" -> "No puedes comprar tu propia oferta"
                     "OFFER_UNAVAILABLE" -> "Esta oferta ya no está disponible"
@@ -100,6 +102,27 @@ class TransactionRepositoryImpl(
             }
         } catch (e: Exception) {
             NetworkResult.Error(-1, e.message ?: "An error occurred")
+        }
+    }
+
+    override suspend fun uploadVoucherWithBase64(id: String, base64: String): NetworkResult<Unit> {
+        return try {
+            // Paso 1: subir imagen al servidor, obtener URL
+            val uploadResponse = api.uploadImage(mapOf("image_base64" to base64))
+            if (!uploadResponse.isSuccessful || uploadResponse.body() == null) {
+                return NetworkResult.Error(uploadResponse.code(), "Error al subir la imagen")
+            }
+            val imageUrl = uploadResponse.body()!!["url"] ?: ""
+
+            // Paso 2: registrar voucher con la URL obtenida
+            val voucherResponse = api.uploadVoucher(id, mapOf("image_url" to imageUrl))
+            if (voucherResponse.isSuccessful) {
+                NetworkResult.Success(Unit)
+            } else {
+                NetworkResult.Error(voucherResponse.code(), voucherResponse.message())
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(-1, e.message ?: "Error al subir voucher")
         }
     }
 

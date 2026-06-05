@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,9 +30,10 @@ import com.example.p2p.ui.theme.*
 fun ProfileScreen(
     viewModel: ProfileViewModel? = null,
     onNavigate: (String) -> Unit = {},
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
 ) {
     val uiState by viewModel?.uiState?.collectAsState(initial = ProfileUiState()) ?: remember { mutableStateOf(ProfileUiState()) }
+    val unreadCount = uiState.unreadNotifications
     val user = uiState.user
 
     val fullName = user?.full_name ?: "Usuario"
@@ -193,6 +196,7 @@ fun ProfileScreen(
             MenuItem(
                 icon = Icons.Default.Notifications, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
                 label = "Notificaciones",
+                badge = unreadCount,
                 onClick = { onNavigate(Screen.Notifications.route) }
             )
             MenuItem(
@@ -221,7 +225,7 @@ fun ProfileScreen(
                 onClick = { onNavigate(Screen.About.route) }
             )
             MenuItem(
-                icon = Icons.Default.HelpOutline, iconBg = SuccessColor.copy(.1f), iconTint = SuccessColor,
+                icon = Icons.AutoMirrored.Filled.HelpOutline, iconBg = SuccessColor.copy(.1f), iconTint = SuccessColor,
                 label = "Centro de Ayuda",
                 onClick = { onNavigate(Screen.Help.route) },
                 showDivider = false
@@ -250,7 +254,7 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(vertical = 10.dp)
             ) {
-                Icon(Icons.Default.Logout, contentDescription = null, tint = DangerColor, modifier = Modifier.size(16.dp))
+                Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = DangerColor, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
                 Text("Cerrar Sesión", color = DangerColor, fontWeight = FontWeight.SemiBold)
             }
@@ -314,7 +318,8 @@ fun MenuItem(
     iconTint: Color,
     label: String,
     onClick: () -> Unit = {},
-    showDivider: Boolean = true
+    showDivider: Boolean = true,
+    badge: Int = 0,
 ) {
     Column {
         Row(
@@ -332,6 +337,23 @@ fun MenuItem(
                 Icon(icon, contentDescription = label, tint = iconTint, modifier = Modifier.size(20.dp))
             }
             Text(label, fontSize = 14.sp, color = TextMain, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+            if (badge > 0) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50.dp))
+                        .background(DangerColor)
+                        .padding(horizontal = 7.dp, vertical = 2.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = if (badge > 99) "99+" else badge.toString(),
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+            }
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(18.dp))
         }
         if (showDivider) {

@@ -77,13 +77,19 @@ class TransactionViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             when (val result = transactionRepository.uploadVoucher(id, imageUrl)) {
-                is NetworkResult.Success -> {
-                    // Refresh the transaction to get the updated status
-                    loadTransaction(id)
-                }
-                is NetworkResult.Error -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
-                }
+                is NetworkResult.Success -> loadTransaction(id)
+                is NetworkResult.Error -> _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun uploadVoucherFromBase64(id: String, base64: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            when (val result = transactionRepository.uploadVoucherWithBase64(id, base64)) {
+                is NetworkResult.Success -> loadTransaction(id)
+                is NetworkResult.Error -> _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
                 NetworkResult.Loading -> Unit
             }
         }

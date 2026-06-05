@@ -11,9 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+enum class OfferFilter { ALL, ACTIVE, PAUSED }
+
 data class MyOffersUiState(
     val isLoading: Boolean = false,
     val offers: List<Offer> = emptyList(),
+    val filteredOffers: List<Offer> = emptyList(),
+    val activeFilter: OfferFilter = OfferFilter.ALL,
     val error: String? = null
 )
 
@@ -26,17 +30,35 @@ class MyOffersViewModel(
 
     fun loadMyOffers() {
         viewModelScope.launch {
-            _uiState.value = MyOffersUiState(isLoading = true)
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             when (val result = offerRepository.getMyOffers()) {
                 is NetworkResult.Success -> {
-                    _uiState.value = MyOffersUiState(offers = result.data)
+                    val offers = result.data
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        offers = offers,
+                        filteredOffers = applyFilter(offers, _uiState.value.activeFilter)
+                    )
                 }
                 is NetworkResult.Error -> {
-                    _uiState.value = MyOffersUiState(error = result.message)
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
                 }
                 NetworkResult.Loading -> Unit
             }
         }
+    }
+
+    fun setFilter(filter: OfferFilter) {
+        _uiState.value = _uiState.value.copy(
+            activeFilter = filter,
+            filteredOffers = applyFilter(_uiState.value.offers, filter)
+        )
+    }
+
+    private fun applyFilter(offers: List<Offer>, filter: OfferFilter): List<Offer> = when (filter) {
+        OfferFilter.ALL    -> offers
+        OfferFilter.ACTIVE -> offers.filter { it.status == "active" }
+        OfferFilter.PAUSED -> offers.filter { it.status == "paused" }
     }
 
     fun pauseOffer(offerId: String) {

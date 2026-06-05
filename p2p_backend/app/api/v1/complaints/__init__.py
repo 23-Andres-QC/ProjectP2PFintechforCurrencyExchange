@@ -1,0 +1,1 @@
+from app.api.v1.complaints.routes import complaints_bp

@@ -5,67 +5,105 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.p2p.core.network.NetworkResult
 import com.example.p2p.data.remote.api.ExchangeApi
+import com.example.p2p.data.remote.model.BankAccount
+import com.example.p2p.data.remote.model.CreateTransactionRequest
 import com.example.p2p.data.remote.model.ExchangeRate
 import com.example.p2p.data.remote.model.Offer
+import com.example.p2p.domain.repository.BankAccountRepository
+import com.example.p2p.domain.repository.NotificationRepository
 import com.example.p2p.domain.repository.OfferRepository
+import com.example.p2p.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.example.p2p.domain.repository.TransactionRepository
-import com.example.p2p.data.remote.model.CreateTransactionRequest
 
 data class MarketUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val offers: List<Offer> = emptyList(),
-    val exchangeRates: List<ExchangeRate> = emptyList()
+    val exchangeRates: List<ExchangeRate> = emptyList(),
+    val bankAccounts: List<BankAccount> = emptyList(),
+    val selectedBankAccountId: String? = null,
+    val isLoadingAccounts: Boolean = false,
+    val unreadCount: Int = 0
 )
 
 class MarketViewModel(
     private val offerRepository: OfferRepository,
     private val transactionRepository: TransactionRepository,
-    private val exchangeApi: ExchangeApi? = null
+    private val bankAccountRepository: BankAccountRepository? = null,
+    private val exchangeApi: ExchangeApi? = null,
+    private val notificationRepository: NotificationRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MarketUiState())
     val uiState: StateFlow<MarketUiState> = _uiState.asStateFlow()
 
     init {
-        loadOffers()
         loadExchangeRates()
+        loadBankAccounts()
+        loadUnreadCount()
+    }
+
+    fun loadUnreadCount() {
+        if (notificationRepository == null) return
+        viewModelScope.launch {
+            when (val result = notificationRepository.getUnreadCount()) {
+                is NetworkResult.Success ->
+                    _uiState.value = _uiState.value.copy(unreadCount = result.data)
+                else -> Unit
+            }
+        }
+    }
+
+    private fun loadBankAccounts() {
+        if (bankAccountRepository == null) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingAccounts = true)
+            when (val result = bankAccountRepository.listAccounts()) {
+                is NetworkResult.Success -> {
+                    val accounts = result.data
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingAccounts = false,
+                        bankAccounts = accounts,
+                        selectedBankAccountId = accounts.firstOrNull()?.id
+                    )
+                }
+                is NetworkResult.Error ->
+                    _uiState.value = _uiState.value.copy(isLoadingAccounts = false)
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun selectBankAccount(id: String) {
+        _uiState.value = _uiState.value.copy(selectedBankAccountId = id)
     }
 
     private fun loadExchangeRates() {
         if (exchangeApi == null) return
         viewModelScope.launch {
             try {
-                val response = exchangeApi.getRates()
-                if (response.isSuccessful) {
-                    val rates = response.body()?.rates ?: emptyList()
-                    _uiState.value = _uiState.value.copy(exchangeRates = rates)
+                val usdResp = exchangeApi.getRates(from = "USD")
+                val usdRates = if (usdResp.isSuccessful) usdResp.body()?.rates ?: emptyList() else emptyList()
+                val eurResp = exchangeApi.getRates(from = "EUR")
+                val eurRates = if (eurResp.isSuccessful) eurResp.body()?.rates ?: emptyList() else emptyList()
+                val combined = (usdRates + eurRates).distinctBy { "${it.from_currency}_${it.to_currency}" }
+                if (combined.isNotEmpty()) {
+                    _uiState.value = _uiState.value.copy(exchangeRates = combined)
                 }
-            } catch (_: Exception) { /* keep defaults on error */ }
+            } catch (_: Exception) {}
         }
     }
 
-    fun loadOffers() {
+    fun loadOffers(currency: String? = null, fiatCurrency: String? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            when (val result = offerRepository.listOffers()) {
-                is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        offers = result.data
-                    )
-                }
-                is NetworkResult.Error -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = result.message
-                    )
-                }
-                NetworkResult.Loading -> Unit
+            when (val result = offerRepository.listOffers(currency, fiatCurrency)) {
+                is NetworkResult.Success -> _uiState.value = _uiState.value.copy(isLoading = false, offers = result.data)
+                is NetworkResult.Error   -> _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
+                NetworkResult.Loading    -> Unit
             }
         }
     }
@@ -74,15 +112,9 @@ class MarketViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             when (val result = transactionRepository.createTransaction(request)) {
-                is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                    onSuccess(result.data.id)
-                }
-                is NetworkResult.Error -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                    onError(result.message)
-                }
-                NetworkResult.Loading -> Unit
+                is NetworkResult.Success -> { _uiState.value = _uiState.value.copy(isLoading = false); onSuccess(result.data.id) }
+                is NetworkResult.Error   -> { _uiState.value = _uiState.value.copy(isLoading = false); onError(result.message) }
+                NetworkResult.Loading    -> Unit
             }
         }
     }
@@ -91,15 +123,9 @@ class MarketViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             when (val result = offerRepository.matchOffer(currency, fiatCurrency)) {
-                is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                    onMatched(result.data)
-                }
-                is NetworkResult.Error -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
-                    onError(result.message)
-                }
-                NetworkResult.Loading -> Unit
+                is NetworkResult.Success -> { _uiState.value = _uiState.value.copy(isLoading = false); onMatched(result.data) }
+                is NetworkResult.Error   -> { _uiState.value = _uiState.value.copy(isLoading = false, error = result.message); onError(result.message) }
+                NetworkResult.Loading    -> Unit
             }
         }
     }
@@ -107,10 +133,12 @@ class MarketViewModel(
     class Factory(
         private val offerRepository: OfferRepository,
         private val transactionRepository: TransactionRepository,
-        private val exchangeApi: ExchangeApi? = null
+        private val bankAccountRepository: BankAccountRepository? = null,
+        private val exchangeApi: ExchangeApi? = null,
+        private val notificationRepository: NotificationRepository? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            MarketViewModel(offerRepository, transactionRepository, exchangeApi) as T
+            MarketViewModel(offerRepository, transactionRepository, bankAccountRepository, exchangeApi, notificationRepository) as T
     }
 }

@@ -3,41 +3,15 @@ package com.example.p2p.presentation.offer
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,15 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.Offer
-import com.example.p2p.ui.theme.BackgroundApp
-import com.example.p2p.ui.theme.BorderColor
-import com.example.p2p.ui.theme.DangerColor
-import com.example.p2p.ui.theme.Primary
-import com.example.p2p.ui.theme.SuccessColor
-import com.example.p2p.ui.theme.SurfaceColor
-import com.example.p2p.ui.theme.TextMain
-import com.example.p2p.ui.theme.TextMuted
-import com.example.p2p.ui.theme.WarningColor
+import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,32 +29,21 @@ fun MyOffersScreen(
     onBack: () -> Unit = {},
     onPublishClick: () -> Unit = {}
 ) {
-    val uiState by viewModel?.uiState?.collectAsState(initial = MyOffersUiState()) ?: remember { mutableStateOf(MyOffersUiState()) }
+    val uiState by viewModel?.uiState?.collectAsState(initial = MyOffersUiState())
+        ?: remember { mutableStateOf(MyOffersUiState()) }
 
-    LaunchedEffect(Unit) {
-        viewModel?.loadMyOffers()
-    }
+    LaunchedEffect(Unit) { viewModel?.loadMyOffers() }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Mis Ofertas",
-                        fontWeight = FontWeight.Bold,
-                        color = TextMain,
-                    )
-                },
+                title = { Text("Mis Ofertas", fontWeight = FontWeight.Bold, color = TextMain) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = TextMain,
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = TextMain)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor)
             )
         },
         bottomBar = {
@@ -96,62 +51,63 @@ fun MyOffersScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(SurfaceColor)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 Button(
                     onClick = onPublishClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = null,
-                        tint = Color.White,
-                    )
+                    Icon(Icons.Filled.Add, contentDescription = null, tint = Color.White)
                     Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "Publicar Nueva Oferta",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White,
-                    )
+                    Text("Publicar Nueva Oferta", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
                 }
             }
         },
-        containerColor = BackgroundApp,
+        containerColor = BackgroundApp
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (uiState.isLoading && uiState.offers.isEmpty()) {
-                item {
-                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                        androidx.compose.material3.CircularProgressIndicator(color = Primary)
+            // ── Filtros ──────────────────────────────────────────────
+            item {
+                FilterBar(
+                    activeFilter = uiState.activeFilter,
+                    totalCount = uiState.offers.size,
+                    activeCount = uiState.offers.count { it.status == "active" },
+                    pausedCount = uiState.offers.count { it.status == "paused" },
+                    onFilterChange = { viewModel?.setFilter(it) }
+                )
+            }
+
+            // ── Contenido ─────────────────────────────────────────────
+            when {
+                uiState.isLoading && uiState.offers.isEmpty() -> item {
+                    Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Primary)
                     }
                 }
-            } else if (uiState.offers.isEmpty()) {
-                item {
-                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                        Text(text = "No tienes ofertas publicadas", color = TextMuted)
+                uiState.error != null -> item {
+                    Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        Text("Error: ${uiState.error}", color = DangerColor)
                     }
                 }
-            } else {
-                item {
-                    Text(
-                        text = "${uiState.offers.size} ofertas publicadas",
-                        fontSize = 13.sp,
-                        color = TextMuted,
-                    )
-                    Spacer(Modifier.height(4.dp))
+                uiState.filteredOffers.isEmpty() -> item {
+                    Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = when (uiState.activeFilter) {
+                                OfferFilter.ACTIVE -> "No tienes ofertas activas"
+                                OfferFilter.PAUSED -> "No tienes ofertas pausadas"
+                                OfferFilter.ALL    -> "No tienes ofertas publicadas"
+                            },
+                            color = TextMuted
+                        )
+                    }
                 }
-                items(uiState.offers) { offer ->
+                else -> items(uiState.filteredOffers) { offer ->
                     OfferCard(
                         offer = offer,
                         onPauseResume = {
@@ -166,104 +122,180 @@ fun MyOffersScreen(
     }
 }
 
+// ── FilterBar ────────────────────────────────────────────────────────────────
+
+@Composable
+private fun FilterBar(
+    activeFilter: OfferFilter,
+    totalCount: Int,
+    activeCount: Int,
+    pausedCount: Int,
+    onFilterChange: (OfferFilter) -> Unit
+) {
+    val filters = listOf(
+        Triple(OfferFilter.ALL,    "Todas",   totalCount),
+        Triple(OfferFilter.ACTIVE, "Activas", activeCount),
+        Triple(OfferFilter.PAUSED, "Pausadas", pausedCount)
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(SurfaceColor)
+            .border(1.dp, BorderColor, RoundedCornerShape(12.dp))
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        filters.forEach { (filter, label, count) ->
+            val isSelected = activeFilter == filter
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (isSelected) Primary else Color.Transparent)
+                    .then(
+                        if (!isSelected) Modifier.border(0.dp, Color.Transparent, RoundedCornerShape(8.dp))
+                        else Modifier
+                    )
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                // Hacemos clickable con OutlinedButton invisible debajo
+                TextButton(
+                    onClick = { onFilterChange(filter) },
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = label,
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isSelected) Color.White else TextMuted
+                        )
+                        Text(
+                            text = "$count",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) Color.White.copy(alpha = 0.8f) else TextMuted.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ── OfferCard ────────────────────────────────────────────────────────────────
+
 @Composable
 private fun OfferCard(
     offer: Offer,
     onPauseResume: () -> Unit = {},
     onDelete: () -> Unit = {}
 ) {
+    val isActive = offer.status == "active"
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
         border = BorderStroke(1.dp, BorderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Currency pair badge + status badge
+
+            // Divisa + estado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
                         .background(Primary)
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
                 ) {
                     Text(
-                        text = "${offer.currency}→${offer.fiat_currency}",
+                        text = "${offer.currency} → ${offer.fiat_currency}",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
+                        color = Color.White
                     )
                 }
 
-                val isActive = offer.status == "active"
-                val statusText = if (isActive) "Activa" else "Pausada"
                 val statusColor = if (isActive) SuccessColor else WarningColor
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50.dp))
                         .background(statusColor.copy(alpha = 0.12f))
                         .border(1.dp, statusColor.copy(alpha = 0.4f), RoundedCornerShape(50.dp))
-                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = statusText,
+                        text = if (isActive) "Activa" else "Pausada",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = statusColor,
+                        color = statusColor
                     )
                 }
             }
 
             Spacer(Modifier.height(12.dp))
 
-            // Rate + available
+            // Tasa + disponible
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom,
+                verticalAlignment = Alignment.Bottom
             ) {
                 Text(
-                    text = "S/ ${offer.price_per_unit}",
+                    text = "${offer.fiat_currency} ${String.format("%.3f", offer.price_per_unit)}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
-                    color = TextMain,
+                    color = TextMain
                 )
                 Text(
-                    text = "${offer.available_amount} disponibles",
+                    text = "${String.format("%.2f", offer.available_amount)} ${offer.currency} disp.",
                     fontSize = 13.sp,
-                    color = TextMuted,
+                    color = TextMuted
                 )
             }
 
             Spacer(Modifier.height(6.dp))
 
             Text(
-                text = "Min S/ ${offer.min_transaction} · Max S/ ${offer.max_transaction ?: offer.amount}",
+                text = "Min ${offer.fiat_currency} ${String.format("%.2f", offer.min_transaction)} · Max ${offer.fiat_currency} ${String.format("%.2f", offer.max_transaction ?: offer.amount)}",
                 fontSize = 12.sp,
-                color = TextMuted,
+                color = TextMuted
+            )
+
+            // Tipo de oferta
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = if (offer.offer_type == "full") "Venta completa" else "Venta por partes",
+                fontSize = 11.sp,
+                color = Primary.copy(alpha = 0.8f),
+                fontWeight = FontWeight.Medium
             )
 
             Spacer(Modifier.height(14.dp))
 
-            // Action buttons
+            // Botones
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val isActive = offer.status == "active"
                 OutlinedButton(
                     onClick = onPauseResume,
                     shape = RoundedCornerShape(8.dp),
                     border = BorderStroke(1.dp, WarningColor),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                    modifier = Modifier.height(36.dp),
+                    modifier = Modifier.height(36.dp)
                 ) {
                     Text(
                         text = if (isActive) "Pausar" else "Reanudar",
                         fontSize = 12.sp,
-                        color = WarningColor,
+                        color = WarningColor
                     )
                 }
                 OutlinedButton(
@@ -271,9 +303,9 @@ private fun OfferCard(
                     shape = RoundedCornerShape(8.dp),
                     border = BorderStroke(1.dp, DangerColor),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                    modifier = Modifier.height(36.dp),
+                    modifier = Modifier.height(36.dp)
                 ) {
-                    Text(text = "Eliminar", fontSize = 12.sp, color = DangerColor)
+                    Text("Eliminar", fontSize = 12.sp, color = DangerColor)
                 }
             }
         }

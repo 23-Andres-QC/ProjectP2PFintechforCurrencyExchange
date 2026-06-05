@@ -5,6 +5,7 @@ from app.core.database import db
 from app.core.exceptions import NotFoundError, AuthorizationError, AppException
 from app.models import Offer, Transaction, Voucher, Dispute
 from app.models.user import User
+from app.core.notifications import notify
 
 transactions_bp = Blueprint('transactions', __name__, url_prefix='/transactions')
 
@@ -112,6 +113,21 @@ def create_transaction():
     if offer.available_amount <= 0:
         offer.status = 'closed'
 
+    notify(
+        user_id=txn.buyer_id,
+        type='transaction',
+        title='Transacción creada',
+        body=f'Tu solicitud de cambio está pendiente de confirmación por el vendedor.',
+        resource_id=txn.id,
+    )
+    notify(
+        user_id=txn.vendor_id,
+        type='transaction',
+        title='Nueva transacción pendiente',
+        body=f'Un comprador inició una transacción por {txn.amount_from} {offer.from_currency}. Revisa y confirma.',
+        resource_id=txn.id,
+    )
+
     db.session.commit()
     return _txn_dict(txn), 201
 
@@ -136,6 +152,15 @@ def upload_voucher(txn_id):
     )
     db.session.add(voucher)
     txn.status = 'voucher_uploaded'
+
+    notify(
+        user_id=txn.vendor_id,
+        type='voucher',
+        title='Comprobante de pago subido',
+        body='El comprador subió su comprobante. Por favor revísalo y confirma la transacción.',
+        resource_id=txn.id,
+    )
+
     db.session.commit()
     return {'id': voucher.id, 'status': 'pending', 'transaction_status': 'voucher_uploaded'}, 201
 
@@ -159,6 +184,14 @@ def confirm_transaction(txn_id):
         vendor.total_transactions = (vendor.total_transactions or 0) + 1
     if buyer:
         buyer.total_transactions = (buyer.total_transactions or 0) + 1
+
+    notify(
+        user_id=txn.buyer_id,
+        type='transaction',
+        title='Transacción completada',
+        body='El vendedor confirmó el pago. Tu transacción fue completada exitosamente.',
+        resource_id=txn.id,
+    )
 
     db.session.commit()
     return {'message': 'Transaction completed', 'status': 'completed'}, 200
@@ -186,6 +219,16 @@ def open_dispute(txn_id):
     )
     db.session.add(dispute)
     txn.status = 'disputed'
+
+    other_id = txn.vendor_id if user_id == txn.buyer_id else txn.buyer_id
+    notify(
+        user_id=other_id,
+        type='dispute',
+        title='Disputa abierta en tu transacción',
+        body=f'Se abrió una disputa por motivo: {dispute.reason}. Un administrador revisará el caso.',
+        resource_id=dispute.id,
+    )
+
     db.session.commit()
     return {'id': dispute.id, 'status': 'open', 'transaction_status': 'disputed'}, 201
 
