@@ -7,6 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,6 +25,7 @@ import com.example.p2p.ui.theme.*
 fun TransactionDetailScreen(
     transactionId: String?,
     viewModel: TransactionViewModel? = null,
+    onNavigateToDispute: (String) -> Unit = {},
     onBack: () -> Unit = {}
 ) {
     val uiState by viewModel?.uiState?.collectAsState(initial = TransactionUiState())
@@ -56,7 +58,7 @@ fun TransactionDetailScreen(
                 title = { Text("Detalle de Transacción", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = TextMain) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = TextMain)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = TextMain)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor)
@@ -139,7 +141,22 @@ fun TransactionDetailScreen(
                 Spacer(Modifier.width(8.dp))
                 Text("Descargar PDF", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             }
+            // Dispute button — solo si la transacción no está completada ni cancelada
 
+
+            if (txn?.status !in listOf("completed", "cancelled", "disputed")) {
+                OutlinedButton(
+                    onClick = { transactionId?.let { onNavigateToDispute(it) } },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerColor),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, DangerColor)
+                ) {
+                    Icon(Icons.Default.Gavel, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Abrir Disputa", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
             // Back to history
             OutlinedButton(
                 onClick = onBack,
@@ -157,6 +174,7 @@ fun TransactionDetailScreen(
         }
     }
 }
+
 
 @Composable
 private fun DetailRow(
@@ -177,3 +195,5 @@ private fun DetailRow(
         if (showDivider) HorizontalDivider(color = BorderColor, thickness = 0.5.dp)
     }
 }
+
+

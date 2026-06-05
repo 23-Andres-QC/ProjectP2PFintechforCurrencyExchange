@@ -74,13 +74,7 @@ class Rating(BaseModel):
     comment        = db.Column(db.Text)
 
 
-class Dispute(BaseModel):
-    __tablename__ = 'disputes'
-    transaction_id = db.Column(db.String(36), db.ForeignKey('transactions.id'), nullable=False, index=True)
-    initiator_id   = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
-    reason         = db.Column(db.String(255), nullable=False)
-    description    = db.Column(db.Text)
-    status         = db.Column(db.String(20), default='open')
+
 
 
 class AuditLog(BaseModel):
@@ -89,3 +83,16 @@ class AuditLog(BaseModel):
     action   = db.Column(db.String(100), nullable=False)
     resource = db.Column(db.String(100), nullable=False)
     changes  = db.Column(db.Text)
+
+from app.models.dispute import Dispute
+from app.models.complaint import Complaint
+
+
+class Notification(BaseModel):
+    __tablename__ = 'notifications'
+    user_id     = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False, index=True)
+    type        = db.Column(db.String(50), nullable=False)   # login | transaction | voucher | dispute | offer | security | admin
+    title       = db.Column(db.String(255), nullable=False)
+    body        = db.Column(db.Text, nullable=False)
+    is_read     = db.Column(db.Boolean, default=False, nullable=False)
+    resource_id = db.Column(db.String(36), nullable=True)    # id del recurso relacionado

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.p2p.core.network.NetworkResult
 import com.example.p2p.data.remote.model.User
+import com.example.p2p.domain.repository.NotificationRepository
 import com.example.p2p.domain.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,11 +15,13 @@ import kotlinx.coroutines.launch
 data class ProfileUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
-    val user: User? = null
+    val user: User? = null,
+    val unreadNotifications: Int = 0,
 )
 
 class ProfileViewModel(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val notificationRepository: NotificationRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -26,6 +29,7 @@ class ProfileViewModel(
 
     init {
         loadProfile()
+        loadUnreadCount()
     }
 
     fun loadProfile() {
@@ -43,9 +47,23 @@ class ProfileViewModel(
         }
     }
 
-    class Factory(private val repo: UserRepository) : ViewModelProvider.Factory {
+    fun loadUnreadCount() {
+        viewModelScope.launch {
+            when (val result = notificationRepository.getUnreadCount()) {
+                is NetworkResult.Success -> {
+                    _uiState.value = _uiState.value.copy(unreadNotifications = result.data)
+                }
+                else -> Unit
+            }
+        }
+    }
+
+    class Factory(
+        private val userRepo: UserRepository,
+        private val notifRepo: NotificationRepository,
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            ProfileViewModel(repo) as T
+            ProfileViewModel(userRepo, notifRepo) as T
     }
 }
