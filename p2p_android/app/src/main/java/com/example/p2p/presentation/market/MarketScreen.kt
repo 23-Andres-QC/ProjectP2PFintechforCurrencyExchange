@@ -3,6 +3,8 @@ package com.example.p2p.presentation.market
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -27,6 +29,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.p2p.data.remote.model.BankAccount
+import com.example.p2p.data.remote.model.CreateTransactionRequest
+import com.example.p2p.data.remote.model.ExchangeRate
+import com.example.p2p.data.remote.model.Offer
+import com.example.p2p.ui.theme.*
 import com.example.p2p.data.remote.model.ExchangeRate
 import com.example.p2p.data.remote.model.Offer
 import com.example.p2p.ui.theme.*
@@ -40,12 +47,14 @@ fun MarketScreen(
     viewModel: MarketViewModel,
     userName: String = "Usuario",
     onNavigateToNotifications: () -> Unit = {},
-    onNavigateToTransaction: (String) -> Unit = {}
+    onNavigateToTransaction: (String) -> Unit = {},
+    onNavigateToAddBankAccount: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showBuyDialog by remember { mutableStateOf<Offer?>(null) }
     val context = LocalContext.current
 
+    LaunchedEffect(Unit) { viewModel.loadOffers() }
     // Todas las divisas disponibles — ambos lados iguales (S/→USD o USD→S/ etc.)
     val allCurrencies = listOf("PEN", "USD", "EUR", "USDT", "COP", "MXN", "ARS", "GBP", "BRL", "CAD", "AUD", "JPY", "CLP")
     var selectedFiat     by remember { mutableStateOf("PEN") }
@@ -67,6 +76,7 @@ fun MarketScreen(
         topBar = {
             MarketTopBar(
                 exchangeRates = uiState.exchangeRates,
+                onNavigateToNotifications = onNavigateToNotifications
                 unreadCount = uiState.unreadCount,
                 onNavigateToNotifications = {
                     viewModel.loadUnreadCount() // refresca al volver
@@ -82,6 +92,16 @@ fun MarketScreen(
             verticalArrangement = Arrangement.spacedBy(0.dp),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
+            item { WelcomeCard(userName = userName) }
+
+            item {
+                FilterCard(
+                    fromCurrency = uiState.fromCurrency,
+                    toCurrency = uiState.toCurrency,
+                    onFilterChange = { from, to -> viewModel.setFilter(from, to) }
+                )
+            }
+
             // ── Filtros ──────────────────────────────────────────────────────
             item {
                 FilterSection(
@@ -100,6 +120,75 @@ fun MarketScreen(
                     isLoading = uiState.isLoading,
                     onMatchingClick = {
                         viewModel.matchOffer(
+                            currency = uiState.toCurrency,
+                            fiatCurrency = uiState.fromCurrency,
+                            onMatched = { matchedOffer -> showBuyDialog = matchedOffer },
+                            onError = { err ->
+                                Toast.makeText(context, "No hay ofertas: $err", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                )
+            }
+
+            if (uiState.isLoading) {
+                item { CircularProgressIndicator(modifier = Modifier.padding(16.dp)) }
+            } else if (uiState.error != null) {
+                item { Text(text = uiState.error!!, color = DangerColor) }
+            } else {
+                item { OffersHeader(count = uiState.offers.size) }
+                itemsIndexed(uiState.offers) { index, offer ->
+                    OfferCard(
+                        offer = offer,
+                        isBestRate = index == 0,
+                        bankAccounts = uiState.bankAccounts,
+                        selectedBankAccountId = uiState.selectedBankAccountId,
+                        onSelectBankAccount = { viewModel.selectBankAccount(it) },
+                        onNavigateToAddBankAccount = onNavigateToAddBankAccount,
+                        onConfirmBuy = { amount, buyerAccount ->
+                            val req = CreateTransactionRequest(
+                                offer_id = offer.id,
+                                amount_from = amount,
+                                amount_to = amount * offer.price_per_unit,
+                                buyer_payment_account = buyerAccount,
+                                vendor_payment_account = offer.payment_methods?.firstOrNull() ?: "BCP"
+                            )
+                            viewModel.createTransaction(req,
+                                onSuccess = { txnId -> onNavigateToTransaction(txnId) },
+                                onError = { err -> Toast.makeText(context, err, Toast.LENGTH_LONG).show() }
+                            )
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    // Diálogo de matching automático
+    showBuyDialog?.let { offer ->
+        MatchingDialog(
+            offer = offer,
+            bankAccounts = uiState.bankAccounts,
+            selectedBankAccountId = uiState.selectedBankAccountId,
+            onSelectBankAccount = { viewModel.selectBankAccount(it) },
+            onNavigateToAddBankAccount = onNavigateToAddBankAccount,
+            onConfirm = { amount, buyerAccount ->
+                val req = CreateTransactionRequest(
+                    offer_id = offer.id,
+                    amount_from = amount,
+                    amount_to = amount * offer.price_per_unit,
+                    buyer_payment_account = buyerAccount,
+                    vendor_payment_account = offer.payment_methods?.firstOrNull() ?: "BCP"
+                )
+                viewModel.createTransaction(req,
+                    onSuccess = { txnId ->
+                        showBuyDialog = null
+                        onNavigateToTransaction(txnId)
+                    },
+                    onError = { err -> Toast.makeText(context, err, Toast.LENGTH_LONG).show() }
+                )
+            },
+            onDismiss = { showBuyDialog = null }
                             currency = selectedCurrency,
                             fiatCurrency = selectedFiat,
                             onMatched = { showBuyDialog = it },
@@ -237,6 +326,18 @@ private fun MarketTopBar(
     unreadCount: Int = 0,
     onNavigateToNotifications: () -> Unit = {}
 ) {
+    val tickerItems: List<Triple<String, String, Boolean>> = if (exchangeRates.isNotEmpty()) {
+        exchangeRates.filter { it.to_currency == "PEN" }.map { r ->
+            Triple(r.from_currency, "S/${String.format("%.3f", r.rate)}", true)
+        }.ifEmpty {
+            listOf(Triple("USD", "S/3.720", true), Triple("EUR", "S/4.050", true))
+        }
+    } else {
+        listOf(Triple("USD", "S/3.720", true), Triple("EUR", "S/4.050", true))
+    }
+
+    Surface(color = Primary, shadowElevation = 4.dp) {
+
     // Pares relevantes a mostrar en el ticker (→ PEN)
     val targetPairs = listOf("USD", "EUR", "USDT", "COP", "MXN", "ARS")
     val rateMap = exchangeRates.associateBy { "${it.from_currency}_${it.to_currency}" }
@@ -270,31 +371,11 @@ private fun MarketTopBar(
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Peru", color = Color.White, fontWeight = FontWeight.Black, fontSize = 20.sp)
-                Text("Exchange", color = PrimaryMint, fontWeight = FontWeight.Black, fontSize = 20.sp)
+                Text("Peru", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
+                Text("Exchange", color = PrimaryMint, fontWeight = FontWeight.Black, fontSize = 18.sp)
                 Spacer(Modifier.weight(1f))
-                IconButton(
-                    onClick = onNavigateToNotifications,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    BadgedBox(
-                        badge = {
-                            if (unreadCount > 0) {
-                                Badge(
-                                    containerColor = DangerColor,
-                                    contentColor = Color.White
-                                ) {
-                                    Text(
-                                        text = if (unreadCount > 99) "99+" else unreadCount.toString(),
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        }
-                    ) {
-                        Icon(Icons.Default.Notifications, contentDescription = "Notificaciones", tint = Color.White, modifier = Modifier.size(22.dp))
-                    }
+                IconButton(onClick = onNavigateToNotifications, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Notifications, contentDescription = "Notificaciones", tint = Color.White, modifier = Modifier.size(22.dp))
                 }
             }
             Row(
@@ -306,14 +387,11 @@ private fun MarketTopBar(
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                tickerItems.forEach { (currency, rate) ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(currency, color = Color.White.copy(alpha = 0.8f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-                        Text(rate, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        Text("▲", color = PrimaryMint, fontSize = 9.sp)
+                tickerItems.forEach { (currency, rate, up) ->
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(currency, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 11.sp)
+                        Text(rate, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp)
+                        Text(if (up) "▲" else "▼", color = if (up) PrimaryMint else DangerColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -321,10 +399,12 @@ private fun MarketTopBar(
     }
 }
 
-// ─── Filter Section ───────────────────────────────────────────────────────────
+// ─── Welcome Card ─────────────────────────────────────────────────────────────
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+
 private fun FilterSection(
     fiatOptions: List<String>,
     currencyOptions: List<String>,
@@ -472,17 +552,207 @@ private fun OffersHeader(count: Int, from: String, to: String) {
     }
 }
 
+// ─── Bank Account Selector ────────────────────────────────────────────────────
+
+@Composable
+fun BankAccountSelector(
+    bankAccounts: List<BankAccount>,
+    selectedId: String?,
+    onSelect: (String) -> Unit,
+    onNavigateToAddBankAccount: () -> Unit = {}
+) {
+    if (bankAccounts.isEmpty()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(WarningColor.copy(alpha = 0.08f))
+                .border(1.dp, WarningColor.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                .clickable { onNavigateToAddBankAccount() }
+                .padding(10.dp)
+        ) {
+            Icon(Icons.Default.Warning, contentDescription = null, tint = WarningColor, modifier = Modifier.size(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Sin cuentas bancarias registradas.", fontSize = 11.sp, color = WarningColor, fontWeight = FontWeight.SemiBold)
+                Text("Toca aquí para agregar una cuenta →", fontSize = 11.sp, color = WarningColor.copy(alpha = 0.8f))
+            }
+        }
+        return
+    }
+
+    var expanded by remember { mutableStateOf(false) }
+    val selected = bankAccounts.firstOrNull { it.id == selectedId } ?: bankAccounts.first()
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Pagar desde mi cuenta:", fontSize = 11.sp, color = TextMuted, fontWeight = FontWeight.Medium)
+        Box {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .border(1.dp, Primary.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                    .background(Primary.copy(alpha = 0.04f))
+                    .clickable { expanded = true }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(selected.bank_name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextMain)
+                    Text("${selected.account_number} · ${selected.currency}", fontSize = 11.sp, color = TextMuted)
+                }
+                Icon(
+                    if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null, tint = Primary, modifier = Modifier.size(18.dp)
+                )
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                bankAccounts.forEach { account ->
+                    DropdownMenuItem(
+                        text = {
+                            Column {
+                                Text(account.bank_name, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                Text("${account.account_number} · ${account.currency}", fontSize = 11.sp, color = TextMuted)
+                            }
+                        },
+                        onClick = { onSelect(account.id); expanded = false },
+                        leadingIcon = if (account.id == selectedId) ({
+                            Icon(Icons.Default.Check, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
+                        }) else null
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ─── Matching Dialog ──────────────────────────────────────────────────────────
+
+@Composable
+private fun MatchingDialog(
+    offer: Offer,
+    bankAccounts: List<BankAccount>,
+    selectedBankAccountId: String?,
+    onSelectBankAccount: (String) -> Unit,
+    onNavigateToAddBankAccount: () -> Unit = {},
+    onConfirm: (Double, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val isPartial = offer.offer_type == "partial"
+    var amountText by remember(offer.id) {
+        mutableStateOf(if (isPartial) "" else offer.available_amount.toString())
+    }
+    val amount = amountText.toDoubleOrNull() ?: 0.0
+    val selectedAccount = bankAccounts.firstOrNull { it.id == selectedBankAccountId } ?: bankAccounts.firstOrNull()
+
+    val isAmountValid = if (isPartial) {
+        amount >= offer.min_transaction &&
+            amount <= (offer.max_transaction ?: offer.available_amount) &&
+            amount <= offer.available_amount
+    } else {
+        amount == offer.available_amount
+    }
+    val canConfirm = isAmountValid && selectedAccount != null
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Icon(Icons.Default.Bolt, contentDescription = null, tint = WarningColor)
+                Text("Matching: Comprar ${offer.currency}")
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Vendedor: ${offer.vendor?.full_name ?: "Vendedor"}", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                Text("Tasa de cambio: S/ ${offer.price_per_unit}", fontSize = 14.sp)
+                Text("Disponible: ${offer.available_amount} ${offer.currency}", fontSize = 13.sp)
+
+                if (isPartial) {
+                    Text("Límites: ${offer.min_transaction} – ${offer.max_transaction ?: offer.available_amount} ${offer.currency}", fontSize = 12.sp, color = TextMuted)
+                    OutlinedTextField(
+                        value = amountText,
+                        onValueChange = { amountText = it },
+                        label = { Text("Monto a comprar (${offer.currency})") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Primary, unfocusedBorderColor = BorderColor, focusedTextColor = TextMain, cursorColor = Primary)
+                    )
+                } else {
+                    OutlinedTextField(
+                        value = amountText,
+                        onValueChange = {},
+                        label = { Text("Monto total (${offer.currency})") },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = false,
+                        colors = OutlinedTextFieldDefaults.colors(disabledBorderColor = BorderColor, disabledTextColor = TextMain)
+                    )
+                }
+
+                if (amount > 0 && isAmountValid) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(SuccessColor.copy(alpha = 0.08f)).padding(10.dp)
+                    ) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Column {
+                                Text("Pagarás aprox.", fontSize = 11.sp, color = TextMuted)
+                                Text("S/ ${String.format("%.2f", amount * offer.price_per_unit)}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = SuccessColor)
+                            }
+                            Icon(Icons.Default.ArrowForward, contentDescription = null, tint = Primary)
+                        }
+                    }
+                }
+
+                BankAccountSelector(
+                    bankAccounts = bankAccounts,
+                    selectedId = selectedBankAccountId,
+                    onSelect = onSelectBankAccount,
+                    onNavigateToAddBankAccount = onNavigateToAddBankAccount
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val account = selectedAccount?.let { "${it.bank_name} · ${it.account_number}" } ?: "Mi cuenta"
+                    onConfirm(amount, account)
+                },
+                enabled = canConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = SuccessColor)
+            ) {
+                Text("Confirmar compra")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        }
+    )
+}
+
 // ─── Offer Card ───────────────────────────────────────────────────────────────
 
 @Composable
 private fun OfferCard(
     offer: Offer,
     isBestRate: Boolean = false,
-    onConfirmBuy: (Double) -> Unit
+    bankAccounts: List<BankAccount>,
+    selectedBankAccountId: String?,
+    onSelectBankAccount: (String) -> Unit,
+    onNavigateToAddBankAccount: () -> Unit = {},
+    onConfirmBuy: (Double, String) -> Unit
 ) {
     val isPartial = offer.offer_type == "partial"
     var isExpanded by remember { mutableStateOf(false) }
     var buyAmountText by remember { mutableStateOf("") }
+
+    val buyAmount = buyAmountText.toDoubleOrNull() ?: 0.0
+    val isAmountValid = if (isPartial) {
+        buyAmount >= offer.min_transaction &&
+            buyAmount <= (offer.max_transaction ?: offer.available_amount) &&
+            buyAmount <= offer.available_amount
     val buyAmountDouble = buyAmountText.toDoubleOrNull() ?: 0.0
 
     val isAmountValid = if (isPartial) {
@@ -491,7 +761,13 @@ private fun OfferCard(
         buyAmountDouble <= offer.available_amount
     } else true
 
+    val selectedAccount = bankAccounts.firstOrNull { it.id == selectedBankAccountId } ?: bankAccounts.firstOrNull()
     val initials = offer.vendor?.full_name?.trim()?.split(" ")
+        ?.filter { it.isNotEmpty() }?.take(2)?.map { it.first().uppercaseChar() }?.joinToString("") ?: "NN"
+    val stars = offer.vendor?.rating ?: 4.9
+    val trades = offer.vendor?.total_transactions ?: 0
+    val verified = offer.vendor?.kyc_verified ?: false
+
         ?.filter { it.isNotEmpty() }?.take(2)
         ?.map { it.first().uppercaseChar() }
         ?.joinToString("") ?: "??"
@@ -529,6 +805,50 @@ private fun OfferCard(
                 // Vendor + estado
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(WarningColor.copy(alpha = 0.15f)).padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text("🏆", fontSize = 11.sp)
+                    Text("Mejor tasa del mercado", color = WarningColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            // Vendedor
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    modifier = Modifier.size(38.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Primary, PrimaryLight))),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(initials, color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(offer.vendor?.full_name ?: "Vendedor", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextMain)
+                        if (verified) Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Primary, modifier = Modifier.size(12.dp))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 2.dp)) {
+                        Text("★ $stars", fontSize = 11.sp, color = WarningColor, fontWeight = FontWeight.SemiBold)
+                        Text("•  $trades ops", fontSize = 11.sp, color = TextMuted)
+                    }
+                }
+                Box(
+                    modifier = Modifier.clip(RoundedCornerShape(50.dp)).background(SuccessColor.copy(alpha = 0.1f)).padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Text("En línea", color = SuccessColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            HorizontalDivider(color = BorderColor, thickness = 0.5.dp)
+
+            // Tasa y disponible
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Tasa", fontSize = 10.sp, color = TextMuted)
+                        Box(
+                            modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(if (isPartial) Primary.copy(alpha = 0.1f) else SuccessColor.copy(alpha = 0.1f)).padding(horizontal = 5.dp, vertical = 1.dp)
+                        ) {
+                            Text(if (isPartial) "POR PARTES" else "COMPLETA", color = if (isPartial) Primary else SuccessColor, fontSize = 8.sp, fontWeight = FontWeight.Bold)
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Box(
@@ -595,6 +915,12 @@ private fun OfferCard(
                             fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = TextMain
                         )
                     }
+                    Text("S/ ${String.format("%.3f", offer.price_per_unit)}", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = TextMain)
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("Disponible: ${offer.available_amount} ${offer.currency}", fontSize = 11.sp, color = TextMuted)
+                    if (isPartial) {
+                        Text("Rango: ${offer.min_transaction} – ${offer.max_transaction ?: offer.available_amount} ${offer.currency}", fontSize = 9.sp, color = TextMuted, modifier = Modifier.padding(top = 2.dp))
                     Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text(
                             "${String.format("%.2f", offer.available_amount)} ${offer.currency}",
@@ -610,6 +936,36 @@ private fun OfferCard(
                     }
                 }
 
+            // Botones
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Primary.copy(alpha = 0.12f)).padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(offer.payment_methods?.firstOrNull() ?: "BCP", color = Primary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+
+                if (isPartial) {
+                    Button(
+                        onClick = { isExpanded = !isExpanded },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Icon(Icons.Filled.ShoppingCart, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text(if (isExpanded) "Cerrar" else "Elegir monto", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            val account = selectedAccount?.let { "${it.bank_name} · ${it.account_number}" } ?: "Mi cuenta"
+                            onConfirmBuy(offer.available_amount, account)
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SuccessColor),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text("Comprar todo", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 // Métodos + botón
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -654,6 +1010,44 @@ private fun OfferCard(
                     }
                 }
 
+            // Panel expandible para compra parcial
+            if (isExpanded && isPartial) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .border(1.dp, BorderColor, RoundedCornerShape(12.dp))
+                        .background(BackgroundApp)
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(Icons.Filled.Calculate, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
+                        Text("¿Cuánto deseas comprar?", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = TextMain)
+                    }
+
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = buyAmountText,
+                            onValueChange = { buyAmountText = it },
+                            placeholder = { Text("Monto en ${offer.currency}", fontSize = 13.sp, color = TextMuted) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Primary, unfocusedBorderColor = BorderColor, focusedTextColor = TextMain, unfocusedTextColor = TextMain, cursorColor = Primary)
+                        )
+                        Text(offer.currency, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextMuted)
+                    }
+
+                    if (buyAmount > 0 && isAmountValid) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(SuccessColor.copy(alpha = 0.05f)).padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Column {
+                                    Text("Pagarás aprox.", fontSize = 10.sp, color = TextMuted)
+                                    Text("S/ ${String.format("%.2f", buyAmount * offer.price_per_unit)}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = SuccessColor)
                 // Panel expandible compra parcial
                 if (isExpanded && isPartial) {
                     Column(
@@ -705,135 +1099,48 @@ private fun OfferCard(
                                 }
                                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Primary, modifier = Modifier.size(18.dp))
                             }
-
-                            when {
-                                buyAmountDouble < offer.min_transaction ->
-                                    Text("Mínimo: ${offer.min_transaction} ${offer.currency}", color = DangerColor, fontSize = 11.sp)
-                                offer.max_transaction != null && buyAmountDouble > offer.max_transaction ->
-                                    Text("Máximo: ${offer.max_transaction} ${offer.currency}", color = DangerColor, fontSize = 11.sp)
-                                buyAmountDouble > offer.available_amount ->
-                                    Text("Disponible: ${offer.available_amount} ${offer.currency}", color = DangerColor, fontSize = 11.sp)
-                            }
                         }
+                    } else if (buyAmount > 0) {
+                        if (buyAmount < offer.min_transaction) Text("El mínimo es ${offer.min_transaction} ${offer.currency}", color = DangerColor, fontSize = 11.sp)
+                        else if (offer.max_transaction != null && buyAmount > offer.max_transaction) Text("El máximo es ${offer.max_transaction} ${offer.currency}", color = DangerColor, fontSize = 11.sp)
+                        else if (buyAmount > offer.available_amount) Text("Solo hay ${offer.available_amount} ${offer.currency} disponibles", color = DangerColor, fontSize = 11.sp)
+                    }
 
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { onConfirmBuy(buyAmountDouble); isExpanded = false; buyAmountText = "" },
-                                enabled = isAmountValid && buyAmountDouble > 0,
-                                colors = ButtonDefaults.buttonColors(containerColor = SuccessColor),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.weight(1f),
-                                elevation = ButtonDefaults.buttonElevation(0.dp)
-                            ) {
-                                Text("Confirmar", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                            }
-                            OutlinedButton(
-                                onClick = { isExpanded = false; buyAmountText = "" },
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextMuted),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor)
-                            ) {
-                                Text("Cancelar", fontSize = 12.sp)
-                            }
+                    // Selector de cuenta bancaria
+                    BankAccountSelector(
+                        bankAccounts = bankAccounts,
+                        selectedId = selectedBankAccountId,
+                        onSelect = onSelectBankAccount,
+                        onNavigateToAddBankAccount = onNavigateToAddBankAccount
+                    )
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = {
+                                val account = selectedAccount?.let { "${it.bank_name} · ${it.account_number}" } ?: "Mi cuenta"
+                                onConfirmBuy(buyAmount, account)
+                                isExpanded = false
+                                buyAmountText = ""
+                            },
+                            enabled = isAmountValid && buyAmount > 0 && selectedAccount != null,
+                            colors = ButtonDefaults.buttonColors(containerColor = SuccessColor),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Confirmar compra", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                        OutlinedButton(
+                            onClick = { isExpanded = false; buyAmountText = "" },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextMuted),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor),
+                            modifier = Modifier.wrapContentWidth()
+                        ) {
+                            Text("Cancelar", fontSize = 12.sp)
                         }
                     }
                 }
             }
         }
     }
-}
-
-// ─── Matching Dialog ──────────────────────────────────────────────────────────
-
-@Composable
-private fun MatchingDialog(offer: Offer, onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
-    val isPartial = offer.offer_type == "partial"
-    var amountText by remember(offer.id) {
-        mutableStateOf(if (isPartial) "" else offer.available_amount.toString())
-    }
-    val amountDouble = amountText.toDoubleOrNull() ?: 0.0
-    val isValid = if (isPartial) {
-        amountDouble >= offer.min_transaction &&
-        amountDouble <= (offer.max_transaction ?: offer.available_amount) &&
-        amountDouble <= offer.available_amount
-    } else amountDouble == offer.available_amount
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = SurfaceColor,
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.Bolt, contentDescription = null, tint = WarningColor)
-                Text("Matching encontrado", fontWeight = FontWeight.Bold, color = TextMain)
-            }
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(BackgroundApp)
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Vendedor", fontSize = 10.sp, color = TextMuted)
-                        Text(offer.vendor?.full_name ?: "Vendedor", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextMain)
-                    }
-                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Tasa", fontSize = 10.sp, color = TextMuted)
-                        Text("${offer.fiat_currency} ${String.format("%.3f", offer.price_per_unit)}", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Primary)
-                    }
-                }
-                if (isPartial) {
-                    OutlinedTextField(
-                        value = amountText,
-                        onValueChange = { amountText = it },
-                        label = { Text("Monto a comprar (${offer.currency})") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary, unfocusedBorderColor = BorderColor,
-                            focusedTextColor = TextMain, cursorColor = Primary
-                        )
-                    )
-                } else {
-                    Text(
-                        "Venta completa — debes comprar ${offer.available_amount} ${offer.currency}",
-                        fontSize = 12.sp, color = WarningColor
-                    )
-                }
-                if (amountDouble > 0) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(SuccessColor.copy(alpha = 0.07f))
-                            .padding(10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("Pagarás", fontSize = 10.sp, color = TextMuted)
-                            Text("${offer.fiat_currency} ${String.format("%.2f", amountDouble * offer.price_per_unit)}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = SuccessColor)
-                        }
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Primary, modifier = Modifier.size(18.dp))
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onConfirm(amountDouble) },
-                enabled = isValid,
-                colors = ButtonDefaults.buttonColors(containerColor = SuccessColor),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text("Confirmar compra", fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar", color = TextMuted) }
-        }
-    )
 }

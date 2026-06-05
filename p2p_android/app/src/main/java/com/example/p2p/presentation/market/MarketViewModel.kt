@@ -5,8 +5,13 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.p2p.core.network.NetworkResult
 import com.example.p2p.data.remote.api.ExchangeApi
+import com.example.p2p.data.remote.model.BankAccount
+import com.example.p2p.data.remote.model.CreateTransactionRequest
 import com.example.p2p.data.remote.model.ExchangeRate
 import com.example.p2p.data.remote.model.Offer
+import com.example.p2p.domain.repository.BankAccountRepository
+import com.example.p2p.domain.repository.OfferRepository
+import com.example.p2p.domain.repository.TransactionRepository
 import com.example.p2p.domain.repository.NotificationRepository
 import com.example.p2p.domain.repository.OfferRepository
 import com.example.p2p.domain.repository.TransactionRepository
@@ -21,12 +26,24 @@ data class MarketUiState(
     val error: String? = null,
     val offers: List<Offer> = emptyList(),
     val exchangeRates: List<ExchangeRate> = emptyList(),
+    // Filtros de moneda
+    val fromCurrency: String = "PEN",
+    val toCurrency: String = "USD",
+    // Cuentas bancarias del comprador
+    val bankAccounts: List<BankAccount> = emptyList(),
+    val selectedBankAccountId: String? = null,
+    val isLoadingAccounts: Boolean = false
+
     val unreadCount: Int = 0
 )
+
+val AVAILABLE_CURRENCIES = listOf("PEN", "USD", "EUR", "BRL")
 
 class MarketViewModel(
     private val offerRepository: OfferRepository,
     private val transactionRepository: TransactionRepository,
+    private val bankAccountRepository: BankAccountRepository,
+    private val exchangeApi: ExchangeApi? = null
     private val exchangeApi: ExchangeApi? = null,
     private val notificationRepository: NotificationRepository? = null
 ) : ViewModel() {
@@ -36,6 +53,7 @@ class MarketViewModel(
 
     init {
         loadExchangeRates()
+        loadBankAccounts()
         loadUnreadCount()
     }
 
@@ -54,6 +72,9 @@ class MarketViewModel(
         if (exchangeApi == null) return
         viewModelScope.launch {
             try {
+                val response = exchangeApi.getRates()
+                if (response.isSuccessful) {
+                    _uiState.value = _uiState.value.copy(exchangeRates = response.body()?.rates ?: emptyList())
                 val usdResp = exchangeApi.getRates(from = "USD")
                 val usdRates = if (usdResp.isSuccessful) usdResp.body()?.rates ?: emptyList() else emptyList()
                 val eurResp = exchangeApi.getRates(from = "EUR")
@@ -77,7 +98,15 @@ class MarketViewModel(
         }
     }
 
-    fun createTransaction(request: CreateTransactionRequest, onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+    fun selectBankAccount(id: String) {
+        _uiState.value = _uiState.value.copy(selectedBankAccountId = id)
+    }
+
+    fun createTransaction(
+        request: CreateTransactionRequest,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             when (val result = transactionRepository.createTransaction(request)) {
@@ -88,7 +117,12 @@ class MarketViewModel(
         }
     }
 
-    fun matchOffer(currency: String, fiatCurrency: String, onMatched: (Offer) -> Unit, onError: (String) -> Unit) {
+    fun matchOffer(
+        currency: String,
+        fiatCurrency: String,
+        onMatched: (Offer) -> Unit,
+        onError: (String) -> Unit
+    ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             when (val result = offerRepository.matchOffer(currency, fiatCurrency)) {

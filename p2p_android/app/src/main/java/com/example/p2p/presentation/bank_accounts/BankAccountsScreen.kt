@@ -78,6 +78,8 @@ private val bankChips = listOf(
     BankChip("Plin", PlinColor),
 )
 
+private val currencyOptions = listOf("PEN", "USD", "EUR")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BankAccountsScreen(
@@ -86,6 +88,8 @@ fun BankAccountsScreen(
 ) {
     var selectedBank by remember { mutableStateOf("BCP") }
     var accountNumber by remember { mutableStateOf("") }
+    var holderName by remember { mutableStateOf("") }
+    var selectedCurrency by remember { mutableStateOf("PEN") }
     val uiState by viewModel?.uiState?.collectAsState(initial = BankAccountsUiState()) ?: remember { mutableStateOf(BankAccountsUiState()) }
     val context = androidx.compose.ui.platform.LocalContext.current
 
@@ -98,6 +102,7 @@ fun BankAccountsScreen(
             android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_SHORT).show()
             viewModel?.clearMessages()
             accountNumber = ""
+            holderName = ""
         }
     }
 
@@ -214,9 +219,35 @@ fun BankAccountsScreen(
                 }
             }
 
-            // Account number field
+            // Holder name field
             item {
                 Spacer(Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = holderName,
+                    onValueChange = { holderName = it },
+                    label = { Text("Nombre del titular", fontSize = 13.sp) },
+                    placeholder = {
+                        Text(
+                            "Ej. Juan Pérez",
+                            fontSize = 13.sp,
+                            color = TextMuted.copy(alpha = 0.6f),
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        unfocusedBorderColor = BorderColor,
+                        focusedLabelColor = Primary,
+                        unfocusedLabelColor = TextMuted,
+                        cursorColor = Primary,
+                    ),
+                )
+            }
+
+            // Account number field
+            item {
                 OutlinedTextField(
                     value = accountNumber,
                     onValueChange = { accountNumber = it },
@@ -230,6 +261,7 @@ fun BankAccountsScreen(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Primary,
                         unfocusedBorderColor = BorderColor,
@@ -240,19 +272,58 @@ fun BankAccountsScreen(
                 )
             }
 
+            // Currency selector
+            item {
+                Text(
+                    text = "Moneda de la cuenta",
+                    fontSize = 13.sp,
+                    color = TextMuted,
+                    fontWeight = FontWeight.Medium,
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    currencyOptions.forEach { currency ->
+                        val isSelected = currency == selectedCurrency
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50.dp))
+                                .background(if (isSelected) Primary else SurfaceColor)
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isSelected) Primary else BorderColor,
+                                    shape = RoundedCornerShape(50.dp),
+                                )
+                                .clickable { selectedCurrency = currency }
+                                .padding(horizontal = 20.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = currency,
+                                fontSize = 13.sp,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (isSelected) Color.White else TextMuted,
+                            )
+                        }
+                    }
+                }
+            }
+
             // Add button
             item {
                 Spacer(Modifier.height(4.dp))
+                val canAdd = holderName.isNotBlank() && accountNumber.isNotBlank()
                 Button(
                     onClick = {
-                        if (accountNumber.isNotBlank()) {
+                        if (canAdd) {
                             viewModel?.addBankAccount(
                                 bankName = selectedBank,
                                 accountNumber = accountNumber,
-                                accountHolder = "Titular P2P"
+                                accountHolder = holderName.trim(),
+                                currency = selectedCurrency
                             )
                         }
                     },
+                    enabled = canAdd,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),

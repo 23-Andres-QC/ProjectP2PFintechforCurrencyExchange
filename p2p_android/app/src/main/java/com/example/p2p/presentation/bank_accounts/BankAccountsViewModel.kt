@@ -41,7 +41,7 @@ class BankAccountsViewModel(
         }
     }
 
-    fun addBankAccount(bankName: String, accountNumber: String, accountHolder: String) {
+    fun addBankAccount(bankName: String, accountNumber: String, accountHolder: String, currency: String = "PEN") {
         if (bankName.isBlank() || accountNumber.isBlank() || accountHolder.isBlank()) {
             _uiState.value = _uiState.value.copy(error = "Todos los campos son obligatorios")
             return
@@ -52,6 +52,7 @@ class BankAccountsViewModel(
                 bank_name = bankName,
                 account_number = accountNumber,
                 account_holder = accountHolder,
+                currency = currency,
                 is_primary = _uiState.value.accounts.isEmpty()
             )
             when (val result = repository.createAccount(request)) {
