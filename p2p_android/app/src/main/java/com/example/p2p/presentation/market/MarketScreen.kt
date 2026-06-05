@@ -272,28 +272,19 @@ private fun MarketTopBar(
     exchangeRates: List<ExchangeRate> = emptyList(),
     onNavigateToNotifications: () -> Unit = {}
 ) {
-    // Build ticker items from real rates (X→PEN), fallback to hardcoded defaults
     val tickerItems: List<Triple<String, String, Boolean>> = if (exchangeRates.isNotEmpty()) {
         val penRates = exchangeRates.filter { it.to_currency == "PEN" }
         if (penRates.isNotEmpty()) {
-            penRates.map { r ->
-                Triple(r.from_currency, "S/${String.format("%.3f", r.rate)}", true)
-            }
+            penRates.map { r -> Triple(r.from_currency, "S/${String.format("%.3f", r.rate)}", true) }
         } else {
-            listOf(
-                Triple("USD", "S/3.720", true),
-                Triple("EUR", "S/4.050", true)
-            )
+            listOf(Triple("USD", "S/3.720", true), Triple("EUR", "S/4.050", true))
         }
     } else {
-        listOf(
-            Triple("USD", "S/3.720", true),
-            Triple("EUR", "S/4.050", true)
-        )
+        listOf(Triple("USD", "S/3.720", true), Triple("EUR", "S/4.050", true))
     }
 
     Surface(
-        color = Primary,
+        color = Color(0xFF0D1117),
         shadowElevation = 4.dp
     ) {
         Column {
@@ -303,33 +294,22 @@ private fun MarketTopBar(
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "Peru",
-                    color = Color.White,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 18.sp
-                )
-                Text(
-                    "Exchange",
-                    color = PrimaryMint,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 18.sp
-                )
+                Text("Peru", color = TextMain, fontWeight = FontWeight.Black, fontSize = 18.sp)
+                Text("Exchange", color = Primary, fontWeight = FontWeight.Black, fontSize = 18.sp)
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = onNavigateToNotifications, modifier = Modifier.size(32.dp)) {
                     Icon(
                         Icons.Default.Notifications,
                         contentDescription = "Notificaciones",
-                        tint = Color.White,
+                        tint = TextMuted,
                         modifier = Modifier.size(22.dp)
                     )
                 }
             }
-            // Ticker row — real rates from backend
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Primary.copy(alpha = 0.85f))
+                    .background(Color(0xFF111827))
                     .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
@@ -346,11 +326,11 @@ private fun MarketTopBar(
 @Composable
 private fun TickerItem(currency: String, rate: String, up: Boolean) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-        Text(currency, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 11.sp)
-        Text(rate, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp)
+        Text(currency, color = TextMuted, fontWeight = FontWeight.SemiBold, fontSize = 11.sp)
+        Text(rate, color = TextMain, fontSize = 11.sp)
         Text(
             if (up) "▲" else "▼",
-            color = if (up) PrimaryMint else DangerColor,
+            color = if (up) SuccessColor else DangerColor,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold
         )
@@ -366,34 +346,37 @@ private fun WelcomeCard(userName: String = "Usuario") {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(Brush.horizontalGradient(listOf(Primary, PrimaryLight)))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(Color(0xFF1A2340), Color(0xFF0D1117))
+                )
+            )
+            .border(1.dp, Primary.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
             .padding(20.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                // Badge
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50.dp))
-                        .background(PrimaryMint.copy(alpha = 0.2f))
-                        .border(1.dp, PrimaryMint.copy(alpha = 0.5f), RoundedCornerShape(50.dp))
+                        .background(Primary.copy(alpha = 0.12f))
+                        .border(1.dp, Primary.copy(alpha = 0.3f), RoundedCornerShape(50.dp))
                         .padding(horizontal = 10.dp, vertical = 3.dp)
                 ) {
-                    Text("⭐ Experto", color = PrimaryMint, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    Text("⭐ Experto", color = Primary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                 }
-                Text("Bienvenido, $firstName", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text("P2P Seguro · Lima, Perú", color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp)
+                Text("Bienvenido, $firstName", color = TextMain, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("P2P Seguro · Lima, Perú", color = TextMuted, fontSize = 12.sp)
             }
-            // "PE" Badge
             Box(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color.White.copy(alpha = 0.15f))
-                    .border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
+                    .background(Primary.copy(alpha = 0.12f))
+                    .border(2.dp, Primary.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("PE", color = Color.White, fontWeight = FontWeight.Black, fontSize = 22.sp)
+                Text("PE", color = Primary, fontWeight = FontWeight.Black, fontSize = 22.sp)
             }
         }
     }
