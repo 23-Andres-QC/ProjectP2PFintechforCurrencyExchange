@@ -22,7 +22,7 @@ def create_app(config_name='development'):
         from app.models.user import User  # noqa
         from app.models import (  # noqa
             Currency, ExchangeRate, BankAccount, Offer,
-            Transaction, Voucher, Rating, Dispute, AuditLog
+            Transaction, Voucher, Rating, Dispute, AuditLog, Complaint  
         )
         db.create_all()
 

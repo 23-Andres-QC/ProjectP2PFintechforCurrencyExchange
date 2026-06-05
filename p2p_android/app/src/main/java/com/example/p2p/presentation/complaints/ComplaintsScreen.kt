@@ -1,31 +1,42 @@
 package com.example.p2p.presentation.complaints
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.p2p.data.remote.model.Complaint
+import com.example.p2p.data.remote.model.ComplaintStatus
+import com.example.p2p.data.remote.model.ComplaintType
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ComplaintsScreen(onBack: () -> Unit = {}) {
+fun ComplaintsScreen(
+    viewModel: ComplaintsViewModel,
+    onBack: () -> Unit = {}
+) {
     val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
+
     var description by remember { mutableStateOf("") }
+    var selectedType by remember { mutableStateOf(ComplaintType.PLATFORM_ERROR) }
+    var dropdownExpanded by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -39,7 +50,7 @@ fun ComplaintsScreen(onBack: () -> Unit = {}) {
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = TextMain)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = TextMain)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor)
@@ -55,7 +66,7 @@ fun ComplaintsScreen(onBack: () -> Unit = {}) {
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // ── New Complaint Card ────────────────────────────────────────────
+            // ── Nuevo Reclamo ─────────────────────────────────────────────────
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceColor),
@@ -73,32 +84,48 @@ fun ComplaintsScreen(onBack: () -> Unit = {}) {
                         color = TextMain
                     )
 
-                    // Type dropdown
+                    // Dropdown tipo de reclamo
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("Tipo de Reclamo", fontSize = 12.sp, color = TextMuted)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(1.dp, BorderColor, RoundedCornerShape(10.dp))
-                                .padding(horizontal = 14.dp, vertical = 14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        ExposedDropdownMenuBox(
+                            expanded = dropdownExpanded,
+                            onExpandedChange = { dropdownExpanded = it }
                         ) {
-                            Text(
-                                "Tipo: Problema con transacción",
-                                fontSize = 13.sp,
-                                color = TextMain
-                            )
-                            Icon(
-                                Icons.Default.KeyboardArrowDown,
-                                contentDescription = null,
-                                tint = TextMuted,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
+                                    .border(1.dp, BorderColor, RoundedCornerShape(10.dp))
+                                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(selectedType.label, fontSize = 13.sp, color = TextMain)
+                                Icon(
+                                    Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = TextMuted,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            ExposedDropdownMenu(
+                                expanded = dropdownExpanded,
+                                onDismissRequest = { dropdownExpanded = false }
+                            ) {
+                                ComplaintType.entries.forEach { type ->
+                                    DropdownMenuItem(
+                                        text = { Text(type.label, fontSize = 13.sp) },
+                                        onClick = {
+                                            selectedType = type
+                                            dropdownExpanded = false
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
 
-                    // Description textarea
+                    // Descripción
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
@@ -122,40 +149,58 @@ fun ComplaintsScreen(onBack: () -> Unit = {}) {
                         )
                     )
 
-                    // Submit button
+                    // Botón enviar
                     Button(
                         onClick = {
                             if (description.isBlank()) {
                                 Toast.makeText(context, "Por favor describe tu reclamo", Toast.LENGTH_SHORT).show()
                             } else {
-                                Toast.makeText(context, "Reclamo enviado. Te responderemos en 48h.", Toast.LENGTH_LONG).show()
-                                description = ""
+                                viewModel.createComplaint(
+                                    type = selectedType,
+                                    description = description,
+                                    onSuccess = {
+                                        Toast.makeText(context, "Reclamo enviado con éxito", Toast.LENGTH_SHORT).show()
+                                        description = ""
+                                    },
+                                    onError = { err ->
+                                        Toast.makeText(context, "Error: $err", Toast.LENGTH_LONG).show()
+                                    }
+                                )
                             }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = DangerColor)
+                        colors = ButtonDefaults.buttonColors(containerColor = DangerColor),
+                        enabled = !uiState.isSubmitting
                     ) {
-                        Icon(
-                            Icons.Default.Send,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = Color.White
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "Enviar Reclamo",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        )
+                        if (uiState.isSubmitting) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                Icons.AutoMirrored.Filled.Send,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = Color.White
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                "Enviar Reclamo",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }
 
-            // ── My Complaints section ─────────────────────────────────────────
+            // ── Mis Reclamos ──────────────────────────────────────────────────
             Text(
                 "Mis Reclamos",
                 fontSize = 15.sp,
@@ -163,20 +208,25 @@ fun ComplaintsScreen(onBack: () -> Unit = {}) {
                 color = TextMain
             )
 
-            ComplaintItem(
-                id = "#RCL-001",
-                type = "Problema con transacción",
-                status = "En revisión",
-                statusColor = WarningColor,
-                date = "20 May 2026"
-            )
-            ComplaintItem(
-                id = "#RCL-002",
-                type = "Error en plataforma",
-                status = "Resuelto",
-                statusColor = SuccessColor,
-                date = "15 May 2026"
-            )
+            when {
+                uiState.isLoading -> {
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = DangerColor)
+                    }
+                }
+                uiState.complaints.isEmpty() -> {
+                    Text(
+                        "No tienes reclamos registrados.",
+                        fontSize = 13.sp,
+                        color = TextMuted
+                    )
+                }
+                else -> {
+                    uiState.complaints.forEach { complaint ->
+                        ComplaintItem(complaint = complaint)
+                    }
+                }
+            }
 
             Spacer(Modifier.height(8.dp))
         }
@@ -184,13 +234,16 @@ fun ComplaintsScreen(onBack: () -> Unit = {}) {
 }
 
 @Composable
-private fun ComplaintItem(
-    id: String,
-    type: String,
-    status: String,
-    statusColor: Color,
-    date: String
-) {
+private fun ComplaintItem(complaint: Complaint) {
+    val statusColor = when (complaint.status) {
+        ComplaintStatus.IN_REVIEW.name  -> WarningColor
+        ComplaintStatus.RESOLVED.name   -> SuccessColor
+        ComplaintStatus.CLOSED.name     -> TextMuted
+        else                            -> WarningColor
+    }
+    val statusLabel = ComplaintStatus.entries
+        .firstOrNull { it.name == complaint.status }?.label ?: complaint.status
+
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
@@ -200,41 +253,26 @@ private fun ComplaintItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("#${complaint.id}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextMain)
                 Text(
-                    id,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextMain
-                )
-                Text(
-                    type,
+                    ComplaintType.entries.firstOrNull { it.name == complaint.type }?.label ?: complaint.type,
                     fontSize = 12.sp,
                     color = TextMuted
                 )
-                Text(
-                    date,
-                    fontSize = 11.sp,
-                    color = TextMuted
-                )
+                Text(complaint.created_at.take(10), fontSize = 11.sp, color = TextMuted)
             }
-            // Status pill
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50.dp))
-                    .background(statusColor.copy(alpha = 0.12f))
-                    .border(1.dp, statusColor.copy(alpha = 0.3f), RoundedCornerShape(50.dp))
-                    .padding(horizontal = 12.dp, vertical = 5.dp)
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = statusColor.copy(alpha = 0.15f)
             ) {
                 Text(
-                    status,
+                    statusLabel,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = statusColor
