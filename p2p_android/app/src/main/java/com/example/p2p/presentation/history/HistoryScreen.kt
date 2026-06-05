@@ -10,6 +10,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -138,7 +141,7 @@ fun HistoryScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White)
                     }
                 },
                 actions = {
@@ -359,7 +362,7 @@ private fun TransactionCard(tx: Transaction, onNavigateToTransaction: (String) -
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     PartyAvatar(tx.from.take(2).uppercase(), Primary)
-                    Icon(Icons.Default.ArrowForward, contentDescription = null, tint = TextMuted, modifier = Modifier.size(14.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = TextMuted, modifier = Modifier.size(14.dp))
                     PartyAvatar(tx.to.take(2).uppercase(), PrimaryLight)
                     Text("${tx.from} → ${tx.to}", fontSize = 12.sp, color = TextMuted)
                 }
@@ -373,7 +376,7 @@ private fun TransactionCard(tx: Transaction, onNavigateToTransaction: (String) -
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.Default.TrendingUp, contentDescription = null, tint = Primary, modifier = Modifier.size(14.dp))
+                    Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null, tint = Primary, modifier = Modifier.size(14.dp))
                     Text("Tipo cambio: ${tx.rate}", fontSize = 11.sp, color = Primary, fontWeight = FontWeight.Medium)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
