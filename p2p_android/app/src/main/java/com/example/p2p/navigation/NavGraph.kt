@@ -153,12 +153,14 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 }
                 val offerRepo = com.example.p2p.data.repository.OfferRepositoryImpl(com.example.p2p.core.network.ApiClient.offerApi)
                 val txnRepo = com.example.p2p.data.repository.TransactionRepositoryImpl(com.example.p2p.core.network.ApiClient.transactionApi)
-                val vm: com.example.p2p.presentation.market.MarketViewModel = viewModel(factory = com.example.p2p.presentation.market.MarketViewModel.Factory(offerRepo, txnRepo, com.example.p2p.core.network.ApiClient.exchangeApi))
+                val bankRepo = com.example.p2p.data.repository.BankAccountRepositoryImpl(com.example.p2p.core.network.ApiClient.bankAccountsApi)
+                val vm: com.example.p2p.presentation.market.MarketViewModel = viewModel(factory = com.example.p2p.presentation.market.MarketViewModel.Factory(offerRepo, txnRepo, bankRepo, com.example.p2p.core.network.ApiClient.exchangeApi))
                 MarketScreen(
                     viewModel = vm,
                     userName = userName,
                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
-                    onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) }
+                    onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) },
+                    onNavigateToAddBankAccount = { navController.navigate(Screen.BankAccounts.route) }
                 )
             }
 

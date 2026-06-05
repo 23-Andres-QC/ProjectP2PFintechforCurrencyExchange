@@ -1,5 +1,10 @@
 package com.example.p2p.presentation.transaction
 
+import android.net.Uri
+import android.util.Base64
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -11,21 +16,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.ui.theme.*
-import androidx.compose.ui.platform.LocalContext
-import android.widget.Toast
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,8 +42,34 @@ fun TransactionScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val uiState by viewModel?.uiState?.collectAsState(initial = TransactionUiState()) ?: remember { mutableStateOf(TransactionUiState()) }
-    var timeLeft by remember { mutableStateOf(15 * 60) } // 15 minutes
-    var isReadingOcr by remember { mutableStateOf(false) }
+    var timeLeft by remember { mutableStateOf(15 * 60) }
+    var isUploadingVoucher by remember { mutableStateOf(false) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null && transactionId != null) {
+            selectedImageUri = uri
+            scope.launch {
+                isUploadingVoucher = true
+                try {
+                    val bytes = context.contentResolver.openInputStream(uri)?.readBytes()
+                    if (bytes != null) {
+                        val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
+                        viewModel?.uploadVoucherFromBase64(transactionId, base64)
+                        Toast.makeText(context, "Voucher subido. Esperando confirmación del vendedor.", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(context, "No se pudo leer la imagen.", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Error al procesar imagen: ${e.message}", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isUploadingVoucher = false
+                }
+            }
+        }
+    }
 
     LaunchedEffect(transactionId) {
         if (transactionId != null) {
@@ -58,8 +87,8 @@ fun TransactionScreen(
         }
     }
 
-    LaunchedEffect(timeLeft, uiState.transaction?.status, isReadingOcr) {
-        if (timeLeft > 0 && uiState.transaction?.status == "pending" && !isReadingOcr) {
+    LaunchedEffect(timeLeft, uiState.transaction?.status, isUploadingVoucher) {
+        if (timeLeft > 0 && uiState.transaction?.status == "pending" && !isUploadingVoucher) {
             delay(1000L)
             timeLeft--
         }
@@ -77,7 +106,9 @@ fun TransactionScreen(
         else -> "ORDEN P2P EN CURSO"
     }
 
-    val amountTo = txn?.amount_to ?: 741.60
+    val amountTo = txn?.amount_to ?: 0.0
+    val amountFrom = txn?.amount_from ?: 0.0
+    val currency = "USD"
 
     Scaffold(
         topBar = {
@@ -184,7 +215,7 @@ fun TransactionScreen(
             }
 
             val currentStep = when (txn?.status) {
-                "pending" -> if (isReadingOcr) 1 else 0
+                "pending" -> if (isUploadingVoucher) 1 else 0
                 "voucher_uploaded" -> 1
                 "completed" -> 3
                 "disputed" -> 2
@@ -308,18 +339,35 @@ fun TransactionScreen(
                     .background(SurfaceColor)
                     .border(1.dp, BorderColor, RoundedCornerShape(16.dp))
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text("Pagas exactamente:", fontSize = 11.sp, color = TextMuted)
+                        Text(
+                            text = "S/ ${String.format("%.2f", amountTo)}",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = SuccessColor
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("Recibirás:", fontSize = 11.sp, color = TextMuted)
+                        Text(
+                            text = "${String.format("%.2f", amountFrom)} $currency",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Primary
+                        )
+                    }
+                }
                 Text(
-                    text = "Transfiere exactamente:",
-                    fontSize = 13.sp,
+                    text = "Cuenta destino: $vendorBank",
+                    fontSize = 12.sp,
                     color = TextMuted
-                )
-                Text(
-                    text = "S/ $amountTo",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = SuccessColor
                 )
             }
 
@@ -328,45 +376,26 @@ fun TransactionScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(110.dp)
+                        .height(120.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(SurfaceColor)
-                        .border(
-                            width = 1.5.dp,
-                            color = BorderColor,
-                            shape = RoundedCornerShape(12.dp)
-                        ),
+                        .border(width = 1.5.dp, color = if (isUploadingVoucher) Primary else BorderColor, shape = RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (isReadingOcr) {
+                    if (isUploadingVoucher || uiState.isLoading) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(28.dp),
-                                color = Primary,
-                                strokeWidth = 3.dp
-                            )
-                            Text(
-                                text = "IA OCR leyendo voucher...",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextMain
-                            )
+                            CircularProgressIndicator(modifier = Modifier.size(28.dp), color = Primary, strokeWidth = 3.dp)
+                            Text("Subiendo voucher...", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextMain)
                         }
                     } else {
-                        Button(onClick = {
-                            if (transactionId != null) {
-                                scope.launch {
-                                    isReadingOcr = true
-                                    delay(1900L)
-                                    isReadingOcr = false
-                                    viewModel?.uploadVoucher(transactionId, "http://dummyimage.com/voucher.jpg")
-                                    Toast.makeText(context, "OCR validado. Cambia a modo Vendedor para confirmar.", Toast.LENGTH_LONG).show()
-                                }
-                            }
-                        }, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
+                        Button(
+                            onClick = { imagePicker.launch("image/*") },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                            elevation = ButtonDefaults.buttonElevation(0.dp)
+                        ) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -377,16 +406,11 @@ fun TransactionScreen(
                                     tint = Primary,
                                     modifier = Modifier.size(32.dp)
                                 )
+                                Text("Subir Comprobante de Pago", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextMain)
                                 Text(
-                                    text = "Subir Comprobante de Pago",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextMain
-                                )
-                                Text(
-                                    text = "IA OCR · Validación automática en segundos",
+                                    text = if (selectedImageUri != null) "Imagen seleccionada ✓" else "Selecciona desde galería o cámara",
                                     fontSize = 11.sp,
-                                    color = TextMuted
+                                    color = if (selectedImageUri != null) SuccessColor else TextMuted
                                 )
                             }
                         }

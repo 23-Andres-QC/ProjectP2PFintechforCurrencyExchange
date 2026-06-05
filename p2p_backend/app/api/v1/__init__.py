@@ -11,6 +11,7 @@ from app.api.v1.admin.routes import admin_bp
 from app.api.v1.exchange.routes import exchange_bp
 from app.api.v1.bank_accounts.routes import bank_accounts_bp
 from app.api.v1.ratings.routes import ratings_bp
+from app.api.v1.uploads.routes import uploads_bp
 
 api_v1.register_blueprint(auth_bp)
 api_v1.register_blueprint(offers_bp)
@@ -20,3 +21,4 @@ api_v1.register_blueprint(admin_bp)
 api_v1.register_blueprint(exchange_bp)
 api_v1.register_blueprint(bank_accounts_bp)
 api_v1.register_blueprint(ratings_bp)
+api_v1.register_blueprint(uploads_bp)
