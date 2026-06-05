@@ -438,7 +438,7 @@ fun TransactionScreen(
                             Icon(Icons.Filled.Schedule, contentDescription = null, tint = WarningColor)
                             Column {
                                 Text("Esperando confirmación del vendedor...", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = TextMain)
-                                Text("El vendedor está verificando el pago en su cuenta bancaria. Cambia a modo vendedor para simular la liberación.", fontSize = 10.sp, color = TextMuted)
+                                Text("El vendedor está verificando tu pago en su cuenta bancaria. Recibirás una notificación cuando libere los fondos.", fontSize = 10.sp, color = TextMuted)
                             }
                         }
                     }
