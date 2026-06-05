@@ -28,9 +28,10 @@ import com.example.p2p.ui.theme.*
 fun ProfileScreen(
     viewModel: ProfileViewModel? = null,
     onNavigate: (String) -> Unit = {},
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
 ) {
     val uiState by viewModel?.uiState?.collectAsState(initial = ProfileUiState()) ?: remember { mutableStateOf(ProfileUiState()) }
+    val unreadCount = uiState.unreadNotifications
     val user = uiState.user
 
     val fullName = user?.full_name ?: "Usuario"
@@ -193,6 +194,7 @@ fun ProfileScreen(
             MenuItem(
                 icon = Icons.Default.Notifications, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
                 label = "Notificaciones",
+                badge = unreadCount,
                 onClick = { onNavigate(Screen.Notifications.route) }
             )
             MenuItem(
@@ -314,7 +316,8 @@ fun MenuItem(
     iconTint: Color,
     label: String,
     onClick: () -> Unit = {},
-    showDivider: Boolean = true
+    showDivider: Boolean = true,
+    badge: Int = 0,
 ) {
     Column {
         Row(
@@ -332,6 +335,23 @@ fun MenuItem(
                 Icon(icon, contentDescription = label, tint = iconTint, modifier = Modifier.size(20.dp))
             }
             Text(label, fontSize = 14.sp, color = TextMain, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+            if (badge > 0) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50.dp))
+                        .background(DangerColor)
+                        .padding(horizontal = 7.dp, vertical = 2.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = if (badge > 99) "99+" else badge.toString(),
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+            }
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(18.dp))
         }
         if (showDivider) {

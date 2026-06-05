@@ -13,6 +13,8 @@ from app.api.v1.exchange.routes import exchange_bp
 from app.api.v1.bank_accounts.routes import bank_accounts_bp
 from app.api.v1.ratings.routes import ratings_bp
 from app.api.v1.disputes.routes import disputes_bp  # ← agrega esto
+from app.api.v1.notifications.routes import notifications_bp
+
 
 api_v1.register_blueprint(auth_bp)
 api_v1.register_blueprint(offers_bp)
@@ -24,3 +26,4 @@ api_v1.register_blueprint(bank_accounts_bp)
 api_v1.register_blueprint(ratings_bp)
 api_v1.register_blueprint(disputes_bp)  # ← agrega esto
 api_v1.register_blueprint(complaints_bp)
+api_v1.register_blueprint(notifications_bp)

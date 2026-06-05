@@ -86,3 +86,13 @@ class AuditLog(BaseModel):
 
 from app.models.dispute import Dispute
 from app.models.complaint import Complaint
+
+
+class Notification(BaseModel):
+    __tablename__ = 'notifications'
+    user_id     = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False, index=True)
+    type        = db.Column(db.String(50), nullable=False)   # login | transaction | voucher | dispute | offer | security | admin
+    title       = db.Column(db.String(255), nullable=False)
+    body        = db.Column(db.Text, nullable=False)
+    is_read     = db.Column(db.Boolean, default=False, nullable=False)
+    resource_id = db.Column(db.String(36), nullable=True)    # id del recurso relacionado

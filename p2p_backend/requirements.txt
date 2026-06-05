@@ -22,3 +22,6 @@ gunicorn==21.2.0
 
 # ── Cache / Cola de tareas ────────────────────────────────────────────────────
 redis==5.0.1
+
+# ── HTTP client (exchange rates externas) ─────────────────────────────────────
+requests==2.31.0

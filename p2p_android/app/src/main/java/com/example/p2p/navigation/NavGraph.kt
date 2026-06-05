@@ -48,7 +48,9 @@ import com.example.p2p.presentation.kyc.KycScreen
 import com.example.p2p.presentation.legal.PrivacyScreen
 import com.example.p2p.presentation.legal.TermsScreen
 import com.example.p2p.presentation.market.MarketScreen
+import com.example.p2p.data.repository.NotificationRepositoryImpl
 import com.example.p2p.presentation.notifications.NotificationsScreen
+import com.example.p2p.presentation.notifications.NotificationsViewModel
 import com.example.p2p.presentation.offer.MyOffersScreen
 import com.example.p2p.presentation.offer.PublishScreen
 import com.example.p2p.presentation.profile.EditProfileScreen
@@ -260,7 +262,10 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
             // ── Profile ──────────────────────────────────────────────────────────
             composable(Screen.Profile.route) {
                 val userRepo = com.example.p2p.data.repository.UserRepositoryImpl(com.example.p2p.core.network.ApiClient.userApi)
-                val vm: com.example.p2p.presentation.profile.ProfileViewModel = viewModel(factory = com.example.p2p.presentation.profile.ProfileViewModel.Factory(userRepo))
+                val notifRepo = NotificationRepositoryImpl(com.example.p2p.core.network.ApiClient.notificationApi)
+                val vm: com.example.p2p.presentation.profile.ProfileViewModel = viewModel(
+                    factory = com.example.p2p.presentation.profile.ProfileViewModel.Factory(userRepo, notifRepo)
+                )
                 ProfileScreen(
                     viewModel = vm,
                     onNavigate = { route -> navController.navigate(route) },
@@ -291,7 +296,12 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
             }
 
             composable(Screen.Notifications.route) {
-                NotificationsScreen()
+                val notifRepo = NotificationRepositoryImpl(com.example.p2p.core.network.ApiClient.notificationApi)
+                val vm: NotificationsViewModel = viewModel(factory = NotificationsViewModel.Factory(notifRepo))
+                NotificationsScreen(
+                    viewModel = vm,
+                    onBack = { navController.popBackStack() },
+                )
             }
 
             composable(Screen.Reviews.route) {

@@ -36,7 +36,11 @@
       "Bash(03_)",
       "Bash('04_ *)",
       "Bash(\" 2>/dev/null)",
-      "Bash(powershell -Command 'Get-Content '\\\\''C:\\\\Mobile\\\\ProyectoFinal\\\\ProjectP2PFintechforCurrencyExchange\\\\p2p_android\\\\app\\\\src\\\\main\\\\java\\\\com\\\\example\\\\p2p\\\\navigation\\\\NavGraph.kt'\\\\'' | Select-String -Pattern '\\\\''Market|userName|getUserName'\\\\'' | Select-Object -First 10')"
+      "Bash(powershell -Command 'Get-Content '\\\\''C:\\\\Mobile\\\\ProyectoFinal\\\\ProjectP2PFintechforCurrencyExchange\\\\p2p_android\\\\app\\\\src\\\\main\\\\java\\\\com\\\\example\\\\p2p\\\\navigation\\\\NavGraph.kt'\\\\'' | Select-String -Pattern '\\\\''Market|userName|getUserName'\\\\'' | Select-Object -First 10')",
+      "Bash(git checkout *)",
+      "Bash(xargs ls -la)",
+      "Bash(git rm *)",
+      "Bash(xargs cat)"
     ]
   }
 }

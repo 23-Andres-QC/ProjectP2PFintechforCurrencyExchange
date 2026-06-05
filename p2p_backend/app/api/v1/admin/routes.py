@@ -11,6 +11,8 @@ from app.core.exceptions import AuthorizationError, NotFoundError, AppException
 from app.models import Transaction, Dispute
 from app.models.user import User
 from app.services.dispute_service import DisputeService
+from app.core.notifications import notify
+
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -274,6 +276,7 @@ def resolve_dispute(dispute_id):
         resolution=resolution,
         resolution_note=resolution_note,
     )
+
 
     return {
         'message':         'Dispute resolved',

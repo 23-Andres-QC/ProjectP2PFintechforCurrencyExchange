@@ -8,6 +8,7 @@ import com.example.p2p.data.remote.api.BankAccountsApi
 import com.example.p2p.data.remote.api.ComplaintApi
 import com.example.p2p.data.remote.api.DisputeApi
 import com.example.p2p.data.remote.api.ExchangeApi
+import com.example.p2p.data.remote.api.NotificationApi
 import com.example.p2p.data.remote.api.OfferApi
 import com.example.p2p.data.remote.api.RatingApi
 import com.example.p2p.data.remote.api.TransactionApi
@@ -74,4 +75,5 @@ object ApiClient {
     val ratingApi: RatingApi by lazy { retrofit.create(RatingApi::class.java) }
     val bankAccountsApi: BankAccountsApi by lazy { retrofit.create(BankAccountsApi::class.java) }
     val exchangeApi: ExchangeApi by lazy { retrofit.create(ExchangeApi::class.java) }
+    val notificationApi: NotificationApi by lazy { retrofit.create(NotificationApi::class.java) }
 }

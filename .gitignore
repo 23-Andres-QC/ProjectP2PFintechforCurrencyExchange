@@ -1,0 +1,52 @@
+# ═══════════════════════════════════════════════════════════════
+#  Android / Kotlin
+# ═══════════════════════════════════════════════════════════════
+p2p_android/.gradle/
+p2p_android/build/
+p2p_android/app/build/
+p2p_android/local.properties
+p2p_android/.idea/
+p2p_android/*.iml
+p2p_android/**/*.iml
+p2p_android/captures/
+p2p_android/.externalNativeBuild/
+p2p_android/.cxx/
+p2p_android/app/release/
+p2p_android/keystore/
+*.jks
+*.keystore
+
+# ═══════════════════════════════════════════════════════════════
+#  Python / Flask (backend)
+# ═══════════════════════════════════════════════════════════════
+p2p_backend/__pycache__/
+p2p_backend/**/__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# ═══════════════════════════════════════════════════════════════
+#  Docker
+# ═══════════════════════════════════════════════════════════════
+p2p_backend/docker/postgres_data/
+p2p_backend/docker/redis_data/
+
+# ═══════════════════════════════════════════════════════════════
+#  IDEs y editores
+# ═══════════════════════════════════════════════════════════════
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ═══════════════════════════════════════════════════════════════
+#  Logs y temporales
+# ═══════════════════════════════════════════════════════════════
+*.log
+*.tmp
+*.temp
+logs/
