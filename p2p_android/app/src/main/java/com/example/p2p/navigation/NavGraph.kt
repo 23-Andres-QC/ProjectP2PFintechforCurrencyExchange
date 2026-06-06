@@ -149,8 +149,15 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
             }
 
             composable(Screen.Kyc.route) {
+                val userRepo = com.example.p2p.data.repository.UserRepositoryImpl(com.example.p2p.core.network.ApiClient.userApi)
+                val kycVm: com.example.p2p.presentation.kyc.KycViewModel = viewModel(factory = com.example.p2p.presentation.kyc.KycViewModel.Factory(userRepo))
                 KycScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    viewModel = kycVm,
+                    onNavigateBack = {
+                        navController.navigate(Screen.Market.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
 
