@@ -89,7 +89,7 @@ fun RegisterScreen(
                 }
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Crear Cuenta",
+                    text = "Registro de Usuario",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = TextMain
@@ -292,7 +292,7 @@ fun RegisterScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Crear Cuenta", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text("Continuar a Verificación", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
                     }
 

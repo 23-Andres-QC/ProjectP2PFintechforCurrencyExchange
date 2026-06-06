@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,7 +41,8 @@ import com.example.p2p.ui.theme.*
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onNavigateToRegister: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
@@ -129,12 +131,28 @@ fun LoginScreen(
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
 
-                    Text(
-                        text = "Iniciar Sesión",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 20.sp,
-                        color = TextMain
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Iniciar Sesión",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 20.sp,
+                            color = TextMain
+                        )
+                        Text(
+                            text = "Crear cuenta",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Primary,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { onNavigateToRegister() }
+                                .padding(vertical = 4.dp, horizontal = 8.dp)
+                        )
+                    }
                     Text(
                         text = "Bienvenido de nuevo",
                         fontSize = 13.sp,
@@ -317,7 +335,11 @@ fun LoginScreen(
                         append("Regístrate")
                     }
                 },
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onNavigateToRegister() }
+                    .padding(8.dp)
             )
 
             Spacer(Modifier.height(24.dp))

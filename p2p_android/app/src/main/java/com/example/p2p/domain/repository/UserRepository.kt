@@ -6,4 +6,5 @@ import com.example.p2p.data.remote.model.User
 interface UserRepository {
     suspend fun getMe(): NetworkResult<User>
     suspend fun updateProfile(fullName: String, phone: String?): NetworkResult<User>
+    suspend fun submitKyc(dniFront: ByteArray, dniBack: ByteArray, selfie: ByteArray): NetworkResult<Unit>
 }

@@ -4,6 +4,9 @@ import com.example.p2p.core.network.NetworkResult
 import com.example.p2p.data.remote.api.UserApi
 import com.example.p2p.data.remote.model.User
 import com.example.p2p.domain.repository.UserRepository
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class UserRepositoryImpl(
     private val api: UserApi
@@ -31,6 +34,39 @@ class UserRepositoryImpl(
             val response = api.updateProfile(body)
             if (response.isSuccessful && response.body() != null) {
                 NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error(response.code(), response.message())
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(-1, e.message ?: "An error occurred")
+        }
+    }
+
+    override suspend fun submitKyc(
+        dniFront: ByteArray,
+        dniBack: ByteArray,
+        selfie: ByteArray
+    ): NetworkResult<Unit> {
+        return try {
+            val dniFrontPart = MultipartBody.Part.createFormData(
+                "dni_front",
+                "dni_front.jpg",
+                dniFront.toRequestBody("image/jpeg".toMediaTypeOrNull())
+            )
+            val dniBackPart = MultipartBody.Part.createFormData(
+                "dni_back",
+                "dni_back.jpg",
+                dniBack.toRequestBody("image/jpeg".toMediaTypeOrNull())
+            )
+            val selfiePart = MultipartBody.Part.createFormData(
+                "selfie",
+                "selfie.jpg",
+                selfie.toRequestBody("image/jpeg".toMediaTypeOrNull())
+            )
+
+            val response = api.submitKyc(dniFrontPart, dniBackPart, selfiePart)
+            if (response.isSuccessful) {
+                NetworkResult.Success(Unit)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }
