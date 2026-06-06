@@ -98,34 +98,49 @@ class TransactionViewModel(
         }
     }
 
-    fun confirmTransaction(id: String) {
+    fun confirmTransaction(id: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             when (val result = transactionRepository.confirmTransaction(id)) {
                 is NetworkResult.Success -> {
                     loadTransaction(id)
                     loadPendingTransactions()
+                    onSuccess()
                 }
                 is NetworkResult.Error -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
+                    onError(result.message)
                 }
                 NetworkResult.Loading -> Unit
             }
         }
     }
 
-    fun acceptTransaction(id: String) {
+    fun acceptTransaction(id: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            transactionRepository.updateStatus(id, "accepted")
-            loadPendingTransactions()
+            when (val result = transactionRepository.updateStatus(id, "accepted")) {
+                is NetworkResult.Success -> { loadPendingTransactions(); onSuccess() }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
+                    onError(result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
         }
     }
 
-    fun cancelTransaction(id: String) {
-        _pendingTransactions.value = _pendingTransactions.value.filter { it.id != id }
+    fun cancelTransaction(id: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
-            transactionRepository.updateStatus(id, "cancelled")
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            when (val result = transactionRepository.updateStatus(id, "cancelled")) {
+                is NetworkResult.Success -> { loadPendingTransactions(); onSuccess() }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
+                    onError(result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
         }
     }
 

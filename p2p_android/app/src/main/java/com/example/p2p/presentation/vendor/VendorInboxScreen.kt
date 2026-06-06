@@ -70,9 +70,12 @@ fun VendorInboxScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.acceptTransaction(txnId)
-                        Toast.makeText(context, "Orden aceptada. El comprador fue notificado.", Toast.LENGTH_SHORT).show()
+                        val id = txnId
                         confirmAcceptTxnId = null
+                        viewModel.acceptTransaction(id,
+                            onSuccess = { Toast.makeText(context, "Orden aceptada. El comprador fue notificado.", Toast.LENGTH_SHORT).show() },
+                            onError = { err -> Toast.makeText(context, "Error al aceptar: $err", Toast.LENGTH_LONG).show() }
+                        )
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
@@ -108,9 +111,12 @@ fun VendorInboxScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.cancelTransaction(txnId)
-                        Toast.makeText(context, "Orden rechazada.", Toast.LENGTH_SHORT).show()
+                        val id = txnId
                         confirmCancelTxnId = null
+                        viewModel.cancelTransaction(id,
+                            onSuccess = { Toast.makeText(context, "Orden rechazada.", Toast.LENGTH_SHORT).show() },
+                            onError = { err -> Toast.makeText(context, "Error al rechazar: $err", Toast.LENGTH_LONG).show() }
+                        )
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = DangerColor)
                 ) {
@@ -256,8 +262,10 @@ fun VendorInboxScreen(
                                 confirmAcceptTxnId = txn.id
                             },
                             onConfirm = {
-                                viewModel.confirmTransaction(txn.id)
-                                Toast.makeText(context, "Operación liberada con éxito", Toast.LENGTH_SHORT).show()
+                                viewModel.confirmTransaction(txn.id,
+                                    onSuccess = { Toast.makeText(context, "Operación liberada con éxito", Toast.LENGTH_SHORT).show() },
+                                    onError = { err -> Toast.makeText(context, "Error al confirmar: $err", Toast.LENGTH_LONG).show() }
+                                )
                             },
                             onCancel = {
                                 confirmCancelTxnId = txn.id

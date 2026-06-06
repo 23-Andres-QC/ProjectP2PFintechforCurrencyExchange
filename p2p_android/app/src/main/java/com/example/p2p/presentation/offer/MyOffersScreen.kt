@@ -32,9 +32,46 @@ fun MyOffersScreen(
     val uiState by viewModel?.uiState?.collectAsState(initial = MyOffersUiState())
         ?: remember { mutableStateOf(MyOffersUiState()) }
 
+    var offerToDelete by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(Unit) { viewModel?.loadMyOffers() }
 
+    LaunchedEffect(uiState.error) {
+        val err = uiState.error
+        if (err != null) {
+            snackbarHostState.showSnackbar(err)
+            viewModel?.clearError()
+        }
+    }
+
+    if (offerToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { offerToDelete = null },
+            containerColor = SurfaceColor,
+            shape = RoundedCornerShape(16.dp),
+            title = { Text("¿Eliminar oferta?", fontWeight = FontWeight.Bold, color = TextMain) },
+            text = { Text("Esta acción no se puede deshacer. La oferta quedará inactiva.", color = TextMuted, fontSize = 14.sp) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel?.deleteOffer(offerToDelete!!)
+                        offerToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = DangerColor),
+                    shape = RoundedCornerShape(8.dp)
+                ) { Text("Eliminar", color = Color.White) }
+            },
+            dismissButton = {
+                TextButton(onClick = { offerToDelete = null }) {
+                    Text("Cancelar", color = TextMuted)
+                }
+            }
+        )
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Mis Ofertas", fontWeight = FontWeight.Bold, color = TextMain) },
@@ -90,11 +127,6 @@ fun MyOffersScreen(
                         CircularProgressIndicator(color = Primary)
                     }
                 }
-                uiState.error != null -> item {
-                    Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                        Text("Error: ${uiState.error}", color = DangerColor)
-                    }
-                }
                 uiState.filteredOffers.isEmpty() -> item {
                     Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                         Text(
@@ -114,7 +146,7 @@ fun MyOffersScreen(
                             if (offer.status == "active") viewModel?.pauseOffer(offer.id)
                             else viewModel?.resumeOffer(offer.id)
                         },
-                        onDelete = { viewModel?.deleteOffer(offer.id) }
+                        onDelete = { offerToDelete = offer.id }
                     )
                 }
             }

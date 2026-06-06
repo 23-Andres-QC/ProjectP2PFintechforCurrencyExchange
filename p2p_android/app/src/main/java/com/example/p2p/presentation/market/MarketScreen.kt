@@ -55,11 +55,6 @@ fun MarketScreen(
     var selectedFiat     by remember { mutableStateOf("PEN") }
     var selectedCurrency by remember { mutableStateOf("USD") }
 
-    val firstName = userName.split(" ").firstOrNull() ?: userName
-    LaunchedEffect(Unit) {
-        Toast.makeText(context, "Bienvenido, $firstName 👋", Toast.LENGTH_SHORT).show()
-    }
-
     LaunchedEffect(selectedFiat, selectedCurrency) {
         viewModel.loadOffers(currency = selectedCurrency, fiatCurrency = selectedFiat)
     }

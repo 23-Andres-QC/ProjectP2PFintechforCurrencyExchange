@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.CreateOfferRequest
@@ -203,6 +205,7 @@ fun PublishScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Primary, unfocusedBorderColor = BorderColor,
                         focusedTextColor = TextMain, unfocusedTextColor = TextMain, cursorColor = Primary
@@ -217,6 +220,7 @@ fun PublishScreen(
                             onValueChange = { minTransactionText = it },
                             placeholder = { Text("Mínimo", color = TextMuted, fontSize = 13.sp) },
                             modifier = Modifier.weight(1f), shape = RoundedCornerShape(10.dp), singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Primary, unfocusedBorderColor = BorderColor,
                                 focusedTextColor = TextMain, unfocusedTextColor = TextMain, cursorColor = Primary
@@ -227,6 +231,7 @@ fun PublishScreen(
                             onValueChange = { maxTransactionText = it },
                             placeholder = { Text("Máximo", color = TextMuted, fontSize = 13.sp) },
                             modifier = Modifier.weight(1f), shape = RoundedCornerShape(10.dp), singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Primary, unfocusedBorderColor = BorderColor,
                                 focusedTextColor = TextMain, unfocusedTextColor = TextMain, cursorColor = Primary
@@ -322,6 +327,7 @@ fun PublishScreen(
                             shape = RoundedCornerShape(8.dp),
                             singleLine = true,
                             enabled = customRateEnabled,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             textStyle = LocalTextStyle.current.copy(
                                 fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                                 color = if (customRateEnabled) TextMain else TextMuted

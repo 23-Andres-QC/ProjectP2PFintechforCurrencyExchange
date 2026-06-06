@@ -30,5 +30,5 @@ interface OfferApi {
     ): Response<Offer>
 
     @DELETE("offers/{id}")
-    suspend fun deleteOffer(@Path("id") offerId: String): Response<Unit>
+    suspend fun deleteOffer(@Path("id") offerId: String): Response<Map<String, String>>
 }

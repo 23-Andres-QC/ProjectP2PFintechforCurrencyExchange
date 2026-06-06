@@ -33,7 +33,7 @@ class MyOffersViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             when (val result = offerRepository.getMyOffers()) {
                 is NetworkResult.Success -> {
-                    val offers = result.data
+                    val offers = result.data.filter { it.status != "closed" }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         offers = offers,
@@ -46,6 +46,10 @@ class MyOffersViewModel(
                 NetworkResult.Loading -> Unit
             }
         }
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
     }
 
     fun setFilter(filter: OfferFilter) {
@@ -63,27 +67,30 @@ class MyOffersViewModel(
 
     fun pauseOffer(offerId: String) {
         viewModelScope.launch {
-            when (offerRepository.pauseOffer(offerId)) {
+            when (val result = offerRepository.pauseOffer(offerId)) {
                 is NetworkResult.Success -> loadMyOffers()
-                else -> Unit
+                is NetworkResult.Error -> _uiState.value = _uiState.value.copy(error = result.message)
+                NetworkResult.Loading -> Unit
             }
         }
     }
 
     fun resumeOffer(offerId: String) {
         viewModelScope.launch {
-            when (offerRepository.resumeOffer(offerId)) {
+            when (val result = offerRepository.resumeOffer(offerId)) {
                 is NetworkResult.Success -> loadMyOffers()
-                else -> Unit
+                is NetworkResult.Error -> _uiState.value = _uiState.value.copy(error = result.message)
+                NetworkResult.Loading -> Unit
             }
         }
     }
 
     fun deleteOffer(offerId: String) {
         viewModelScope.launch {
-            when (offerRepository.deleteOffer(offerId)) {
+            when (val result = offerRepository.deleteOffer(offerId)) {
                 is NetworkResult.Success -> loadMyOffers()
-                else -> Unit
+                is NetworkResult.Error -> _uiState.value = _uiState.value.copy(error = result.message)
+                NetworkResult.Loading -> Unit
             }
         }
     }

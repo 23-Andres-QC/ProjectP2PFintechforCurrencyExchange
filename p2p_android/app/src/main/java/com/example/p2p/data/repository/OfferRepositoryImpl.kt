@@ -126,7 +126,8 @@ class OfferRepositoryImpl(
             if (response.isSuccessful) {
                 NetworkResult.Success(Unit)
             } else {
-                NetworkResult.Error(response.code(), response.message())
+                val errorMsg = parseBackendError(response.errorBody()?.string(), response.code())
+                NetworkResult.Error(response.code(), errorMsg)
             }
         } catch (e: Exception) {
             NetworkResult.Error(-1, e.message ?: "An error occurred")

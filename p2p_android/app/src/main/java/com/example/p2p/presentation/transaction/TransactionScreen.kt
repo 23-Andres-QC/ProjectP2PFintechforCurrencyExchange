@@ -59,6 +59,7 @@ fun TransactionScreen(
     var selectedFileName by remember { mutableStateOf("") }
     var showRatingDialog by remember { mutableStateOf(false) }
     var selectedStars by remember { mutableStateOf(0) }
+    var previousStatus by remember { mutableStateOf("") }
 
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -117,10 +118,18 @@ fun TransactionScreen(
 
     LaunchedEffect(uiState.transaction?.status, currentUserId) {
         val t = uiState.transaction
-        if (t?.status == "completed" && currentUserId.isNotBlank() && currentUserId == t.buyer_id) {
+        val newStatus = t?.status ?: return@LaunchedEffect
+        // Solo muestra el dialog cuando la transacción ACABA de completarse en tiempo real
+        // (transición voucher_uploaded → completed), no cuando se abre una ya completada
+        if (newStatus == "completed" &&
+            previousStatus in listOf("voucher_uploaded", "pending", "accepted") &&
+            currentUserId.isNotBlank() &&
+            currentUserId == t.buyer_id
+        ) {
             delay(1500L)
             showRatingDialog = true
         }
+        previousStatus = newStatus
     }
 
     val txn = uiState.transaction

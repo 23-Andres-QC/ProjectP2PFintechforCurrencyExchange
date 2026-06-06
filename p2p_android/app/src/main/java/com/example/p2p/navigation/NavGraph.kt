@@ -87,17 +87,12 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = currentRoute != null && currentRoute !in authRoutes
 
-    var userRole by remember { mutableStateOf("") }
-    LaunchedEffect(Unit) {
-        userRole = tokenManager.getUserRole() ?: ""
-    }
-
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
                 AppBottomBar(
                     currentRoute = currentRoute,
-                    isVendor = userRole == "vendor" || userRole == "admin"
+                    tokenManager = tokenManager
                 ) { route ->
                     navController.navigate(route) {
                         launchSingleTop = true
@@ -463,9 +458,15 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
 @Composable
 private fun AppBottomBar(
     currentRoute: String?,
-    isVendor: Boolean = false,
+    tokenManager: TokenManager,
     onNavigate: (String) -> Unit
 ) {
+    var isVendor by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        val role = tokenManager.getUserRole() ?: ""
+        isVendor = role == "vendor" || role == "admin"
+    }
+
     NavigationBar(containerColor = SurfaceColor, tonalElevation = 8.dp) {
         NavigationBarItem(
             selected = currentRoute == Screen.Market.route,
