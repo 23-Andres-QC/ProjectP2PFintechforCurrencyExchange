@@ -43,6 +43,7 @@ fun ProfileScreen(
     val txCount = user?.total_transactions?.toString() ?: "0"
     val roleStr = if (user?.role == "vendor") "Experto" else "Básico"
     val isVerified = user?.kyc_verified == true
+    val isAdmin = user?.role == "admin"
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -127,109 +128,116 @@ fun ProfileScreen(
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(16.dp))
         }
 
-        // ── Quick Actions ─────────────────────────────────────────────────────
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Button(
-                onClick = { onNavigate(Screen.Vendor.route) },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = WarningColor),
-                contentPadding = PaddingValues(vertical = 12.dp)
-            ) {
-                Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.size(15.dp))
-                Spacer(Modifier.width(5.dp))
-                Text("Pendientes", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        if (isAdmin) {
+            // ── Admin: solo Panel Administrador ──────────────────────────────
+            MenuSection(title = "ADMINISTRACIÓN") {
+                MenuItem(
+                    icon = Icons.Default.AdminPanelSettings, iconBg = DangerColor.copy(.1f), iconTint = DangerColor,
+                    label = "Panel Administrador",
+                    onClick = { onNavigate(Screen.Admin.route) },
+                    showDivider = false
+                )
             }
-            Button(
-                onClick = { onNavigate(Screen.MyDisputes.route) },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = DangerColor),
-                contentPadding = PaddingValues(vertical = 12.dp)
+        } else {
+            // ── Quick Actions ─────────────────────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Icon(Icons.Default.Gavel, contentDescription = null, modifier = Modifier.size(15.dp))
-                Spacer(Modifier.width(5.dp))
-                Text("Mis Disputas", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Button(
+                    onClick = { onNavigate(Screen.Vendor.route) },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = WarningColor),
+                    contentPadding = PaddingValues(vertical = 12.dp)
+                ) {
+                    Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.size(15.dp))
+                    Spacer(Modifier.width(5.dp))
+                    Text("Pendientes", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Button(
+                    onClick = { onNavigate(Screen.MyDisputes.route) },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DangerColor),
+                    contentPadding = PaddingValues(vertical = 12.dp)
+                ) {
+                    Icon(Icons.Default.Gavel, contentDescription = null, modifier = Modifier.size(15.dp))
+                    Spacer(Modifier.width(5.dp))
+                    Text("Mis Disputas", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
-        }
 
-        // ── Mi Cuenta ────────────────────────────────────────────────────────
-        MenuSection(title = "MI CUENTA") {
-            MenuItem(
-                icon = Icons.Default.CreditCard, iconBg = Primary.copy(.12f), iconTint = Primary,
-                label = "Tarjetas y Cuentas",
-                onClick = { onNavigate(Screen.BankAccounts.route) }
-            )
-            MenuItem(
-                icon = Icons.Default.History, iconBg = PrimaryLight.copy(.15f), iconTint = PrimaryLight,
-                label = "Historial de Operaciones",
-                onClick = { onNavigate(Screen.History.route) }
-            )
-            MenuItem(
-                icon = Icons.Default.Star, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
-                label = "Mis Reseñas",
-                onClick = { onNavigate(Screen.Reviews.route) }
-            )
-            MenuItem(
-                icon = Icons.Default.Campaign, iconBg = SuccessColor.copy(.12f), iconTint = SuccessColor,
-                label = "Mis Ofertas",
-                onClick = { onNavigate(Screen.MyOffers.route) },
-                showDivider = false
-            )
-        }
+            // ── Mi Cuenta ────────────────────────────────────────────────────────
+            MenuSection(title = "MI CUENTA") {
+                MenuItem(
+                    icon = Icons.Default.CreditCard, iconBg = Primary.copy(.12f), iconTint = Primary,
+                    label = "Tarjetas y Cuentas",
+                    onClick = { onNavigate(Screen.BankAccounts.route) }
+                )
+                MenuItem(
+                    icon = Icons.Default.History, iconBg = PrimaryLight.copy(.15f), iconTint = PrimaryLight,
+                    label = "Historial de Operaciones",
+                    onClick = { onNavigate(Screen.History.route) }
+                )
+                MenuItem(
+                    icon = Icons.Default.Star, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
+                    label = "Mis Reseñas",
+                    onClick = { onNavigate(Screen.Reviews.route) }
+                )
+                MenuItem(
+                    icon = Icons.Default.Campaign, iconBg = SuccessColor.copy(.12f), iconTint = SuccessColor,
+                    label = "Mis Ofertas",
+                    onClick = { onNavigate(Screen.MyOffers.route) },
+                    showDivider = false
+                )
+            }
 
-        // ── Soporte ───────────────────────────────────────────────────────────
-        MenuSection(title = "SOPORTE") {
-            MenuItem(
-                icon = Icons.Default.Store, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
-                label = "Modo Vendedor (Inbox)",
-                onClick = { onNavigate(Screen.Vendor.route) }
-            )
-            MenuItem(
-                icon = Icons.Default.HeadsetMic, iconBg = Primary.copy(.12f), iconTint = Primary,
-                label = "Reclamos",
-                onClick = { onNavigate(Screen.Complaints.route) }
-            )
-            MenuItem(
-                icon = Icons.Default.Notifications, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
-                label = "Notificaciones",
-                badge = unreadCount,
-                onClick = { onNavigate(Screen.Notifications.route) }
-            )
-            MenuItem(
-                icon = Icons.Default.AdminPanelSettings, iconBg = DangerColor.copy(.1f), iconTint = DangerColor,
-                label = "Panel Administrador",
-                onClick = { onNavigate(Screen.Admin.route) },
-                showDivider = false
-            )
-        }
+            // ── Soporte ───────────────────────────────────────────────────────────
+            MenuSection(title = "SOPORTE") {
+                MenuItem(
+                    icon = Icons.Default.Store, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
+                    label = "Modo Vendedor (Inbox)",
+                    onClick = { onNavigate(Screen.Vendor.route) }
+                )
+                MenuItem(
+                    icon = Icons.Default.HeadsetMic, iconBg = Primary.copy(.12f), iconTint = Primary,
+                    label = "Reclamos",
+                    onClick = { onNavigate(Screen.Complaints.route) }
+                )
+                MenuItem(
+                    icon = Icons.Default.Notifications, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
+                    label = "Notificaciones",
+                    badge = unreadCount,
+                    onClick = { onNavigate(Screen.Notifications.route) },
+                    showDivider = false
+                )
+            }
 
-        // ── Legal ─────────────────────────────────────────────────────────────
-        MenuSection(title = "LEGAL") {
-            MenuItem(
-                icon = Icons.Default.Description, iconBg = Primary.copy(.1f), iconTint = Primary,
-                label = "Términos y Condiciones",
-                onClick = { onNavigate(Screen.Terms.route) }
-            )
-            MenuItem(
-                icon = Icons.Default.Lock, iconBg = Primary.copy(.1f), iconTint = Primary,
-                label = "Política de Privacidad",
-                onClick = { onNavigate(Screen.Privacy.route) }
-            )
-            MenuItem(
-                icon = Icons.Default.Info, iconBg = PrimaryLight.copy(.12f), iconTint = PrimaryLight,
-                label = "Acerca de Perú Exchange",
-                onClick = { onNavigate(Screen.About.route) }
-            )
-            MenuItem(
-                icon = Icons.AutoMirrored.Filled.HelpOutline, iconBg = SuccessColor.copy(.1f), iconTint = SuccessColor,
-                label = "Centro de Ayuda",
-                onClick = { onNavigate(Screen.Help.route) },
-                showDivider = false
-            )
+            // ── Legal ─────────────────────────────────────────────────────────────
+            MenuSection(title = "LEGAL") {
+                MenuItem(
+                    icon = Icons.Default.Description, iconBg = Primary.copy(.1f), iconTint = Primary,
+                    label = "Términos y Condiciones",
+                    onClick = { onNavigate(Screen.Terms.route) }
+                )
+                MenuItem(
+                    icon = Icons.Default.Lock, iconBg = Primary.copy(.1f), iconTint = Primary,
+                    label = "Política de Privacidad",
+                    onClick = { onNavigate(Screen.Privacy.route) }
+                )
+                MenuItem(
+                    icon = Icons.Default.Info, iconBg = PrimaryLight.copy(.12f), iconTint = PrimaryLight,
+                    label = "Acerca de Perú Exchange",
+                    onClick = { onNavigate(Screen.About.route) }
+                )
+                MenuItem(
+                    icon = Icons.AutoMirrored.Filled.HelpOutline, iconBg = SuccessColor.copy(.1f), iconTint = SuccessColor,
+                    label = "Centro de Ayuda",
+                    onClick = { onNavigate(Screen.Help.route) },
+                    showDivider = false
+                )
+            }
         }
 
         // ── Bottom Actions ────────────────────────────────────────────────────

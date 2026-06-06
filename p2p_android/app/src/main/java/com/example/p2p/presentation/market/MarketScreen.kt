@@ -43,6 +43,7 @@ import com.example.p2p.ui.theme.*
 fun MarketScreen(
     viewModel: MarketViewModel,
     userName: String = "Usuario",
+    currentUserId: String = "",
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToTransaction: (String) -> Unit = {},
     onNavigateToAddBankAccount: () -> Unit = {}
@@ -111,10 +112,11 @@ fun MarketScreen(
                     isLoading = uiState.isLoading,
                     onMatchingClick = {
                         viewModel.matchOffer(
-                            currency     = selectedCurrency,
-                            fiatCurrency = selectedFiat,
-                            onMatched    = { showBuyDialog = it },
-                            onError      = { Toast.makeText(context, "Sin coincidencias: $it", Toast.LENGTH_SHORT).show() }
+                            currency      = selectedCurrency,
+                            fiatCurrency  = selectedFiat,
+                            currentUserId = currentUserId,
+                            onMatched     = { showBuyDialog = it },
+                            onError       = { Toast.makeText(context, "Sin coincidencias: $it", Toast.LENGTH_SHORT).show() }
                         )
                     }
                 )
@@ -167,7 +169,7 @@ fun MarketScreen(
                     }
                 }
 
-                uiState.offers.isEmpty() -> item {
+                uiState.offers.filter { it.vendor_id != currentUserId }.isEmpty() -> item {
                     Box(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
                         contentAlignment = Alignment.Center
@@ -195,10 +197,11 @@ fun MarketScreen(
                     val isQuickSale: (Offer) -> Boolean = { offer ->
                         marketRate != null && offer.price_per_unit < marketRate
                     }
-                    val sortedOffers = uiState.offers.sortedWith(compareByDescending { isQuickSale(it) })
+                    val visibleOffers = uiState.offers.filter { it.vendor_id != currentUserId }
+                    val sortedOffers = visibleOffers.sortedWith(compareByDescending { isQuickSale(it) })
 
                     item {
-                        OffersHeader(count = uiState.offers.size, from = selectedCurrency, to = selectedFiat)
+                        OffersHeader(count = visibleOffers.size, from = selectedCurrency, to = selectedFiat)
                     }
                     itemsIndexed(sortedOffers, key = { _, o -> o.id }) { index, offer ->
                         OfferCard(

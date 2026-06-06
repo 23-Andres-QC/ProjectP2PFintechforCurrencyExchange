@@ -167,8 +167,10 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
             // ── Main ─────────────────────────────────────────────────────────────
             composable(Screen.Market.route) {
                 var userName by remember { mutableStateOf("Usuario") }
+                var currentUserId by remember { mutableStateOf("") }
                 LaunchedEffect(Unit) {
                     userName = tokenManager.getUserName() ?: "Usuario"
+                    currentUserId = tokenManager.getUserId() ?: ""
                 }
 
                 val offerRepo  = com.example.p2p.data.repository.OfferRepositoryImpl(com.example.p2p.core.network.ApiClient.offerApi)
@@ -183,6 +185,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 MarketScreen(
                     viewModel = vm,
                     userName = userName,
+                    currentUserId = currentUserId,
                     onNavigateToNotifications = {
                         vm.loadUnreadCount()
                         navController.navigate(Screen.Notifications.route)
@@ -470,7 +473,7 @@ private fun AppBottomBar(
     var isVendor by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         val role = tokenManager.getUserRole() ?: ""
-        isVendor = role == "vendor" || role == "admin"
+        isVendor = role != "admin"
     }
 
     NavigationBar(containerColor = SurfaceColor, tonalElevation = 8.dp) {

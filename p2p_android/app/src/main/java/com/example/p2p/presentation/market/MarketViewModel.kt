@@ -134,13 +134,16 @@ class MarketViewModel(
         }
     }
 
-    fun matchOffer(currency: String, fiatCurrency: String, onMatched: (Offer) -> Unit, onError: (String) -> Unit) {
+    fun matchOffer(currency: String, fiatCurrency: String, currentUserId: String = "", onMatched: (Offer) -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             val rates = _uiState.value.exchangeRates.associateBy { "${it.from_currency}_${it.to_currency}" }
             val marketRate = rates["${currency}_${fiatCurrency}"]?.rate
+            val availableOffers = if (currentUserId.isNotEmpty())
+                _uiState.value.offers.filter { it.vendor_id != currentUserId }
+            else _uiState.value.offers
             val quickSaleOffer = if (marketRate != null) {
-                _uiState.value.offers.filter { it.price_per_unit < marketRate }.minByOrNull { it.price_per_unit }
+                availableOffers.filter { it.price_per_unit < marketRate }.minByOrNull { it.price_per_unit }
             } else null
             if (quickSaleOffer != null) {
                 _uiState.value = _uiState.value.copy(isLoading = false)
