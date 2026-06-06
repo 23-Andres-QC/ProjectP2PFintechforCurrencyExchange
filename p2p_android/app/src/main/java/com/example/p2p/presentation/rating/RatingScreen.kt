@@ -30,12 +30,13 @@ import com.example.p2p.ui.theme.*
 @Composable
 fun RatingScreen(
     transactionId: String? = null,
+    defaultScore: Int = 5,
     viewModel: RatingViewModel? = null,
     onSuccess: () -> Unit = {},
     onSkip: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    var score by remember { mutableIntStateOf(5) }
+    var score by remember { mutableIntStateOf(defaultScore.coerceIn(1, 5)) }
     var commentText by remember { mutableStateOf("") }
     val uiState by viewModel?.uiState?.collectAsState(initial = RatingUiState()) ?: remember { mutableStateOf(RatingUiState()) }
 

@@ -36,6 +36,7 @@ fun VendorInboxScreen(
     val pendingTransactions by viewModel.pendingTransactions.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     var confirmAcceptTxnId by remember { mutableStateOf<String?>(null) }
+    var confirmCancelTxnId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.loadPendingTransactions()
@@ -80,6 +81,44 @@ fun VendorInboxScreen(
             },
             dismissButton = {
                 TextButton(onClick = { confirmAcceptTxnId = null }) {
+                    Text("No", color = TextMuted)
+                }
+            },
+            containerColor = SurfaceColor
+        )
+    }
+
+    confirmCancelTxnId?.let { txnId ->
+        AlertDialog(
+            onDismissRequest = { confirmCancelTxnId = null },
+            title = {
+                Text(
+                    "¿Estás seguro?",
+                    fontWeight = FontWeight.Bold,
+                    color = TextMain
+                )
+            },
+            text = {
+                Text(
+                    "¿Deseas rechazar esta orden de compra? La operación será cancelada.",
+                    color = TextMuted,
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.cancelTransaction(txnId)
+                        Toast.makeText(context, "Orden rechazada.", Toast.LENGTH_SHORT).show()
+                        confirmCancelTxnId = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = DangerColor)
+                ) {
+                    Text("Sí, rechazar", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmCancelTxnId = null }) {
                     Text("No", color = TextMuted)
                 }
             },
@@ -221,8 +260,7 @@ fun VendorInboxScreen(
                                 Toast.makeText(context, "Operación liberada con éxito", Toast.LENGTH_SHORT).show()
                             },
                             onCancel = {
-                                viewModel.updateStatus(txn.id, "cancelled")
-                                Toast.makeText(context, "Operación cancelada.", Toast.LENGTH_SHORT).show()
+                                confirmCancelTxnId = txn.id
                             }
                         )
                     }

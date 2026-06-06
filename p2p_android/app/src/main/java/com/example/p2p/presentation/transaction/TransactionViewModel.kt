@@ -115,18 +115,16 @@ class TransactionViewModel(
     }
 
     fun acceptTransaction(id: String) {
+        _pendingTransactions.value = _pendingTransactions.value.filter { it.id != id }
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            when (val result = transactionRepository.updateStatus(id, "accepted")) {
-                is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                    loadPendingTransactions()
-                }
-                is NetworkResult.Error -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
-                }
-                NetworkResult.Loading -> Unit
-            }
+            transactionRepository.updateStatus(id, "accepted")
+        }
+    }
+
+    fun cancelTransaction(id: String) {
+        _pendingTransactions.value = _pendingTransactions.value.filter { it.id != id }
+        viewModelScope.launch {
+            transactionRepository.updateStatus(id, "cancelled")
         }
     }
 

@@ -201,13 +201,18 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
 
             composable(
                 route = Screen.Rating.route,
-                arguments = listOf(navArgument("transactionId") { type = NavType.StringType })
+                arguments = listOf(
+                    navArgument("transactionId") { type = NavType.StringType },
+                    navArgument("score") { type = NavType.IntType; defaultValue = 5 }
+                )
             ) { backStack ->
                 val ratingRepo = com.example.p2p.data.repository.RatingRepositoryImpl(com.example.p2p.core.network.ApiClient.ratingApi)
                 val vm: com.example.p2p.presentation.rating.RatingViewModel = viewModel(factory = com.example.p2p.presentation.rating.RatingViewModel.Factory(ratingRepo))
                 val id = backStack.arguments?.getString("transactionId") ?: ""
+                val score = backStack.arguments?.getInt("score") ?: 5
                 RatingScreen(
                     transactionId = id,
+                    defaultScore = score,
                     viewModel = vm,
                     onSuccess = {
                         navController.navigate(Screen.Market.route) {
@@ -234,7 +239,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                     viewModel = vm,
                     onNavigateToDispute = { txnId -> navController.navigate(Screen.RegisterDispute.createRoute(txnId)) },
                     onNavigateToReceipt = { txnId -> navController.navigate(Screen.Receipt.createRoute(txnId)) },
-                    onNavigateToRating = { txnId -> navController.navigate(Screen.Rating.createRoute(txnId)) },
+                    onNavigateToRating = { txnId, score -> navController.navigate(Screen.Rating.createRoute(txnId, score)) },
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

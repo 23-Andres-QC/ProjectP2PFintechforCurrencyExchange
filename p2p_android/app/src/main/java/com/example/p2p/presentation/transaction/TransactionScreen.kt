@@ -3,6 +3,7 @@ package com.example.p2p.presentation.transaction
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Base64
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -44,7 +45,7 @@ fun TransactionScreen(
     viewModel: TransactionViewModel? = null,
     onNavigateToDispute: (String) -> Unit = {},
     onNavigateToReceipt: (String) -> Unit = {},
-    onNavigateToRating: (String) -> Unit = {},
+    onNavigateToRating: (String, Int) -> Unit = { _, _ -> },
     onNavigateBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -54,6 +55,7 @@ fun TransactionScreen(
     var isUploadingVoucher by remember { mutableStateOf(false) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var selectedFileName by remember { mutableStateOf("") }
     var showRatingDialog by remember { mutableStateOf(false) }
     var selectedStars by remember { mutableStateOf(0) }
 
@@ -62,6 +64,12 @@ fun TransactionScreen(
     ) { uri: Uri? ->
         if (uri != null && transactionId != null) {
             selectedImageUri = uri
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (nameIndex != -1 && cursor.moveToFirst()) {
+                    selectedFileName = cursor.getString(nameIndex)
+                }
+            }
             scope.launch {
                 isUploadingVoucher = true
                 try {
@@ -499,8 +507,40 @@ fun TransactionScreen(
                                         .background(SuccessColor)
                                         .padding(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
-                                    Text("✓ Subida", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text("✓ Cargado", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
+                            }
+
+                            // Filename + success indicator
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(SuccessColor.copy(alpha = 0.08f))
+                                    .border(1.dp, SuccessColor.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Image,
+                                    contentDescription = null,
+                                    tint = SuccessColor,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = if (selectedFileName.isNotEmpty()) selectedFileName else "comprobante_pago.jpg",
+                                    fontSize = 12.sp,
+                                    color = SuccessColor,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Icon(
+                                    imageVector = Icons.Filled.CheckCircle,
+                                    contentDescription = null,
+                                    tint = SuccessColor,
+                                    modifier = Modifier.size(16.dp)
+                                )
                             }
                         }
 
@@ -728,7 +768,7 @@ fun TransactionScreen(
                 Button(
                     onClick = {
                         showRatingDialog = false
-                        onNavigateToRating(transactionId ?: "")
+                        onNavigateToRating(transactionId ?: "", selectedStars.coerceAtLeast(1))
                     },
                     enabled = selectedStars > 0,
                     colors = ButtonDefaults.buttonColors(containerColor = Primary),
