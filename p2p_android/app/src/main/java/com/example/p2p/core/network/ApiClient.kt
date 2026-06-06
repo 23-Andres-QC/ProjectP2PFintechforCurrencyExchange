@@ -23,8 +23,15 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
 
-    // Use 10.0.2.2 for Android emulator → host machine localhost
-    private const val BASE_URL = "http://10.0.2.2:5000/api/v1/"
+    // Toggle this to true if you want to connect to your local backend, false for the VM
+    private const val IS_LOCAL = false 
+
+    // Local emulator URL
+    private const val LOCAL_URL = "http://10.0.2.2:5000/api/v1/"
+    // Your Oracle VM URL
+    private const val REMOTE_URL = "http://157.137.189.178/api/v1/"
+
+    private val BASE_URL = if (IS_LOCAL) LOCAL_URL else REMOTE_URL
 
     private var tokenManager: TokenManager? = null
 

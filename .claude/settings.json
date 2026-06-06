@@ -92,7 +92,19 @@
       "Bash(python -c \"import json,sys; print\\(json.dumps\\(json.load\\(sys.stdin\\), indent=2, ensure_ascii=False\\)\\)\")",
       "Bash(python -c ' *)",
       "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices 2>&1)",
-      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s emulator-5554 emu kill 2>&1)"
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s emulator-5554 emu kill 2>&1)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s emulator-5554 shell pm list packages | Select-String \"p2p\" 2>&1)",
+      "PowerShell($env:LOCALAPPDATA + \"\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" + \" devices\")",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" logcat -d -t 400 2>$null | Select-String -Pattern \"offer|publish|Offer|Publish|error|Error|exception|Exception|p2p|retrofit|gson\" | Select-Object -Last 60)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" logcat -d -t 1000 2>$null | Select-String -Pattern \"okhttp|OkHttp\" | Select-Object -Last 100)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" logcat -d -t 5000 2>$null | Select-String -Pattern \"okhttp\" | Where-Object { $_ -match \"offer|POST|201|403|400|error\" } | Select-Object -Last 30)",
+      "Bash(./gradlew app:assembleDebug)",
+      "Bash(git commit -m 'fix: reemplazar Icons.Default.ArrowBack deprecado por AutoMirrored en VendorInboxScreen *)",
+      "Bash(./gradlew assembleDebug --quiet)",
+      "Bash(cd \"c:\\\\Mobile\\\\ProyectoFinal\" && docker compose ps 2>&1)",
+      "Read(//c/Mobile/ProyectoFinal/**)",
+      "Bash(curl -s -X POST http://localhost:5000/api/v1/auth/login -H \"Content-Type: application/json\" -d \"{\\\\\"email\\\\\":\\\\\"vendor@test.com\\\\\",\\\\\"password\\\\\":\\\\\"test123\\\\\"}\")"
     ]
   }
 }
