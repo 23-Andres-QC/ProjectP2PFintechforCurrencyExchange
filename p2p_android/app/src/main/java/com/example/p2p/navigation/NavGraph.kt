@@ -300,7 +300,13 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
 
             composable(Screen.BankAccounts.route) {
                 val bankRepo = com.example.p2p.data.repository.BankAccountRepositoryImpl(com.example.p2p.core.network.ApiClient.bankAccountsApi)
-                val vm: com.example.p2p.presentation.bank_accounts.BankAccountsViewModel = viewModel(factory = com.example.p2p.presentation.bank_accounts.BankAccountsViewModel.Factory(bankRepo))
+
+                // Asegúrate de que el ViewModel se cree así, con el tokenManager que ya tienes arriba
+                val vm: com.example.p2p.presentation.bank_accounts.BankAccountsViewModel = viewModel(
+                    factory = com.example.p2p.presentation.bank_accounts.BankAccountsViewModel.Factory(bankRepo, tokenManager)
+                )
+
+                // El Screen debe ir en su propia línea
                 BankAccountsScreen(
                     viewModel = vm,
                     onBack = { navController.popBackStack() }

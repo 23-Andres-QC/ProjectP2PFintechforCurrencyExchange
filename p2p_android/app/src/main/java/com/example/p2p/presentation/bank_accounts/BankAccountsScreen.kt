@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -41,17 +42,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.BankAccount
@@ -88,21 +90,39 @@ fun BankAccountsScreen(
 ) {
     var selectedBank by remember { mutableStateOf("BCP") }
     var accountNumber by remember { mutableStateOf("") }
-    var holderName by remember { mutableStateOf("") }
     var selectedCurrency by remember { mutableStateOf("PEN") }
     val uiState by viewModel?.uiState?.collectAsState(initial = BankAccountsUiState()) ?: remember { mutableStateOf(BankAccountsUiState()) }
     val context = androidx.compose.ui.platform.LocalContext.current
+    var holderName by remember(uiState.currentUserName) {
+        mutableStateOf(uiState.currentUserName ?: "")
+    }
+
+    val isYapeOrPlin = selectedBank == "Yape" || selectedBank == "Plin"
+    val accountError = when {
+        accountNumber.isBlank() -> null
+        isYapeOrPlin && accountNumber.length != 9 -> "El celular debe tener 9 dígitos"
+        isYapeOrPlin && !accountNumber.all { it.isDigit() } -> "Solo números"
+        !isYapeOrPlin && accountNumber.length != 20 -> "El CCI debe tener 20 dígitos"
+        !isYapeOrPlin && !accountNumber.all { it.isDigit() } -> "Solo números"
+        else -> null
+    }
+    val holderError = when {
+        holderName.isBlank() -> null
+        holderName.length < 3 -> "Nombre muy corto"
+        else -> null
+    }
+    val canAdd = holderName.isNotBlank() && accountNumber.isNotBlank() && accountError == null && holderError == null
 
     LaunchedEffect(Unit) {
         viewModel?.loadBankAccounts()
     }
 
     LaunchedEffect(uiState.successMessage) {
-        uiState.successMessage?.let {
-            android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_SHORT).show()
+        if (uiState.successMessage != null) {
+            android.widget.Toast.makeText(context, uiState.successMessage, android.widget.Toast.LENGTH_SHORT).show()
             viewModel?.clearMessages()
             accountNumber = ""
-            holderName = ""
+            holderName = uiState.currentUserName ?: ""
         }
     }
 
@@ -219,52 +239,66 @@ fun BankAccountsScreen(
                 }
             }
 
-            // Holder name field
-            item {
-                Spacer(Modifier.height(4.dp))
-                OutlinedTextField(
-                    value = holderName,
-                    onValueChange = { holderName = it },
-                    label = { Text("Nombre del titular", fontSize = 13.sp) },
-                    placeholder = {
-                        Text(
-                            "Ej. Juan Pérez",
-                            fontSize = 13.sp,
-                            color = TextMuted.copy(alpha = 0.6f),
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Primary,
-                        unfocusedBorderColor = BorderColor,
-                        focusedLabelColor = Primary,
-                        unfocusedLabelColor = TextMuted,
-                        cursorColor = Primary,
-                    ),
-                )
+            // Holder name field — oculto para Yape/Plin
+            if (!isYapeOrPlin) {
+                item {
+                    Spacer(Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = holderName,
+                        onValueChange = { holderName = it },
+                        label = { Text("Nombre del titular", fontSize = 13.sp) },
+                        placeholder = { Text("Ej. Juan Pérez", fontSize = 13.sp, color = TextMuted.copy(alpha = 0.6f)) },
+                        isError = holderError != null,
+                        supportingText = if (holderError != null) {
+                            { Text(holderError, color = DangerColor, fontSize = 11.sp) }
+                        } else null,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Primary,
+                            unfocusedBorderColor = BorderColor,
+                            errorBorderColor = DangerColor,
+                            focusedLabelColor = Primary,
+                            unfocusedLabelColor = TextMuted,
+                            cursorColor = Primary,
+                        ),
+                    )
+                }
             }
 
             // Account number field
             item {
                 OutlinedTextField(
                     value = accountNumber,
-                    onValueChange = { accountNumber = it },
-                    label = { Text("Número de Cuenta / CCI", fontSize = 13.sp) },
+                    onValueChange = { 
+                        val maxLength = if (isYapeOrPlin) 9 else 20
+                        if (it.length <= maxLength && it.all { c -> c.isDigit() }) {
+                            accountNumber = it
+                        }
+                    },
+                    label = { Text(if (isYapeOrPlin) "Número de celular" else "Número de CCI", fontSize = 13.sp) },
                     placeholder = {
                         Text(
-                            "Ej. 002-191-0098765432-12",
+                            if (isYapeOrPlin) "Ej. 987654321" else "Ej. 00219100987654321200",
                             fontSize = 13.sp,
                             color = TextMuted.copy(alpha = 0.6f),
                         )
                     },
+                    isError = accountError != null,
+                    supportingText = when {
+                        accountError != null -> { { Text(accountError, color = DangerColor, fontSize = 11.sp) } }
+                        accountNumber.isNotBlank() -> { { Text("✓ Válido", color = Color(0xFF2E7D32), fontSize = 11.sp) } }
+                        else -> { { Text(if (isYapeOrPlin) "9 dígitos" else "20 dígitos", fontSize = 11.sp, color = TextMuted) } }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Primary,
                         unfocusedBorderColor = BorderColor,
+                        errorBorderColor = DangerColor,
                         focusedLabelColor = Primary,
                         unfocusedLabelColor = TextMuted,
                         cursorColor = Primary,
@@ -311,14 +345,13 @@ fun BankAccountsScreen(
             // Add button
             item {
                 Spacer(Modifier.height(4.dp))
-                val canAdd = holderName.isNotBlank() && accountNumber.isNotBlank()
                 Button(
                     onClick = {
                         if (canAdd) {
                             viewModel?.addBankAccount(
                                 bankName = selectedBank,
                                 accountNumber = accountNumber,
-                                accountHolder = holderName.trim(),
+                                accountHolder = if (isYapeOrPlin) selectedBank else holderName.trim(),
                                 currency = selectedCurrency
                             )
                         }
