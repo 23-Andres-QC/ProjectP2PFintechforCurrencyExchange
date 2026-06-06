@@ -116,6 +116,9 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                         navController.navigate(Screen.Market.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
+                    },
+                    onNavigateToRegister = {
+                        navController.navigate(Screen.Register.route)
                     }
                 )
             }
@@ -132,8 +135,8 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                         }
                     },
                     onRegisterSuccess = {
-                        navController.navigate(Screen.Market.route) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
+                        navController.navigate(Screen.Kyc.route) {
+                            popUpTo(Screen.Register.route) { inclusive = true }
                         }
                     }
                 )

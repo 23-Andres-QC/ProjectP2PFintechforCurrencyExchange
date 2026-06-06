@@ -64,6 +64,8 @@ dependencies {
     implementation(libs.coroutines.android)
     // DataStore
     implementation(libs.datastore.preferences)
+    // Coil
+    implementation(libs.coil.compose)
     // Tests
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
