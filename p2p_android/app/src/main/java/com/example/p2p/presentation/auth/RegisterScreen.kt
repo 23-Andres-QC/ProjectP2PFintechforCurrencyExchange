@@ -1,10 +1,12 @@
 package com.example.p2p.presentation.auth
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -297,12 +299,30 @@ fun RegisterScreen(
                     }
 
                     uiState.error?.let { err ->
-                        Text(
-                            text = err,
-                            color = DangerColor,
-                            fontSize = 12.sp,
-                            modifier = androidx.compose.ui.Modifier.padding(top = 6.dp)
-                        )
+                        Spacer(Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(DangerColor.copy(alpha = 0.08f))
+                                .border(1.dp, DangerColor.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = DangerColor,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = err,
+                                color = DangerColor,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }

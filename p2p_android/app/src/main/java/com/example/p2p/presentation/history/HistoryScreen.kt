@@ -40,7 +40,8 @@ private data class Transaction(
     val amount: String,
     val rate: String,
     val date: String,
-    val icon: ImageVector
+    val icon: ImageVector,
+    val isBuyerActive: Boolean = false
 )
 
 private val sampleTransactions = listOf(
@@ -59,18 +60,25 @@ private val filterChips = listOf("Todos", "Completados", "Pendientes", "Disputas
 @Composable
 fun HistoryScreen(
     viewModel: HistoryViewModel? = null,
+    currentUserId: String = "",
     onBack: () -> Unit = {},
     onNavigateToTransaction: (String) -> Unit = {},
+    onNavigateToTransactionDetail: (String) -> Unit = {},
     onNavigateToPending: () -> Unit = {}
 ) {
     val uiState by viewModel?.uiState?.collectAsState(initial = HistoryUiState()) ?: remember { mutableStateOf(HistoryUiState()) }
     var selectedFilter by remember { mutableStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
 
+    LaunchedEffect(Unit) {
+        viewModel?.loadTransactions()
+    }
+
     val transactions = uiState.transactions.map { dto ->
         val statusName = when (dto.status) {
             "completed" -> "Completado"
             "pending" -> "Pendiente"
+            "accepted" -> "Aceptado"
             "voucher_uploaded" -> "En Proceso"
             "cancelled" -> "Cancelado"
             "disputed" -> "Disputa"
@@ -78,13 +86,13 @@ fun HistoryScreen(
         }
         val sColor = when (dto.status) {
             "completed" -> SuccessColor
-            "pending", "voucher_uploaded" -> WarningColor
+            "pending", "accepted", "voucher_uploaded" -> WarningColor
             "cancelled", "disputed" -> DangerColor
             else -> TextMuted
         }
         val icon = when (dto.status) {
             "completed" -> Icons.Default.SwapHoriz
-            "pending", "voucher_uploaded" -> Icons.Default.Schedule
+            "pending", "accepted", "voucher_uploaded" -> Icons.Default.Schedule
             "cancelled" -> Icons.Default.Cancel
             "disputed" -> Icons.Default.Gavel
             else -> Icons.Default.Info
@@ -108,7 +116,10 @@ fun HistoryScreen(
             amount = "${String.format("%.2f", dto.amount_from)} USD",
             rate = "S/ ${String.format("%.3f", dto.exchange_rate)}",
             date = formattedDate,
-            icon = icon
+            icon = icon,
+            isBuyerActive = currentUserId.isNotBlank() &&
+                currentUserId == dto.buyer_id &&
+                dto.status in listOf("pending", "accepted", "voucher_uploaded")
         )
     }
 
@@ -116,7 +127,7 @@ fun HistoryScreen(
         .filter {
             when (selectedFilter) {
                 1 -> it.status == "Completado"
-                2 -> it.status == "Pendiente" || it.status == "En Proceso"
+                2 -> it.status == "Pendiente" || it.status == "Aceptado" || it.status == "En Proceso"
                 3 -> it.status == "Disputa"
                 else -> true
             }
@@ -220,21 +231,6 @@ fun HistoryScreen(
                 }
             }
 
-            // ── Summary row ───────────────────────────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                SummaryChip("${transactions.size} Total", Primary)
-                SummaryChip("${filteredList.size} Mostrados", TextMuted)
-                SummaryChip("${transactions.count { it.status == "Completado" }} Completados", SuccessColor)
-                SummaryChip("${transactions.count { it.status == "Pendiente" || it.status == "En Proceso" }} Pendientes", WarningColor, onClick = onNavigateToPending)
-                SummaryChip("${transactions.count { it.status == "Disputa" }} Disputas", DangerColor)
-            }
-
             // ── Transaction list ──────────────────────────────────────────────
             if (filteredList.isEmpty() && !uiState.isLoading) {
                 Box(
@@ -282,7 +278,7 @@ fun HistoryScreen(
                         }
                     }
                     items(filteredList) { tx ->
-                        TransactionCard(tx, onNavigateToTransaction)
+                        TransactionCard(tx, onNavigateToTransaction, onNavigateToTransactionDetail)
                     }
                 }
             }
@@ -290,27 +286,15 @@ fun HistoryScreen(
     }
 }
 
-// ─── Summary Chip ─────────────────────────────────────────────────────────────
-
-@Composable
-private fun SummaryChip(text: String, color: Color, onClick: (() -> Unit)? = null) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(color.copy(alpha = 0.1f))
-            .border(1.dp, color.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        Text(text, color = color, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
-    }
-}
-
 // ─── Transaction Card ─────────────────────────────────────────────────────────
 
 @Composable
-private fun TransactionCard(tx: Transaction, onNavigateToTransaction: (String) -> Unit = {}) {
-    val isActive = tx.status == "Pendiente" || tx.status == "En Proceso"
+private fun TransactionCard(
+    tx: Transaction,
+    onNavigateToTransaction: (String) -> Unit = {},
+    onNavigateToTransactionDetail: (String) -> Unit = {}
+) {
+    val isActive = tx.status == "Pendiente" || tx.status == "Aceptado" || tx.status == "En Proceso"
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
@@ -322,7 +306,10 @@ private fun TransactionCard(tx: Transaction, onNavigateToTransaction: (String) -
         modifier = Modifier
             .fillMaxWidth()
             .then(
-                if (tx.rawId.isNotBlank()) Modifier.clickable { onNavigateToTransaction(tx.rawId) }
+                if (tx.rawId.isNotBlank()) Modifier.clickable {
+                    if (tx.isBuyerActive) onNavigateToTransaction(tx.rawId)
+                    else onNavigateToTransactionDetail(tx.rawId)
+                }
                 else Modifier
             )
     ) {
@@ -348,7 +335,7 @@ private fun TransactionCard(tx: Transaction, onNavigateToTransaction: (String) -
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text(tx.id, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextMain)
-                    if (isActive && tx.rawId.isNotBlank()) {
+                    if (tx.isBuyerActive) {
                         Text("Toca para continuar →", fontSize = 10.sp, color = WarningColor, fontWeight = FontWeight.SemiBold)
                     }
                 }

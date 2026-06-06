@@ -9,6 +9,7 @@ import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.data.remote.model.CreateTransactionRequest
 import com.example.p2p.data.remote.model.ExchangeRate
 import com.example.p2p.data.remote.model.Offer
+import com.example.p2p.data.remote.model.Transaction
 import com.example.p2p.domain.repository.BankAccountRepository
 import com.example.p2p.domain.repository.NotificationRepository
 import com.example.p2p.domain.repository.OfferRepository
@@ -26,7 +27,8 @@ data class MarketUiState(
     val bankAccounts: List<BankAccount> = emptyList(),
     val selectedBankAccountId: String? = null,
     val isLoadingAccounts: Boolean = false,
-    val unreadCount: Int = 0
+    val unreadCount: Int = 0,
+    val activeTransactions: List<Transaction> = emptyList()
 )
 
 class MarketViewModel(
@@ -44,6 +46,7 @@ class MarketViewModel(
         loadExchangeRates()
         loadBankAccounts()
         loadUnreadCount()
+        loadActiveTransactions()
     }
 
     fun loadUnreadCount() {
@@ -115,6 +118,18 @@ class MarketViewModel(
                 is NetworkResult.Success -> { _uiState.value = _uiState.value.copy(isLoading = false); onSuccess(result.data.id) }
                 is NetworkResult.Error   -> { _uiState.value = _uiState.value.copy(isLoading = false); onError(result.message) }
                 NetworkResult.Loading    -> Unit
+            }
+        }
+    }
+
+    fun loadActiveTransactions() {
+        viewModelScope.launch {
+            when (val result = transactionRepository.listTransactions()) {
+                is NetworkResult.Success -> {
+                    val active = result.data.filter { it.status in listOf("pending", "accepted", "voucher_uploaded") }
+                    _uiState.value = _uiState.value.copy(activeTransactions = active)
+                }
+                else -> Unit
             }
         }
     }

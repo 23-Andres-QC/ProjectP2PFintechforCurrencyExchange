@@ -86,7 +86,13 @@
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(f'OK - {len\\(d[\\\\\"bank_accounts\\\\\"]\\)} cuentas'\\)\")",
       "Bash(curl -s -X POST http://localhost/api/v1/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"admin@peruexchange.com\",\"password\":\"Admin123!\"}')",
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(f'OK - {len\\(d[\\\\\"users\\\\\"]\\)} usuarios' if 'users' in d else d\\)\")",
-      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('Login OK' if 'access_token' in d else d\\)\")"
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('Login OK' if 'access_token' in d else d\\)\")",
+      "Bash(grep -vE \"^$\")",
+      "Bash(curl -s -X POST http://localhost/api/v1/auth/register -H \"Content-Type: application/json\" -d '{\"email\":\"test@test.com\",\"password\":\"Test1234!\",\"full_name\":\"Test User\",\"role\":\"buyer\"}')",
+      "Bash(python -c \"import json,sys; print\\(json.dumps\\(json.load\\(sys.stdin\\), indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(python -c ' *)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices 2>&1)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s emulator-5554 emu kill 2>&1)"
     ]
   }
 }

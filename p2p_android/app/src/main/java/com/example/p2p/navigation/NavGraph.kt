@@ -87,10 +87,18 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = currentRoute != null && currentRoute !in authRoutes
 
+    var userRole by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        userRole = tokenManager.getUserRole() ?: ""
+    }
+
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                AppBottomBar(currentRoute = currentRoute) { route ->
+                AppBottomBar(
+                    currentRoute = currentRoute,
+                    isVendor = userRole == "vendor" || userRole == "admin"
+                ) { route ->
                     navController.navigate(route) {
                         launchSingleTop = true
                         popUpTo(Screen.Market.route) { saveState = true }
@@ -201,10 +209,14 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
             composable(Screen.History.route) {
                 val txnRepo = com.example.p2p.data.repository.TransactionRepositoryImpl(com.example.p2p.core.network.ApiClient.transactionApi)
                 val vm: com.example.p2p.presentation.history.HistoryViewModel = viewModel(factory = com.example.p2p.presentation.history.HistoryViewModel.Factory(txnRepo))
+                var historyUserId by remember { mutableStateOf("") }
+                LaunchedEffect(Unit) { historyUserId = tokenManager.getUserId() ?: "" }
                 HistoryScreen(
                     viewModel = vm,
+                    currentUserId = historyUserId,
                     onBack = { navController.popBackStack() },
                     onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) },
+                    onNavigateToTransactionDetail = { txnId -> navController.navigate(Screen.TransactionDetail.createRoute(txnId)) },
                     onNavigateToPending = { navController.navigate(Screen.Vendor.route) }
                 )
             }
@@ -244,8 +256,11 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 val txnRepo = com.example.p2p.data.repository.TransactionRepositoryImpl(com.example.p2p.core.network.ApiClient.transactionApi)
                 val vm: com.example.p2p.presentation.transaction.TransactionViewModel = viewModel(factory = com.example.p2p.presentation.transaction.TransactionViewModel.Factory(txnRepo))
                 val id = backStack.arguments?.getString("transactionId") ?: ""
+                var txnCurrentUserId by remember { mutableStateOf("") }
+                LaunchedEffect(Unit) { txnCurrentUserId = tokenManager.getUserId() ?: "" }
                 TransactionScreen(
                     transactionId = id,
+                    currentUserId = txnCurrentUserId,
                     viewModel = vm,
                     onNavigateToDispute = { txnId -> navController.navigate(Screen.RegisterDispute.createRoute(txnId)) },
                     onNavigateToReceipt = { txnId -> navController.navigate(Screen.Receipt.createRoute(txnId)) },
@@ -446,7 +461,11 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
 }
 
 @Composable
-private fun AppBottomBar(currentRoute: String?, onNavigate: (String) -> Unit) {
+private fun AppBottomBar(
+    currentRoute: String?,
+    isVendor: Boolean = false,
+    onNavigate: (String) -> Unit
+) {
     NavigationBar(containerColor = SurfaceColor, tonalElevation = 8.dp) {
         NavigationBarItem(
             selected = currentRoute == Screen.Market.route,
@@ -459,17 +478,19 @@ private fun AppBottomBar(currentRoute: String?, onNavigate: (String) -> Unit) {
                 indicatorColor = Primary.copy(alpha = 0.12f)
             )
         )
-        NavigationBarItem(
-            selected = currentRoute == Screen.Publish.route,
-            onClick = { onNavigate(Screen.Publish.route) },
-            icon = { Icon(Icons.Default.AddCircle, contentDescription = "Publicar") },
-            label = { Text("Publicar", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Primary,
-                selectedTextColor = Primary,
-                indicatorColor = Primary.copy(alpha = 0.12f)
+        if (isVendor) {
+            NavigationBarItem(
+                selected = currentRoute == Screen.Publish.route,
+                onClick = { onNavigate(Screen.Publish.route) },
+                icon = { Icon(Icons.Default.AddCircle, contentDescription = "Publicar") },
+                label = { Text("Publicar", fontSize = 11.sp) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Primary,
+                    selectedTextColor = Primary,
+                    indicatorColor = Primary.copy(alpha = 0.12f)
+                )
             )
-        )
+        }
         NavigationBarItem(
             selected = currentRoute == Screen.Profile.route,
             onClick = { onNavigate(Screen.Profile.route) },

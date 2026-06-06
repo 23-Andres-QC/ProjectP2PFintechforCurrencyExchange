@@ -5,6 +5,7 @@ import com.example.p2p.data.remote.api.OfferApi
 import com.example.p2p.data.remote.model.CreateOfferRequest
 import com.example.p2p.data.remote.model.Offer
 import com.example.p2p.domain.repository.OfferRepository
+import org.json.JSONObject
 
 class OfferRepositoryImpl(
     private val api: OfferApi
@@ -33,11 +34,38 @@ class OfferRepositoryImpl(
             if (response.isSuccessful && response.body() != null) {
                 NetworkResult.Success(response.body()!!)
             } else {
-                NetworkResult.Error(response.code(), response.message())
+                val errorMsg = parseBackendError(response.errorBody()?.string(), response.code())
+                NetworkResult.Error(response.code(), errorMsg)
             }
         } catch (e: Exception) {
             NetworkResult.Error(-1, e.message ?: "An error occurred")
         }
+    }
+
+    private fun parseBackendError(errorBody: String?, code: Int): String {
+        if (!errorBody.isNullOrBlank()) {
+            return try {
+                val json = JSONObject(errorBody)
+                val msg = json.optJSONObject("error")?.optString("message", "") ?: ""
+                when {
+                    code == 403 && msg.contains("vendor", ignoreCase = true) ->
+                        "Solo los vendedores pueden crear ofertas"
+                    msg.isNotBlank() -> msg
+                    else -> httpMessage(code)
+                }
+            } catch (e: Exception) {
+                httpMessage(code)
+            }
+        }
+        return httpMessage(code)
+    }
+
+    private fun httpMessage(code: Int) = when (code) {
+        400 -> "Datos inválidos"
+        401 -> "Sesión expirada, vuelve a iniciar sesión"
+        403 -> "No tienes permiso para realizar esta acción"
+        404 -> "No encontrado"
+        else -> "Error $code"
     }
 
     override suspend fun getMyOffers(): NetworkResult<List<Offer>> {

@@ -54,7 +54,7 @@ def pending_transactions():
     user_id = get_jwt_identity()
     txns = Transaction.query.filter(
         Transaction.vendor_id == user_id,
-        Transaction.status.in_(('pending', 'voucher_uploaded'))
+        Transaction.status.in_(('pending', 'accepted', 'voucher_uploaded'))
     ).order_by(Transaction.created_at.desc()).all()
     return {'transactions': [_txn_dict(t) for t in txns]}, 200
 

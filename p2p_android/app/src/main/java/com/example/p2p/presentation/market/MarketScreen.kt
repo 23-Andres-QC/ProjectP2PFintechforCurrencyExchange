@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -32,6 +33,7 @@ import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.data.remote.model.CreateTransactionRequest
 import com.example.p2p.data.remote.model.ExchangeRate
 import com.example.p2p.data.remote.model.Offer
+import com.example.p2p.data.remote.model.Transaction
 import com.example.p2p.ui.theme.*
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
@@ -60,6 +62,13 @@ fun MarketScreen(
 
     LaunchedEffect(selectedFiat, selectedCurrency) {
         viewModel.loadOffers(currency = selectedCurrency, fiatCurrency = selectedFiat)
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            viewModel.loadActiveTransactions()
+            kotlinx.coroutines.delay(8000L)
+        }
     }
 
     Scaffold(
@@ -91,6 +100,15 @@ fun MarketScreen(
                     onFiatChange     = { selectedFiat = it },
                     onCurrencyChange = { selectedCurrency = it }
                 )
+            }
+
+            if (uiState.activeTransactions.isNotEmpty()) {
+                items(uiState.activeTransactions, key = { it.id }) { txn ->
+                    ActiveTransactionBanner(
+                        transaction = txn,
+                        onClick = { onNavigateToTransaction(txn.id) }
+                    )
+                }
             }
 
             item {
@@ -648,6 +666,69 @@ private fun MatchingDialog(
             TextButton(onClick = onDismiss) { Text("Cancelar") }
         }
     )
+}
+
+// ─── Active Transaction Banner ───────────────────────────────────────────────
+
+@Composable
+private fun ActiveTransactionBanner(
+    transaction: Transaction,
+    onClick: () -> Unit
+) {
+    val (statusLabel, statusColor, statusIcon) = when (transaction.status) {
+        "pending"          -> Triple("Esperando al vendedor", WarningColor, Icons.Default.Schedule)
+        "accepted"         -> Triple("Vendedor aceptó · Sube tu comprobante", SuccessColor, Icons.Default.CheckCircle)
+        "voucher_uploaded" -> Triple("Verificando tu pago", Primary, Icons.Default.Pending)
+        else               -> Triple("En curso", TextMuted, Icons.Default.Info)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(statusColor.copy(alpha = 0.09f))
+            .border(1.5.dp, statusColor.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(statusColor.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(statusIcon, contentDescription = null, tint = statusColor, modifier = Modifier.size(20.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "Transacción pendiente",
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+                color = TextMain
+            )
+            Text(
+                text = statusLabel,
+                fontSize = 11.sp,
+                color = statusColor,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "${String.format("%.2f", transaction.amount_from)} USD · S/ ${String.format("%.2f", transaction.amount_to)}",
+                fontSize = 11.sp,
+                color = TextMuted
+            )
+        }
+        Icon(
+            Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = statusColor,
+            modifier = Modifier.size(18.dp)
+        )
+    }
 }
 
 // ─── Offer Card ───────────────────────────────────────────────────────────────

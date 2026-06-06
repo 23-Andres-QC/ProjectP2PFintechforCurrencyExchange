@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun TransactionScreen(
     transactionId: String? = null,
+    currentUserId: String = "",
     viewModel: TransactionViewModel? = null,
     onNavigateToDispute: (String) -> Unit = {},
     onNavigateToReceipt: (String) -> Unit = {},
@@ -114,8 +115,9 @@ fun TransactionScreen(
         }
     }
 
-    LaunchedEffect(uiState.transaction?.status) {
-        if (uiState.transaction?.status == "completed") {
+    LaunchedEffect(uiState.transaction?.status, currentUserId) {
+        val t = uiState.transaction
+        if (t?.status == "completed" && currentUserId.isNotBlank() && currentUserId == t.buyer_id) {
             delay(1500L)
             showRatingDialog = true
         }
