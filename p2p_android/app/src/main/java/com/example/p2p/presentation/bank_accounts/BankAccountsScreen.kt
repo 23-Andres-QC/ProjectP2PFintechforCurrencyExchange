@@ -55,7 +55,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,35 +76,53 @@ import com.example.p2p.ui.theme.YapeColor
 private data class BankChip(val name: String, val color: Color)
 
 private val bankChips = listOf(
-    BankChip("BCP", BcpColor),
+    BankChip("BCP",       BcpColor),
     BankChip("Interbank", InterbankColor),
-    BankChip("BBVA", BbvaColor),
-    BankChip("Yape", YapeColor),
-    BankChip("Plin", PlinColor),
+    BankChip("BBVA",      BbvaColor),
+    BankChip("Yape",      YapeColor),
+    BankChip("Plin",      PlinColor),
+    BankChip("Wise",      Color(0xFF00B9FF)),
+    BankChip("Binance",   Color(0xFFF0B90B)),
+    BankChip("Otro",      Color(0xFF6B7280)),
 )
 
-private val currencyOptions = listOf("PEN", "USD", "EUR")
+private val currencyOptions = listOf(
+    "PEN", "USD", "EUR", "USDT", "COP", "MXN", "ARS", "GBP", "BRL", "CAD", "AUD", "JPY", "CLP"
+)
 
-private fun validateHolderName(name: String): String? = when {
-    name.isBlank() -> "El nombre es obligatorio"
-    name.trim().length < 3 -> "Mínimo 3 caracteres"
-    !name.matches(Regex("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$")) -> "Solo letras y espacios"
-    else -> null
-}
+private val mobileWalletBanks = listOf("yape", "plin")
+private val strictDigitBanks  = listOf("bcp", "interbank", "bbva")
 
-// Strips hyphens/spaces to get only digits for backend
 private fun cleanAccountNumber(number: String) = number.replace("-", "").replace(" ", "")
 
 private fun validateAccountNumber(number: String, bank: String): String? {
-    val digits = cleanAccountNumber(number)
+    val bankLower = bank.lowercase()
     return when {
-        digits.isBlank() -> "El número de cuenta es obligatorio"
-        !digits.matches(Regex("^[0-9]+$")) -> "Solo dígitos (sin letras ni guiones especiales)"
-        bank.lowercase() in listOf("yape", "plin") ->
-            if (digits.length != 9) "Yape/Plin requiere exactamente 9 dígitos" else null
-        bank.lowercase() in listOf("bcp", "interbank", "bbva") ->
-            if (digits.length != 20) "El CCI debe tener exactamente 20 dígitos" else null
-        else -> null
+        number.isBlank() -> "El número de cuenta es obligatorio"
+        bankLower in mobileWalletBanks -> {
+            val d = cleanAccountNumber(number)
+            when {
+                !d.all { it.isDigit() } -> "Solo dígitos"
+                d.length != 9           -> "Yape/Plin requiere exactamente 9 dígitos"
+                else                    -> null
+            }
+        }
+        bankLower in strictDigitBanks -> {
+            val d = cleanAccountNumber(number)
+            when {
+                !d.all { it.isDigit() } -> "Solo dígitos (sin letras)"
+                d.length != 20          -> "El CCI debe tener exactamente 20 dígitos"
+                else                    -> null
+            }
+        }
+        else -> {
+            val clean = number.trim()
+            when {
+                clean.length < 4  -> "Mínimo 4 caracteres"
+                clean.length > 60 -> "Máximo 60 caracteres"
+                else              -> null
+            }
+        }
     }
 }
 
@@ -117,35 +134,25 @@ fun BankAccountsScreen(
 ) {
     var selectedBank     by remember { mutableStateOf("BCP") }
     var accountNumber    by remember { mutableStateOf("") }
-    var holderName       by remember { mutableStateOf("") }
     var selectedCurrency by remember { mutableStateOf("PEN") }
-    var holderTouched    by remember { mutableStateOf(false) }
     var accountTouched   by remember { mutableStateOf(false) }
 
     val uiState by viewModel?.uiState?.collectAsState(initial = BankAccountsUiState())
         ?: remember { mutableStateOf(BankAccountsUiState()) }
     val context = LocalContext.current
 
-    val isYapeOrPlin = selectedBank == "Yape" || selectedBank == "Plin"
-    val holderError  = if (holderTouched && !isYapeOrPlin) validateHolderName(holderName) else null
-    val accountError = if (accountTouched) validateAccountNumber(accountNumber, selectedBank) else null
-    val canAdd = (isYapeOrPlin || validateHolderName(holderName) == null) &&
-                 validateAccountNumber(accountNumber, selectedBank) == null &&
-                 accountNumber.isNotBlank()
+    val isYapeOrPlin   = selectedBank.lowercase() in mobileWalletBanks
+    val isInternational = selectedBank.lowercase() !in (mobileWalletBanks + strictDigitBanks)
+    val accountError   = if (accountTouched) validateAccountNumber(accountNumber, selectedBank) else null
+    val canAdd         = validateAccountNumber(accountNumber, selectedBank) == null && accountNumber.isNotBlank()
 
     LaunchedEffect(Unit) { viewModel?.loadBankAccounts() }
-
-    LaunchedEffect(uiState.currentUserName) {
-        if (holderName.isBlank()) holderName = uiState.currentUserName ?: ""
-    }
 
     LaunchedEffect(uiState.successMessage) {
         if (uiState.successMessage != null) {
             android.widget.Toast.makeText(context, uiState.successMessage, android.widget.Toast.LENGTH_SHORT).show()
             viewModel?.clearMessages()
             accountNumber  = ""
-            holderName     = uiState.currentUserName ?: ""
-            holderTouched  = false
             accountTouched = false
         }
     }
@@ -160,20 +167,10 @@ fun BankAccountsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Mis Cuentas Bancarias",
-                        fontWeight = FontWeight.Bold,
-                        color = TextMain,
-                    )
-                },
+                title = { Text("Mis Cuentas Bancarias", fontWeight = FontWeight.Bold, color = TextMain) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = TextMain,
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = TextMain)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor),
@@ -182,32 +179,19 @@ fun BankAccountsScreen(
         containerColor = BackgroundApp,
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
 
-            // ── Título del formulario ─────────────────────────────────────────
             item {
-                Text(
-                    text = "Agregar Cuenta Bancaria",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = TextMain,
-                )
+                Text("Agregar Cuenta Bancaria", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextMain)
             }
 
             // ── Selector de banco ─────────────────────────────────────────────
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "Selecciona tu banco",
-                        fontSize = 13.sp,
-                        color = TextMuted,
-                        fontWeight = FontWeight.Medium,
-                    )
+                    Text("Selecciona tu banco", fontSize = 13.sp, color = TextMuted, fontWeight = FontWeight.Medium)
                     Row(
                         modifier = Modifier.horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -217,59 +201,19 @@ fun BankAccountsScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(50.dp))
-                                    .background(if (isSelected) Primary else SurfaceColor)
-                                    .border(
-                                        width = 1.dp,
-                                        color = if (isSelected) Primary else BorderColor,
-                                        shape = RoundedCornerShape(50.dp),
-                                    )
-                                    .clickable { selectedBank = chip.name }
+                                    .background(if (isSelected) chip.color else SurfaceColor)
+                                    .border(1.dp, if (isSelected) chip.color else BorderColor, RoundedCornerShape(50.dp))
+                                    .clickable { selectedBank = chip.name; accountNumber = ""; accountTouched = false }
                                     .padding(horizontal = 14.dp, vertical = 8.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
-                                    text = chip.name,
+                                    chip.name,
                                     fontSize = 13.sp,
                                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                                     color = if (isSelected) Color.White else TextMuted,
                                 )
                             }
-                        }
-                    }
-                }
-            }
-
-            // ── Nombre del titular (oculto para Yape/Plin) ───────────────────
-            if (!isYapeOrPlin) {
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        OutlinedTextField(
-                            value = holderName,
-                            onValueChange = { holderName = it; holderTouched = true },
-                            label = { Text("Nombre del titular", fontSize = 13.sp) },
-                            placeholder = { Text("Ej. Juan Pérez", fontSize = 13.sp, color = TextMuted.copy(alpha = 0.6f)) },
-                            isError = holderError != null,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Text,
-                                capitalization = KeyboardCapitalization.Words,
-                            ),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Primary,
-                                unfocusedBorderColor = BorderColor,
-                                errorBorderColor = DangerColor,
-                                focusedLabelColor = Primary,
-                                unfocusedLabelColor = TextMuted,
-                                errorLabelColor = DangerColor,
-                                cursorColor = Primary,
-                            ),
-                        )
-                        if (holderError != null) {
-                            Text(holderError, fontSize = 11.sp, color = DangerColor, modifier = Modifier.padding(start = 4.dp))
-                        } else if (holderTouched && holderName.isNotBlank()) {
-                            Text("✓ Nombre válido", fontSize = 11.sp, color = SuccessColor, modifier = Modifier.padding(start = 4.dp))
                         }
                     }
                 }
@@ -281,16 +225,38 @@ fun BankAccountsScreen(
                     OutlinedTextField(
                         value = accountNumber,
                         onValueChange = {
-                            val maxLength = if (isYapeOrPlin) 9 else 20
-                            if (it.length <= maxLength && it.all { c -> c.isDigit() }) {
-                                accountNumber = it
+                            val maxLen = when {
+                                isYapeOrPlin    -> 9
+                                isInternational -> 60
+                                else            -> 20
+                            }
+                            val allowed = when {
+                                isYapeOrPlin                  -> it.all { c -> c.isDigit() }
+                                isInternational               -> true
+                                else                          -> it.all { c -> c.isDigit() }
+                            }
+                            if (it.length <= maxLen && allowed) {
+                                accountNumber  = it
                                 accountTouched = true
                             }
                         },
-                        label = { Text(if (isYapeOrPlin) "Número de celular" else "Número de CCI", fontSize = 13.sp) },
+                        label = {
+                            Text(
+                                when {
+                                    isYapeOrPlin    -> "Número de celular"
+                                    isInternational -> "Número / IBAN / Wallet"
+                                    else            -> "Número de CCI (20 dígitos)"
+                                },
+                                fontSize = 13.sp
+                            )
+                        },
                         placeholder = {
                             Text(
-                                if (isYapeOrPlin) "9 dígitos (ej. 987654321)" else "20 dígitos del CCI (ej. 00219100987654321234)",
+                                when {
+                                    isYapeOrPlin    -> "9 dígitos (ej. 987654321)"
+                                    isInternational -> "Ej. IBAN, dirección wallet, etc."
+                                    else            -> "20 dígitos CCI (ej. 00219100987654321234)"
+                                },
                                 fontSize = 13.sp,
                                 color = TextMuted.copy(alpha = 0.6f),
                             )
@@ -299,15 +265,17 @@ fun BankAccountsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = if (isInternational) KeyboardType.Text else KeyboardType.Number
+                        ),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary,
+                            focusedBorderColor  = Primary,
                             unfocusedBorderColor = BorderColor,
-                            errorBorderColor = DangerColor,
-                            focusedLabelColor = Primary,
+                            errorBorderColor    = DangerColor,
+                            focusedLabelColor   = Primary,
                             unfocusedLabelColor = TextMuted,
-                            errorLabelColor = DangerColor,
-                            cursorColor = Primary,
+                            errorLabelColor     = DangerColor,
+                            cursorColor         = Primary,
                         ),
                     )
                     if (accountError != null) {
@@ -320,35 +288,30 @@ fun BankAccountsScreen(
 
             // ── Selector de moneda ────────────────────────────────────────────
             item {
-                Text(
-                    text = "Moneda de la cuenta",
-                    fontSize = 13.sp,
-                    color = TextMuted,
-                    fontWeight = FontWeight.Medium,
-                )
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    currencyOptions.forEach { currency ->
-                        val isSelected = currency == selectedCurrency
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(50.dp))
-                                .background(if (isSelected) Primary else SurfaceColor)
-                                .border(
-                                    width = 1.dp,
-                                    color = if (isSelected) Primary else BorderColor,
-                                    shape = RoundedCornerShape(50.dp),
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Moneda de la cuenta", fontSize = 13.sp, color = TextMuted, fontWeight = FontWeight.Medium)
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        currencyOptions.forEach { currency ->
+                            val isSelected = currency == selectedCurrency
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(50.dp))
+                                    .background(if (isSelected) Primary else SurfaceColor)
+                                    .border(1.dp, if (isSelected) Primary else BorderColor, RoundedCornerShape(50.dp))
+                                    .clickable { selectedCurrency = currency }
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    currency,
+                                    fontSize = 13.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (isSelected) Color.White else TextMuted,
                                 )
-                                .clickable { selectedCurrency = currency }
-                                .padding(horizontal = 20.dp, vertical = 8.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                currency,
-                                fontSize = 13.sp,
-                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                color = if (isSelected) Color.White else TextMuted,
-                            )
+                            }
                         }
                     }
                 }
@@ -356,59 +319,36 @@ fun BankAccountsScreen(
 
             // ── Botón agregar ─────────────────────────────────────────────────
             item {
-                Spacer(Modifier.height(4.dp))
-
                 Button(
                     onClick = {
-                        holderTouched  = true
                         accountTouched = true
                         if (canAdd) {
+                            val holder = uiState.currentUserName?.takeIf { it.isNotBlank() } ?: selectedBank
                             viewModel?.addBankAccount(
-                                bankName = selectedBank,
+                                bankName      = selectedBank,
                                 accountNumber = accountNumber,
-                                accountHolder = if (isYapeOrPlin) selectedBank else holderName.trim(),
-                                currency = selectedCurrency
+                                accountHolder = holder,
+                                currency      = selectedCurrency
                             )
                         }
                     },
-                    enabled = canAdd,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                    enabled  = canAdd,
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape    = RoundedCornerShape(12.dp),
+                    colors   = ButtonDefaults.buttonColors(containerColor = Primary),
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp),
-                    )
+                    Icon(Icons.Filled.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "Agregar Cuenta",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White,
-                    )
+                    Text("Agregar Cuenta", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
                 }
             }
 
-            // ── Separador + título de cuentas registradas ─────────────────────
+            // ── Cuentas registradas ───────────────────────────────────────────
             item {
-                Spacer(Modifier.height(4.dp))
                 HorizontalDivider(color = BorderColor)
                 Spacer(Modifier.height(12.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(
-                        text = "Mis cuentas registradas",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = TextMain,
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Mis cuentas registradas", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextMain)
                     if (uiState.accounts.isNotEmpty()) {
                         Box(
                             modifier = Modifier
@@ -416,24 +356,15 @@ fun BankAccountsScreen(
                                 .background(Primary)
                                 .padding(horizontal = 8.dp, vertical = 2.dp),
                         ) {
-                            Text(
-                                text = "${uiState.accounts.size}",
-                                color = Color.White,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
+                            Text("${uiState.accounts.size}", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
             }
 
-            // ── Lista de cuentas ──────────────────────────────────────────────
             if (uiState.isLoading && uiState.accounts.isEmpty()) {
                 item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(100.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
+                    Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = Primary)
                     }
                 }
@@ -448,19 +379,12 @@ fun BankAccountsScreen(
                             .padding(24.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = "No tienes cuentas bancarias registradas.",
-                            color = TextMuted,
-                            fontSize = 13.sp,
-                        )
+                        Text("No tienes cuentas bancarias registradas.", color = TextMuted, fontSize = 13.sp)
                     }
                 }
             } else {
                 items(uiState.accounts) { account ->
-                    BankAccountCard(
-                        account  = account,
-                        onDelete = { viewModel?.deleteBankAccount(account.id) },
-                    )
+                    BankAccountCard(account = account, onDelete = { viewModel?.deleteBankAccount(account.id) })
                 }
             }
 
@@ -471,32 +395,29 @@ fun BankAccountsScreen(
 
 @Composable
 private fun BankAccountCard(account: BankAccount, onDelete: () -> Unit) {
-    val color = when (account.bank_name) {
-        "BCP"       -> BcpColor
-        "Interbank" -> InterbankColor
-        "BBVA"      -> BbvaColor
-        "Yape"      -> YapeColor
-        "Plin"      -> PlinColor
+    val bankColor = when (account.bank_name.lowercase()) {
+        "bcp"       -> BcpColor
+        "interbank" -> InterbankColor
+        "bbva"      -> BbvaColor
+        "yape"      -> YapeColor
+        "plin"      -> PlinColor
+        "wise"      -> Color(0xFF00B9FF)
+        "binance"   -> Color(0xFFF0B90B)
         else        -> Primary
     }
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        border = BorderStroke(1.dp, BorderColor),
+        modifier  = Modifier.fillMaxWidth(),
+        shape     = RoundedCornerShape(16.dp),
+        colors    = CardDefaults.cardColors(containerColor = SurfaceColor),
+        border    = BorderStroke(1.dp, BorderColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(color),
+                modifier = Modifier.size(44.dp).clip(CircleShape).background(bankColor),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -510,33 +431,26 @@ private fun BankAccountCard(account: BankAccount, onDelete: () -> Unit) {
             Spacer(Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = account.bank_name,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp,
-                    color = TextMain,
-                )
-                Text(
-                    text = account.account_number,
-                    fontSize = 13.sp,
-                    color = TextMuted,
-                )
-                if (!account.account_holder.isNullOrBlank()) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(account.bank_name, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextMain)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Primary.copy(alpha = 0.12f))
+                            .padding(horizontal = 5.dp, vertical = 1.dp)
+                    ) {
+                        Text(account.currency, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Primary)
+                    }
+                }
+                Text(account.account_number, fontSize = 13.sp, color = TextMuted)
+                if (account.account_holder.isNotBlank()) {
                     Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = "Titular: ${account.account_holder}",
-                        fontSize = 11.sp,
-                        color = TextMuted.copy(alpha = 0.7f),
-                    )
+                    Text("Titular: ${account.account_holder}", fontSize = 11.sp, color = TextMuted.copy(alpha = 0.7f))
                 }
             }
 
             IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Filled.Delete,
-                    contentDescription = "Eliminar",
-                    tint = DangerColor,
-                )
+                Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = DangerColor)
             }
         }
     }

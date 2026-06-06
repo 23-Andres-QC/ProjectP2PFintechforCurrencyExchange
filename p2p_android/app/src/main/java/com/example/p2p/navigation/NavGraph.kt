@@ -194,10 +194,16 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
 
             composable(Screen.Publish.route) {
                 val offerRepo = com.example.p2p.data.repository.OfferRepositoryImpl(com.example.p2p.core.network.ApiClient.offerApi)
-                val vm: com.example.p2p.presentation.offer.PublishViewModel = viewModel(factory = com.example.p2p.presentation.offer.PublishViewModel.Factory(offerRepo, com.example.p2p.core.network.ApiClient.exchangeApi))
+                val bankRepo  = com.example.p2p.data.repository.BankAccountRepositoryImpl(com.example.p2p.core.network.ApiClient.bankAccountsApi)
+                val vm: com.example.p2p.presentation.offer.PublishViewModel = viewModel(
+                    factory = com.example.p2p.presentation.offer.PublishViewModel.Factory(
+                        offerRepo, com.example.p2p.core.network.ApiClient.exchangeApi, bankRepo
+                    )
+                )
                 PublishScreen(
                     viewModel = vm,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToBankAccounts = { navController.navigate(Screen.BankAccounts.route) }
                 )
             }
 

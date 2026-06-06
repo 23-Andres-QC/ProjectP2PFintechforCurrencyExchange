@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.p2p.core.network.NetworkResult
 import com.example.p2p.data.remote.api.ExchangeApi
+import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.data.remote.model.CreateOfferRequest
+import com.example.p2p.domain.repository.BankAccountRepository
 import com.example.p2p.domain.repository.OfferRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,13 +19,18 @@ data class PublishUiState(
     val success: Boolean = false,
     val error: String? = null,
     val marketRate: Double? = null,
-    val isLoadingRate: Boolean = false
+    val isLoadingRate: Boolean = false,
+    val bankAccounts: List<BankAccount> = emptyList(),
+    val isLoadingAccounts: Boolean = false
 )
 
 class PublishViewModel(
     private val offerRepository: OfferRepository,
-    private val exchangeApi: ExchangeApi? = null
+    private val exchangeApi: ExchangeApi? = null,
+    private val bankAccountRepository: BankAccountRepository? = null
 ) : ViewModel() {
+
+    init { loadBankAccounts() }
 
     private val _uiState = MutableStateFlow(PublishUiState())
     val uiState: StateFlow<PublishUiState> = _uiState.asStateFlow()
@@ -46,6 +53,19 @@ class PublishViewModel(
         }
     }
 
+    fun loadBankAccounts() {
+        if (bankAccountRepository == null) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingAccounts = true)
+            when (val result = bankAccountRepository.listAccounts()) {
+                is NetworkResult.Success -> _uiState.value = _uiState.value.copy(
+                    isLoadingAccounts = false, bankAccounts = result.data
+                )
+                else -> _uiState.value = _uiState.value.copy(isLoadingAccounts = false)
+            }
+        }
+    }
+
     fun publishOffer(request: CreateOfferRequest) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null, success = false)
@@ -63,10 +83,11 @@ class PublishViewModel(
 
     class Factory(
         private val offerRepository: OfferRepository,
-        private val exchangeApi: ExchangeApi? = null
+        private val exchangeApi: ExchangeApi? = null,
+        private val bankAccountRepository: BankAccountRepository? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            PublishViewModel(offerRepository, exchangeApi) as T
+            PublishViewModel(offerRepository, exchangeApi, bankAccountRepository) as T
     }
 }

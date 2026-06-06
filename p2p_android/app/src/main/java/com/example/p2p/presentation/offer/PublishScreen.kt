@@ -8,13 +8,17 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.data.remote.model.CreateOfferRequest
 import com.example.p2p.ui.theme.*
 
@@ -49,7 +54,8 @@ private fun fiatSymbol(currency: String) = when (currency) {
 @Composable
 fun PublishScreen(
     viewModel: PublishViewModel? = null,
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onNavigateToBankAccounts: () -> Unit = {}
 ) {
     val uiState by viewModel?.uiState?.collectAsState(initial = PublishUiState())
         ?: remember { mutableStateOf(PublishUiState()) }
@@ -77,11 +83,20 @@ fun PublishScreen(
     var customRateText       by remember { mutableStateOf("") }
     var minTransactionText   by remember { mutableStateOf("") }
     var maxTransactionText   by remember { mutableStateOf("") }
+    var selectedAccountId    by remember { mutableStateOf<String?>(null) }
 
     var selectedCurrency     by remember { mutableStateOf("USD") }
     var expandedCurrency     by remember { mutableStateOf(false) }
     var selectedFiatCurrency by remember { mutableStateOf("PEN") }
     var expandedFiat         by remember { mutableStateOf(false) }
+
+    // Cuentas filtradas por la moneda fiat seleccionada
+    val accountsForFiat = uiState.bankAccounts.filter { it.currency == selectedFiatCurrency }
+    val selectedAccount = accountsForFiat.find { it.id == selectedAccountId }
+        ?: accountsForFiat.firstOrNull()
+
+    // Resetear cuenta seleccionada al cambiar moneda fiat
+    LaunchedEffect(selectedFiatCurrency) { selectedAccountId = null }
 
     // Cargar tasa real cuando cambia el par
     LaunchedEffect(selectedCurrency, selectedFiatCurrency) {
@@ -342,6 +357,101 @@ fun PublishScreen(
                 }
             }
 
+            // ── Cuenta de Pago ───────────────────────────────────────────────
+            PublishSectionCard(title = "Cuenta donde recibirás el pago") {
+                if (uiState.isLoadingAccounts) {
+                    Box(Modifier.fillMaxWidth().height(48.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Primary, strokeWidth = 2.dp)
+                    }
+                } else if (accountsForFiat.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(WarningColor.copy(alpha = 0.07f))
+                            .border(1.dp, WarningColor.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Filled.Warning, contentDescription = null, tint = WarningColor, modifier = Modifier.size(18.dp))
+                            Text(
+                                text = "No tienes cuentas en $selectedFiatCurrency",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = WarningColor
+                            )
+                        }
+                        Text(
+                            text = "Debes agregar una cuenta bancaria en $selectedFiatCurrency para recibir el pago de tus compradores.",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+                        Button(
+                            onClick = onNavigateToBankAccounts,
+                            colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Icon(Icons.Filled.AddCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Agregar cuenta $selectedFiatCurrency", fontSize = 13.sp, color = Color.White)
+                        }
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        accountsForFiat.forEach { account ->
+                            val isSelected = account.id == (selectedAccount?.id)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (isSelected) Primary.copy(alpha = 0.07f) else SurfaceColor)
+                                    .border(
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) Primary else BorderColor,
+                                        shape = RoundedCornerShape(10.dp)
+                                    )
+                                    .clickable { selectedAccountId = account.id }
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.AccountBalance,
+                                    contentDescription = null,
+                                    tint = if (isSelected) Primary else TextMuted,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = account.bank_name,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.sp,
+                                        color = if (isSelected) Primary else TextMain
+                                    )
+                                    Text(
+                                        text = account.account_number,
+                                        fontSize = 12.sp,
+                                        color = TextMuted
+                                    )
+                                    if (!account.account_holder.isNullOrBlank()) {
+                                        Text(
+                                            text = account.account_holder,
+                                            fontSize = 11.sp,
+                                            color = TextMuted.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
+                                if (isSelected) {
+                                    Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // ── Vista Previa ──────────────────────────────────────────────────
             Column(
                 modifier = Modifier
@@ -383,6 +493,7 @@ fun PublishScreen(
                     when {
                         amountDouble <= 0 -> Toast.makeText(context, "Ingresa un monto válido.", Toast.LENGTH_SHORT).show()
                         currentRate <= 0  -> Toast.makeText(context, "La tasa de cambio no está disponible.", Toast.LENGTH_SHORT).show()
+                        selectedAccount == null -> Toast.makeText(context, "Agrega una cuenta bancaria en $selectedFiatCurrency para recibir el pago.", Toast.LENGTH_LONG).show()
                         selectedSaleMode == 1 && minVal > maxVal ->
                             Toast.makeText(context, "El mínimo no puede ser mayor al máximo.", Toast.LENGTH_SHORT).show()
                         selectedSaleMode == 1 && maxVal > amountDouble ->
@@ -396,7 +507,7 @@ fun PublishScreen(
                                 offer_type = if (selectedSaleMode == 0) "full" else "partial",
                                 min_transaction = minVal,
                                 max_transaction = maxVal,
-                                payment_methods = listOf("BCP")
+                                payment_methods = listOf("${selectedAccount!!.bank_name} · ${selectedAccount.account_number}")
                             )
                         )
                     }
