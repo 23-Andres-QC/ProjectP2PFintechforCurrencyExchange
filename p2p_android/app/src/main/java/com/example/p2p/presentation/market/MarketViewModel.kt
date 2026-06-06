@@ -122,6 +122,16 @@ class MarketViewModel(
     fun matchOffer(currency: String, fiatCurrency: String, onMatched: (Offer) -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
+            val rates = _uiState.value.exchangeRates.associateBy { "${it.from_currency}_${it.to_currency}" }
+            val marketRate = rates["${currency}_${fiatCurrency}"]?.rate
+            val quickSaleOffer = if (marketRate != null) {
+                _uiState.value.offers.filter { it.price_per_unit < marketRate }.minByOrNull { it.price_per_unit }
+            } else null
+            if (quickSaleOffer != null) {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                onMatched(quickSaleOffer)
+                return@launch
+            }
             when (val result = offerRepository.matchOffer(currency, fiatCurrency)) {
                 is NetworkResult.Success -> { _uiState.value = _uiState.value.copy(isLoading = false); onMatched(result.data) }
                 is NetworkResult.Error   -> { _uiState.value = _uiState.value.copy(isLoading = false, error = result.message); onError(result.message) }

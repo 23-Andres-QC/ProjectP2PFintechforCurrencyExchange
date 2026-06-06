@@ -194,7 +194,8 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 HistoryScreen(
                     viewModel = vm,
                     onBack = { navController.popBackStack() },
-                    onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) }
+                    onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) },
+                    onNavigateToPending = { navController.navigate(Screen.Vendor.route) }
                 )
             }
 
@@ -233,6 +234,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                     viewModel = vm,
                     onNavigateToDispute = { txnId -> navController.navigate(Screen.RegisterDispute.createRoute(txnId)) },
                     onNavigateToReceipt = { txnId -> navController.navigate(Screen.Receipt.createRoute(txnId)) },
+                    onNavigateToRating = { txnId -> navController.navigate(Screen.Rating.createRoute(txnId)) },
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

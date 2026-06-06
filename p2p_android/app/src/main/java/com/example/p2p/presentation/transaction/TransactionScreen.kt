@@ -1,12 +1,16 @@
 package com.example.p2p.presentation.transaction
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -22,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -38,6 +44,7 @@ fun TransactionScreen(
     viewModel: TransactionViewModel? = null,
     onNavigateToDispute: (String) -> Unit = {},
     onNavigateToReceipt: (String) -> Unit = {},
+    onNavigateToRating: (String) -> Unit = {},
     onNavigateBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -46,6 +53,9 @@ fun TransactionScreen(
     var timeLeft by remember { mutableStateOf(15 * 60) }
     var isUploadingVoucher by remember { mutableStateOf(false) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var showRatingDialog by remember { mutableStateOf(false) }
+    var selectedStars by remember { mutableStateOf(0) }
 
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -57,6 +67,7 @@ fun TransactionScreen(
                 try {
                     val bytes = context.contentResolver.openInputStream(uri)?.readBytes()
                     if (bytes != null) {
+                        selectedBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                         val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
                         viewModel?.uploadVoucherFromBase64(transactionId, base64)
                         Toast.makeText(context, "Voucher subido. Esperando confirmación del vendedor.", Toast.LENGTH_LONG).show()
@@ -89,17 +100,28 @@ fun TransactionScreen(
     }
 
     LaunchedEffect(timeLeft, uiState.transaction?.status, isUploadingVoucher) {
-        if (timeLeft > 0 && uiState.transaction?.status == "pending" && !isUploadingVoucher) {
+        if (timeLeft > 0 && uiState.transaction?.status in listOf("pending", "accepted") && !isUploadingVoucher) {
             delay(1000L)
             timeLeft--
         }
     }
 
+    LaunchedEffect(uiState.transaction?.status) {
+        if (uiState.transaction?.status == "completed") {
+            delay(1500L)
+            showRatingDialog = true
+        }
+    }
+
     val txn = uiState.transaction
     val vendorName = txn?.vendor_name ?: "Vendedor"
-    val vendorBank = txn?.vendor_payment_account ?: "BCP"
+    val vendorPayment = txn?.vendor_payment_account ?: "BCP"
+    val vendorBankParts = vendorPayment.split(" · ")
+    val vendorBank = vendorBankParts[0]
+    val vendorAccountNumber = vendorBankParts.getOrNull(1)
     val statusText = when (txn?.status) {
         "pending" -> "ORDEN P2P EN CURSO"
+        "accepted" -> "VENDEDOR ACEPTÓ TU ORDEN"
         "voucher_uploaded" -> "VERIFICANDO PAGO"
         "completed" -> "COMPLETADA"
         "cancelled" -> "CANCELADA"
@@ -216,11 +238,12 @@ fun TransactionScreen(
             }
 
             val currentStep = when (txn?.status) {
-                "pending" -> if (isUploadingVoucher) 1 else 0
+                "pending"          -> if (isUploadingVoucher) 1 else 0
+                "accepted"         -> 0
                 "voucher_uploaded" -> 1
-                "completed" -> 3
-                "disputed" -> 2
-                else -> 0
+                "completed"        -> 3
+                "disputed"         -> 2
+                else               -> 0
             }
 
             // Timeline Row
@@ -319,16 +342,25 @@ fun TransactionScreen(
                     fontWeight = FontWeight.Bold,
                     color = TextMain
                 )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = vendorBank,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Primary
-                    )
+                Text(
+                    text = vendorBank,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Primary
+                )
+                if (vendorAccountNumber != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("N° cuenta:", fontSize = 11.sp, color = TextMuted)
+                        Text(
+                            text = vendorAccountNumber,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextMain
+                        )
+                    }
                 }
             }
 
@@ -372,47 +404,140 @@ fun TransactionScreen(
                 )
             }
 
-            // Upload Zone (only active when pending)
-            if (txn?.status == "pending") {
-                Box(
+            // Vendor accepted banner
+            if (txn?.status == "accepted") {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = SuccessColor.copy(alpha = 0.1f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SuccessColor.copy(alpha = 0.3f)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = SuccessColor)
+                        Column {
+                            Text("¡El vendedor aceptó tu orden!", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextMain)
+                            Text("Realiza el pago a la cuenta indicada y sube tu comprobante.", fontSize = 11.sp, color = TextMuted)
+                        }
+                    }
+                }
+            }
+
+            // Waiting banner for pending (vendor hasn't accepted yet)
+            if (txn?.status == "pending" && !isUploadingVoucher) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Primary.copy(alpha = 0.07f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Primary.copy(alpha = 0.2f)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(Icons.Filled.Schedule, contentDescription = null, tint = Primary)
+                        Column {
+                            Text("Esperando al vendedor...", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextMain)
+                            Text("El vendedor fue notificado. Aceptará tu orden en breve.", fontSize = 11.sp, color = TextMuted)
+                        }
+                    }
+                }
+            }
+
+            // Upload Zone (active when pending or accepted)
+            if (txn?.status == "pending" || txn?.status == "accepted") {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(120.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(SurfaceColor)
-                        .border(width = 1.5.dp, color = if (isUploadingVoucher) Primary else BorderColor, shape = RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center
+                        .border(
+                            width = 1.5.dp,
+                            color = when {
+                                isUploadingVoucher -> Primary
+                                selectedBitmap != null -> SuccessColor
+                                else -> BorderColor
+                            },
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     if (isUploadingVoucher || uiState.isLoading) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.size(28.dp), color = Primary, strokeWidth = 3.dp)
-                            Text("Subiendo voucher...", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextMain)
-                        }
-                    } else {
-                        Button(
-                            onClick = { imagePicker.launch("image/*") },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                            elevation = ButtonDefaults.buttonElevation(0.dp)
+                        Box(
+                            modifier = Modifier.fillMaxWidth().height(80.dp),
+                            contentAlignment = Alignment.Center
                         ) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(28.dp), color = Primary, strokeWidth = 3.dp)
+                                Text("Subiendo voucher...", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextMain)
+                            }
+                        }
+                    } else {
+                        // Image preview
+                        if (selectedBitmap != null) {
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                Image(
+                                    bitmap = selectedBitmap!!.asImageBitmap(),
+                                    contentDescription = "Comprobante de pago",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp)
+                                        .clip(RoundedCornerShape(10.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(6.dp)
+                                        .clip(RoundedCornerShape(50.dp))
+                                        .background(SuccessColor)
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text("✓ Subida", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+
+                        // Upload / change button
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (selectedBitmap != null) SuccessColor.copy(alpha = 0.06f) else Primary.copy(alpha = 0.06f))
+                                .border(1.dp, if (selectedBitmap != null) SuccessColor.copy(alpha = 0.3f) else Primary.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
+                                .clickable { imagePicker.launch("image/*") }
+                                .padding(14.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Filled.CloudUpload,
-                                    contentDescription = "Subir",
-                                    tint = Primary,
-                                    modifier = Modifier.size(32.dp)
+                                    imageVector = if (selectedBitmap != null) Icons.Filled.PhotoLibrary else Icons.Filled.CloudUpload,
+                                    contentDescription = null,
+                                    tint = if (selectedBitmap != null) SuccessColor else Primary,
+                                    modifier = Modifier.size(26.dp)
                                 )
-                                Text("Subir Comprobante de Pago", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextMain)
-                                Text(
-                                    text = if (selectedImageUri != null) "Imagen seleccionada ✓" else "Selecciona desde galería o cámara",
-                                    fontSize = 11.sp,
-                                    color = if (selectedImageUri != null) SuccessColor else TextMuted
-                                )
+                                Column {
+                                    Text(
+                                        text = if (selectedBitmap != null) "Cambiar imagen" else "Subir Comprobante de Pago",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (selectedBitmap != null) SuccessColor else TextMain
+                                    )
+                                    Text(
+                                        text = "Selecciona desde galería",
+                                        fontSize = 11.sp,
+                                        color = TextMuted
+                                    )
+                                }
                             }
                         }
                     }
@@ -458,6 +583,39 @@ fun TransactionScreen(
 
             // Success View Receipt Option
             if (txn?.status == "completed") {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = SuccessColor.copy(alpha = 0.1f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SuccessColor.copy(alpha = 0.3f)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "✓",
+                            fontSize = 40.sp,
+                            color = SuccessColor,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "¡Cambio de divisas realizado con éxito!",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = TextMain,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "Los fondos han sido liberados correctamente.",
+                            fontSize = 12.sp,
+                            color = TextMuted,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
                 Button(
                     onClick = { onNavigateToReceipt(transactionId ?: "") },
                     modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -470,8 +628,8 @@ fun TransactionScreen(
                 }
             }
 
-            // Cancel button (only when pending)
-            if (txn?.status == "pending") {
+            // Cancel button (when pending or accepted)
+            if (txn?.status == "pending" || txn?.status == "accepted") {
                 OutlinedButton(
                     onClick = {
                         if (transactionId != null) {
@@ -496,5 +654,94 @@ fun TransactionScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
         }
+    }
+
+    if (showRatingDialog) {
+        AlertDialog(
+            onDismissRequest = { showRatingDialog = false },
+            containerColor = SurfaceColor,
+            shape = RoundedCornerShape(20.dp),
+            title = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "🎉",
+                        fontSize = 40.sp
+                    )
+                    Text(
+                        text = "¡Operación completada!",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp,
+                        color = TextMain,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "¿Cómo fue tu experiencia con el vendedor?",
+                        fontSize = 12.sp,
+                        color = TextMuted,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        (1..5).forEach { star ->
+                            Text(
+                                text = if (star <= selectedStars) "★" else "☆",
+                                fontSize = 38.sp,
+                                color = if (star <= selectedStars) Color(0xFFF59E0B) else TextMuted,
+                                modifier = Modifier
+                                    .clickable { selectedStars = star }
+                                    .padding(horizontal = 4.dp)
+                            )
+                        }
+                    }
+                    if (selectedStars > 0) {
+                        Text(
+                            text = when (selectedStars) {
+                                1 -> "Muy mala experiencia"
+                                2 -> "Mala experiencia"
+                                3 -> "Experiencia regular"
+                                4 -> "Buena experiencia"
+                                else -> "¡Excelente experiencia!"
+                            },
+                            fontSize = 12.sp,
+                            color = if (selectedStars >= 4) SuccessColor else if (selectedStars == 3) Color(0xFFF59E0B) else DangerColor,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showRatingDialog = false
+                        onNavigateToRating(transactionId ?: "")
+                    },
+                    enabled = selectedStars > 0,
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Enviar calificación", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRatingDialog = false }) {
+                    Text("Omitir por ahora", color = TextMuted)
+                }
+            }
+        )
     }
 }
