@@ -115,30 +115,6 @@ fun BankAccountsScreen(
     viewModel: BankAccountsViewModel? = null,
     onBack: () -> Unit = {}
 ) {
-    var selectedBank by remember { mutableStateOf("BCP") }
-    var accountNumber by remember { mutableStateOf("") }
-    var selectedCurrency by remember { mutableStateOf("PEN") }
-    val uiState by viewModel?.uiState?.collectAsState(initial = BankAccountsUiState()) ?: remember { mutableStateOf(BankAccountsUiState()) }
-    val context = androidx.compose.ui.platform.LocalContext.current
-    var holderName by remember(uiState.currentUserName) {
-        mutableStateOf(uiState.currentUserName ?: "")
-    }
-
-    val isYapeOrPlin = selectedBank == "Yape" || selectedBank == "Plin"
-    val accountError = when {
-        accountNumber.isBlank() -> null
-        isYapeOrPlin && accountNumber.length != 9 -> "El celular debe tener 9 dígitos"
-        isYapeOrPlin && !accountNumber.all { it.isDigit() } -> "Solo números"
-        !isYapeOrPlin && accountNumber.length != 20 -> "El CCI debe tener 20 dígitos"
-        !isYapeOrPlin && !accountNumber.all { it.isDigit() } -> "Solo números"
-        else -> null
-    }
-    val holderError = when {
-        holderName.isBlank() -> null
-        holderName.length < 3 -> "Nombre muy corto"
-        else -> null
-    }
-    val canAdd = holderName.isNotBlank() && accountNumber.isNotBlank() && accountError == null && holderError == null
     var selectedBank     by remember { mutableStateOf("BCP") }
     var accountNumber    by remember { mutableStateOf("") }
     var holderName       by remember { mutableStateOf("") }
@@ -150,20 +126,25 @@ fun BankAccountsScreen(
         ?: remember { mutableStateOf(BankAccountsUiState()) }
     val context = LocalContext.current
 
-    val holderError  = if (holderTouched) validateHolderName(holderName) else null
+    val isYapeOrPlin = selectedBank == "Yape" || selectedBank == "Plin"
+    val holderError  = if (holderTouched && !isYapeOrPlin) validateHolderName(holderName) else null
     val accountError = if (accountTouched) validateAccountNumber(accountNumber, selectedBank) else null
-    val canAdd = validateHolderName(holderName) == null && validateAccountNumber(accountNumber, selectedBank) == null
+    val canAdd = (isYapeOrPlin || validateHolderName(holderName) == null) &&
+                 validateAccountNumber(accountNumber, selectedBank) == null &&
+                 accountNumber.isNotBlank()
 
     LaunchedEffect(Unit) { viewModel?.loadBankAccounts() }
+
+    LaunchedEffect(uiState.currentUserName) {
+        if (holderName.isBlank()) holderName = uiState.currentUserName ?: ""
+    }
 
     LaunchedEffect(uiState.successMessage) {
         if (uiState.successMessage != null) {
             android.widget.Toast.makeText(context, uiState.successMessage, android.widget.Toast.LENGTH_SHORT).show()
             viewModel?.clearMessages()
-            accountNumber = ""
-            holderName = uiState.currentUserName ?: ""
             accountNumber  = ""
-            holderName     = ""
+            holderName     = uiState.currentUserName ?: ""
             holderTouched  = false
             accountTouched = false
         }
@@ -258,74 +239,86 @@ fun BankAccountsScreen(
                 }
             }
 
-            // Holder name field — oculto para Yape/Plin
+            // ── Nombre del titular (oculto para Yape/Plin) ───────────────────
             if (!isYapeOrPlin) {
                 item {
-                    Spacer(Modifier.height(4.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        OutlinedTextField(
+                            value = holderName,
+                            onValueChange = { holderName = it; holderTouched = true },
+                            label = { Text("Nombre del titular", fontSize = 13.sp) },
+                            placeholder = { Text("Ej. Juan Pérez", fontSize = 13.sp, color = TextMuted.copy(alpha = 0.6f)) },
+                            isError = holderError != null,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Text,
+                                capitalization = KeyboardCapitalization.Words,
+                            ),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Primary,
+                                unfocusedBorderColor = BorderColor,
+                                errorBorderColor = DangerColor,
+                                focusedLabelColor = Primary,
+                                unfocusedLabelColor = TextMuted,
+                                errorLabelColor = DangerColor,
+                                cursorColor = Primary,
+                            ),
+                        )
+                        if (holderError != null) {
+                            Text(holderError, fontSize = 11.sp, color = DangerColor, modifier = Modifier.padding(start = 4.dp))
+                        } else if (holderTouched && holderName.isNotBlank()) {
+                            Text("✓ Nombre válido", fontSize = 11.sp, color = SuccessColor, modifier = Modifier.padding(start = 4.dp))
+                        }
+                    }
+                }
+            }
+
+            // ── Número de cuenta / CCI ────────────────────────────────────────
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     OutlinedTextField(
-                        value = holderName,
-                        onValueChange = { holderName = it },
-                        label = { Text("Nombre del titular", fontSize = 13.sp) },
-                        placeholder = { Text("Ej. Juan Pérez", fontSize = 13.sp, color = TextMuted.copy(alpha = 0.6f)) },
-                        isError = holderError != null,
-                        supportingText = if (holderError != null) {
-                            { Text(holderError, color = DangerColor, fontSize = 11.sp) }
-                        } else null,
+                        value = accountNumber,
+                        onValueChange = {
+                            val maxLength = if (isYapeOrPlin) 9 else 20
+                            if (it.length <= maxLength && it.all { c -> c.isDigit() }) {
+                                accountNumber = it
+                                accountTouched = true
+                            }
+                        },
+                        label = { Text(if (isYapeOrPlin) "Número de celular" else "Número de CCI", fontSize = 13.sp) },
+                        placeholder = {
+                            Text(
+                                if (isYapeOrPlin) "9 dígitos (ej. 987654321)" else "20 dígitos del CCI (ej. 00219100987654321234)",
+                                fontSize = 13.sp,
+                                color = TextMuted.copy(alpha = 0.6f),
+                            )
+                        },
+                        isError = accountError != null,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Primary,
                             unfocusedBorderColor = BorderColor,
                             errorBorderColor = DangerColor,
                             focusedLabelColor = Primary,
                             unfocusedLabelColor = TextMuted,
+                            errorLabelColor = DangerColor,
                             cursorColor = Primary,
                         ),
                     )
+                    if (accountError != null) {
+                        Text(accountError, fontSize = 11.sp, color = DangerColor, modifier = Modifier.padding(start = 4.dp))
+                    } else if (accountTouched && accountNumber.isNotBlank()) {
+                        Text("✓ Número válido", fontSize = 11.sp, color = SuccessColor, modifier = Modifier.padding(start = 4.dp))
+                    }
                 }
             }
 
-            // Account number field
-            item {
-                OutlinedTextField(
-                    value = accountNumber,
-                    onValueChange = { 
-                        val maxLength = if (isYapeOrPlin) 9 else 20
-                        if (it.length <= maxLength && it.all { c -> c.isDigit() }) {
-                            accountNumber = it
-                        }
-                    },
-                    label = { Text(if (isYapeOrPlin) "Número de celular" else "Número de CCI", fontSize = 13.sp) },
-                    placeholder = {
-                        Text(
-                            if (isYapeOrPlin) "Ej. 987654321" else "Ej. 00219100987654321200",
-                            fontSize = 13.sp,
-                            color = TextMuted.copy(alpha = 0.6f),
-                        )
-                    },
-                    isError = accountError != null,
-                    supportingText = when {
-                        accountError != null -> { { Text(accountError, color = DangerColor, fontSize = 11.sp) } }
-                        accountNumber.isNotBlank() -> { { Text("✓ Válido", color = Color(0xFF2E7D32), fontSize = 11.sp) } }
-                        else -> { { Text(if (isYapeOrPlin) "9 dígitos" else "20 dígitos", fontSize = 11.sp, color = TextMuted) } }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Primary,
-                        unfocusedBorderColor = BorderColor,
-                        errorBorderColor = DangerColor,
-                        focusedLabelColor = Primary,
-                        unfocusedLabelColor = TextMuted,
-                        cursorColor = Primary,
-                    ),
-                )
-            }
-
-            // Currency selector
+            // ── Selector de moneda ────────────────────────────────────────────
             item {
                 Text(
                     text = "Moneda de la cuenta",
@@ -351,70 +344,12 @@ fun BankAccountsScreen(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                "Ej. Juan Pérez",
+                                currency,
                                 fontSize = 13.sp,
-                                color = TextMuted.copy(alpha = 0.6f),
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (isSelected) Color.White else TextMuted,
                             )
-                        },
-                        isError = holderError != null,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            capitalization = KeyboardCapitalization.Words,
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary,
-                            unfocusedBorderColor = BorderColor,
-                            errorBorderColor = DangerColor,
-                            focusedLabelColor = Primary,
-                            unfocusedLabelColor = TextMuted,
-                            errorLabelColor = DangerColor,
-                            cursorColor = Primary,
-                        ),
-                    )
-                    if (holderError != null) {
-                        Text(holderError, fontSize = 11.sp, color = DangerColor, modifier = Modifier.padding(start = 4.dp))
-                    } else if (holderTouched && holderName.isNotBlank()) {
-                        Text("✓ Nombre válido", fontSize = 11.sp, color = SuccessColor, modifier = Modifier.padding(start = 4.dp))
-                    }
-                }
-            }
-
-            // ── Número de cuenta / CCI ────────────────────────────────────────
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    OutlinedTextField(
-                        value = accountNumber,
-                        onValueChange = { accountNumber = it; accountTouched = true },
-                        label = { Text("Número de Cuenta / CCI", fontSize = 13.sp) },
-                        placeholder = {
-                            val hint = when (selectedBank.lowercase()) {
-                                "yape", "plin" -> "9 dígitos (ej. 987654321)"
-                                else -> "20 dígitos del CCI (ej. 00219100987654321234)"
-                            }
-                            Text(hint, fontSize = 13.sp, color = TextMuted.copy(alpha = 0.6f))
-                        },
-                        isError = accountError != null,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary,
-                            unfocusedBorderColor = BorderColor,
-                            errorBorderColor = DangerColor,
-                            focusedLabelColor = Primary,
-                            unfocusedLabelColor = TextMuted,
-                            errorLabelColor = DangerColor,
-                            cursorColor = Primary,
-                        ),
-                    )
-                    if (accountError != null) {
-                        Text(accountError, fontSize = 11.sp, color = DangerColor, modifier = Modifier.padding(start = 4.dp))
-                    } else if (accountTouched && accountNumber.isNotBlank()) {
-                        Text("✓ Número válido", fontSize = 11.sp, color = SuccessColor, modifier = Modifier.padding(start = 4.dp))
+                        }
                     }
                 }
             }

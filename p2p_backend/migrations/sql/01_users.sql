@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     total_transactions INTEGER    DEFAULT 0,
     is_active        BOOLEAN      DEFAULT TRUE,
     is_banned        BOOLEAN      DEFAULT FALSE,
+    ban_reason       TEXT,
     created_at       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
