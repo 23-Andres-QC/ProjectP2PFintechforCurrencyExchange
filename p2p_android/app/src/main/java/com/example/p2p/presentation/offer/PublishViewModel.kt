@@ -30,10 +30,10 @@ class PublishViewModel(
     private val bankAccountRepository: BankAccountRepository? = null
 ) : ViewModel() {
 
-    init { loadBankAccounts() }
-
     private val _uiState = MutableStateFlow(PublishUiState())
     val uiState: StateFlow<PublishUiState> = _uiState.asStateFlow()
+
+    init { loadBankAccounts() }
 
     fun loadExchangeRate(from: String, to: String) {
         if (exchangeApi == null) return
