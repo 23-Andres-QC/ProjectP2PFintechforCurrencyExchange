@@ -60,7 +60,8 @@ private val filterChips = listOf("Todos", "Completados", "Pendientes", "Disputas
 fun HistoryScreen(
     viewModel: HistoryViewModel? = null,
     onBack: () -> Unit = {},
-    onNavigateToTransaction: (String) -> Unit = {}
+    onNavigateToTransaction: (String) -> Unit = {},
+    onNavigateToPending: () -> Unit = {}
 ) {
     val uiState by viewModel?.uiState?.collectAsState(initial = HistoryUiState()) ?: remember { mutableStateOf(HistoryUiState()) }
     var selectedFilter by remember { mutableStateOf(0) }
@@ -229,6 +230,9 @@ fun HistoryScreen(
             ) {
                 SummaryChip("${transactions.size} Total", Primary)
                 SummaryChip("${filteredList.size} Mostrados", TextMuted)
+                SummaryChip("${transactions.count { it.status == "Completado" }} Completados", SuccessColor)
+                SummaryChip("${transactions.count { it.status == "Pendiente" || it.status == "En Proceso" }} Pendientes", WarningColor, onClick = onNavigateToPending)
+                SummaryChip("${transactions.count { it.status == "Disputa" }} Disputas", DangerColor)
             }
 
             // ── Transaction list ──────────────────────────────────────────────
@@ -289,12 +293,13 @@ fun HistoryScreen(
 // ─── Summary Chip ─────────────────────────────────────────────────────────────
 
 @Composable
-private fun SummaryChip(text: String, color: Color) {
+private fun SummaryChip(text: String, color: Color, onClick: (() -> Unit)? = null) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
             .background(color.copy(alpha = 0.1f))
             .border(1.dp, color.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(text, color = color, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)

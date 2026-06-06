@@ -38,7 +38,7 @@ class BankAccountsViewModel(
 
     fun loadBankAccounts() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null, successMessage = null)
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             when (val result = repository.listAccounts()) {
                 is NetworkResult.Success -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, accounts = result.data)
@@ -67,7 +67,11 @@ class BankAccountsViewModel(
             )
             when (val result = repository.createAccount(request)) {
                 is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(successMessage = "Cuenta agregada con éxito")
+                    _uiState.value = _uiState.value.copy(
+                        accounts = _uiState.value.accounts + result.data,
+                        successMessage = "Cuenta agregada con éxito",
+                        isLoading = false
+                    )
                     loadBankAccounts()
                 }
                 is NetworkResult.Error -> {

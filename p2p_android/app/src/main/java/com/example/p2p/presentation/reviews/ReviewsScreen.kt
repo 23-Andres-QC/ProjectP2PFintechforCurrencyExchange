@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
@@ -41,6 +42,11 @@ fun ReviewsScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = TextMain)
                     }
                 },
+                actions = {
+                    IconButton(onClick = { viewModel?.load() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Actualizar", tint = Primary)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor)
             )
         },
@@ -50,6 +56,20 @@ fun ReviewsScreen(
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Primary)
+            }
+            return@Scaffold
+        }
+
+        val errorMsg = uiState.error
+        if (errorMsg != null) {
+            Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("No se pudieron cargar las reseñas", fontWeight = FontWeight.SemiBold, color = TextMain)
+                    Text(errorMsg, fontSize = 12.sp, color = TextMuted)
+                    Button(onClick = { viewModel?.load() }, colors = ButtonDefaults.buttonColors(containerColor = Primary)) {
+                        Text("Reintentar")
+                    }
+                }
             }
             return@Scaffold
         }

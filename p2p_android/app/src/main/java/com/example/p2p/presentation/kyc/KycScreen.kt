@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CreditCard
@@ -17,53 +17,129 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.ui.theme.*
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
+import androidx.core.content.FileProvider
+import android.net.Uri
+import android.os.Environment
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
+
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import android.widget.Toast
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KycScreen(
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    viewModel: KycViewModel = viewModel()
 ) {
-    // 1 = front DNI active, 2 = back DNI, 3 = selfie
-    var currentStep by remember { mutableIntStateOf(1) }
+    val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
+    LaunchedEffect(state.error) {
+        state.error?.let {
+            snackbarHostState.showSnackbar(it)
+        }
+    }
+
+    // Helper to create temp URI
+    var tempUri by remember { mutableStateOf<Uri?>(null) }
+    
+    fun createUri(): Uri {
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val file = File.createTempFile("KYC_${timeStamp}_", ".jpg", storageDir)
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    }
+
+    val frontLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) tempUri?.let { viewModel.onDniFrontSelected(it) }
+    }
+    val backLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) tempUri?.let { viewModel.onDniBackSelected(it) }
+    }
+    val selfieLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) tempUri?.let { viewModel.onSelfieSelected(it) }
+    }
+
+    // Permission Launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (!isGranted) {
+            Toast.makeText(context, "Se requiere permiso de cámara para continuar", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun launchCameraWithPermission(launcher: androidx.activity.result.ActivityResultLauncher<Uri>, uri: Uri) {
+        when (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)) {
+            PackageManager.PERMISSION_GRANTED -> {
+                launcher.launch(uri)
+            }
+            else -> {
+                permissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
+    }
+
+    val currentStep = state.currentStep
     val scrollState = rememberScrollState()
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundApp)
-    ) {
-        Column(
+    LaunchedEffect(state.isSuccess) {
+        if (state.isSuccess) {
+            onNavigateBack()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = BackgroundApp
+    ) { paddingValues ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(paddingValues)
         ) {
-
-            // ── Top Bar ───────────────────────────────────────
-            Row(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Volver",
-                        tint = TextMain
-                    )
-                }
+
+                // ── Top Bar ───────────────────────────────────────
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = TextMain
+                        )
+                    }
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = "Verificación KYC",
@@ -136,95 +212,56 @@ fun KycScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(130.dp)
+                            .height(160.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .border(
                                 width = 2.dp,
-                                color = Primary.copy(alpha = 0.5f),
+                                color = if (state.dniFrontUri != null) SuccessColor else Primary.copy(alpha = 0.5f),
                                 shape = RoundedCornerShape(14.dp)
                             )
                             .background(Primary.copy(alpha = 0.04f))
-                            .padding(12.dp)
+                            .clickable {
+                                val uri = createUri()
+                                tempUri = uri
+                                launchCameraWithPermission(frontLauncher, uri)
+                            },
+                        contentAlignment = Alignment.Center
                     ) {
-                        // Simulated DNI card
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFFF0F4FF))
-                                .border(1.dp, BorderColor, RoundedCornerShape(10.dp))
-                                .padding(horizontal = 10.dp, vertical = 8.dp)
-                        ) {
-                            // DNI header strip
+                        if (state.dniFrontUri != null) {
+                            AsyncImage(
+                                model = state.dniFrontUri,
+                                contentDescription = "DNI Frontal",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                        } else {
+                            // Simulated DNI card (Clickable)
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(18.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(Color(0xFFD32F2F)),
-                                contentAlignment = Alignment.Center
+                                    .fillMaxSize()
+                                    .padding(12.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFFF0F4FF))
+                                    .border(1.dp, BorderColor, RoundedCornerShape(10.dp))
+                                    .padding(horizontal = 10.dp, vertical = 8.dp)
                             ) {
-                                Text(
-                                    text = "REPÚBLICA DEL PERÚ",
-                                    fontSize = 7.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    letterSpacing = 0.6.sp
-                                )
-                            }
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 22.dp),
-                                horizontalArrangement = Arrangement.Start,
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                // Fake photo
+                                // ... (Rest of simulated DNI)
                                 Box(
                                     modifier = Modifier
-                                        .size(width = 42.dp, height = 54.dp)
+                                        .fillMaxWidth()
+                                        .height(18.dp)
                                         .clip(RoundedCornerShape(4.dp))
-                                        .background(Color(0xFFBDBDBD)),
+                                        .background(Color(0xFFD32F2F)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(text = "FOTO", fontSize = 7.sp, color = Color(0xFF757575))
+                                    Text("REPÚBLICA DEL PERÚ", fontSize = 7.sp, fontWeight = FontWeight.Bold, color = Color.White)
                                 }
-
-                                Spacer(Modifier.width(10.dp))
-
-                                // DNI data
-                                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                    Text(
-                                        text = "MENDOZA LÓPEZ",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF1A237E)
-                                    )
-                                    Text(
-                                        text = "Carlos Andrés",
-                                        fontSize = 8.sp,
-                                        color = TextMain
-                                    )
-                                    Spacer(Modifier.height(4.dp))
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = "DNI",
-                                            fontSize = 7.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = TextMuted
-                                        )
-                                        Spacer(Modifier.width(4.dp))
-                                        Text(
-                                            text = "72345678",
-                                            fontSize = 8.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = TextMain
-                                        )
-                                    }
-                                }
+                                Icon(
+                                    Icons.Default.CameraAlt,
+                                    contentDescription = null,
+                                    modifier = Modifier.align(Alignment.Center).size(32.dp),
+                                    tint = Primary
+                                )
                             }
                         }
                     }
@@ -232,10 +269,11 @@ fun KycScreen(
                     Spacer(Modifier.height(18.dp))
 
                     Button(
-                        onClick = { currentStep = 2 },
+                        onClick = { viewModel.nextStep() },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),
+                        enabled = state.dniFrontUri != null,
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Primary)
                     ) {
@@ -303,39 +341,54 @@ fun KycScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(110.dp)
+                                .height(140.dp)
                                 .clip(RoundedCornerShape(14.dp))
                                 .border(
                                     width = 2.dp,
-                                    color = Primary.copy(alpha = 0.5f),
+                                    color = if (state.dniBackUri != null) SuccessColor else Primary.copy(alpha = 0.5f),
                                     shape = RoundedCornerShape(14.dp)
                                 )
-                                .background(Primary.copy(alpha = 0.04f)),
+                                .background(Primary.copy(alpha = 0.04f))
+                                .clickable {
+                                    val uri = createUri()
+                                    tempUri = uri
+                                    launchCameraWithPermission(backLauncher, uri)
+                                },
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    imageVector = Icons.Default.Flip,
-                                    contentDescription = null,
-                                    tint = Primary.copy(alpha = 0.5f),
-                                    modifier = Modifier.size(32.dp)
+                            if (state.dniBackUri != null) {
+                                AsyncImage(
+                                    model = state.dniBackUri,
+                                    contentDescription = "DNI Posterior",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
                                 )
-                                Spacer(Modifier.height(8.dp))
-                                Text(
-                                    text = "Cara posterior del DNI",
-                                    fontSize = 12.sp,
-                                    color = TextMuted
-                                )
+                            } else {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        imageVector = Icons.Default.Flip,
+                                        contentDescription = null,
+                                        tint = Primary.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(
+                                        text = "Toca para capturar el dorso",
+                                        fontSize = 12.sp,
+                                        color = TextMuted
+                                    )
+                                }
                             }
                         }
 
                         Spacer(Modifier.height(18.dp))
 
                         Button(
-                            onClick = { currentStep = 3 },
+                            onClick = { viewModel.nextStep() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
+                            enabled = state.dniBackUri != null,
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Primary)
                         ) {
@@ -403,48 +456,71 @@ fun KycScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(120.dp)
+                                .height(150.dp)
                                 .clip(RoundedCornerShape(14.dp))
                                 .border(
                                     width = 2.dp,
-                                    color = Primary.copy(alpha = 0.5f),
+                                    color = if (state.selfieUri != null) SuccessColor else Primary.copy(alpha = 0.5f),
                                     shape = RoundedCornerShape(14.dp)
                                 )
-                                .background(Primary.copy(alpha = 0.04f)),
+                                .background(Primary.copy(alpha = 0.04f))
+                                .clickable {
+                                    val uri = createUri()
+                                    tempUri = uri
+                                    launchCameraWithPermission(selfieLauncher, uri)
+                                },
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    imageVector = Icons.Default.CameraAlt,
-                                    contentDescription = null,
-                                    tint = Primary.copy(alpha = 0.5f),
-                                    modifier = Modifier.size(36.dp)
+                            if (state.selfieUri != null) {
+                                AsyncImage(
+                                    model = state.selfieUri,
+                                    contentDescription = "Selfie",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
                                 )
-                                Spacer(Modifier.height(8.dp))
-                                Text(
-                                    text = "Toca para abrir la cámara",
-                                    fontSize = 12.sp,
-                                    color = TextMuted
-                                )
+                            } else {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        imageVector = Icons.Default.CameraAlt,
+                                        contentDescription = null,
+                                        tint = Primary.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(
+                                        text = "Toca para abrir la cámara",
+                                        fontSize = 12.sp,
+                                        color = TextMuted
+                                    )
+                                }
                             }
                         }
 
                         Spacer(Modifier.height(18.dp))
 
                         Button(
-                            onClick = { /* visual only — submission */ },
+                            onClick = { viewModel.submitKyc(context) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
+                            enabled = state.selfieUri != null && !state.isLoading,
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = PrimaryMint)
                         ) {
-                            Text(
-                                "Enviar Verificación",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = Color(0xFF004D40)
-                            )
+                            if (state.isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = Color(0xFF004D40),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Text(
+                                    "Enviar Verificación",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF004D40)
+                                )
+                            }
                         }
                     }
                 }
@@ -472,6 +548,7 @@ fun KycScreen(
             }
 
             Spacer(Modifier.height(24.dp))
+            }
         }
     }
 }

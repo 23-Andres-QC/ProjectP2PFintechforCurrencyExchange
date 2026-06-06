@@ -177,13 +177,21 @@ fun MarketScreen(
                 }
 
                 else -> {
+                    val rateMap = uiState.exchangeRates.associateBy { "${it.from_currency}_${it.to_currency}" }
+                    val marketRate = rateMap["${selectedCurrency}_${selectedFiat}"]?.rate
+                    val isQuickSale: (Offer) -> Boolean = { offer ->
+                        marketRate != null && offer.price_per_unit < marketRate
+                    }
+                    val sortedOffers = uiState.offers.sortedWith(compareByDescending { isQuickSale(it) })
+
                     item {
                         OffersHeader(count = uiState.offers.size, from = selectedCurrency, to = selectedFiat)
                     }
-                    itemsIndexed(uiState.offers, key = { _, o -> o.id }) { index, offer ->
+                    itemsIndexed(sortedOffers, key = { _, o -> o.id }) { index, offer ->
                         OfferCard(
                             offer = offer,
                             isBestRate = index == 0,
+                            isQuickSale = isQuickSale(offer),
                             bankAccounts = uiState.bankAccounts,
                             selectedBankAccountId = uiState.selectedBankAccountId,
                             onSelectBankAccount = { viewModel.selectBankAccount(it) },
@@ -197,7 +205,10 @@ fun MarketScreen(
                                     vendor_payment_account = offer.payment_methods?.firstOrNull() ?: "BCP"
                                 )
                                 viewModel.createTransaction(req,
-                                    onSuccess = { txnId -> onNavigateToTransaction(txnId) },
+                                    onSuccess = { txnId ->
+                                        Toast.makeText(context, "¡Compra iniciada! El vendedor fue notificado.", Toast.LENGTH_SHORT).show()
+                                        onNavigateToTransaction(txnId)
+                                    },
                                     onError   = { err -> Toast.makeText(context, err, Toast.LENGTH_LONG).show() }
                                 )
                             }
@@ -224,7 +235,11 @@ fun MarketScreen(
                     vendor_payment_account = offer.payment_methods?.firstOrNull() ?: "BCP"
                 )
                 viewModel.createTransaction(req,
-                    onSuccess = { txnId -> showBuyDialog = null; onNavigateToTransaction(txnId) },
+                    onSuccess = { txnId ->
+                        showBuyDialog = null
+                        Toast.makeText(context, "¡Compra iniciada! El vendedor fue notificado.", Toast.LENGTH_SHORT).show()
+                        onNavigateToTransaction(txnId)
+                    },
                     onError   = { err -> Toast.makeText(context, err, Toast.LENGTH_LONG).show() }
                 )
             },
@@ -641,6 +656,7 @@ private fun MatchingDialog(
 private fun OfferCard(
     offer: Offer,
     isBestRate: Boolean = false,
+    isQuickSale: Boolean = false,
     bankAccounts: List<BankAccount>,
     selectedBankAccountId: String?,
     onSelectBankAccount: (String) -> Unit,
@@ -664,30 +680,49 @@ private fun OfferCard(
     val verified = offer.vendor?.kyc_verified ?: false
 
     Card(
-        shape = RoundedCornerShape(0.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(0.dp),
-        modifier = Modifier.fillMaxWidth()
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
     ) {
         Column {
-            HorizontalDivider(color = BorderColor, thickness = 0.5.dp)
-
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                if (isBestRate) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(WarningColor.copy(alpha = 0.12f))
-                            .border(1.dp, WarningColor.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text("🏆", fontSize = 11.sp)
-                        Text("Mejor tasa del mercado", color = WarningColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                if (isBestRate || isQuickSale) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (isBestRate) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(WarningColor.copy(alpha = 0.12f))
+                                    .border(1.dp, WarningColor.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text("🏆", fontSize = 11.sp)
+                                Text("Mejor tasa del mercado", color = WarningColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        if (isQuickSale) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(DangerColor.copy(alpha = 0.1f))
+                                    .border(1.dp, DangerColor.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text("⚡", fontSize = 11.sp)
+                                Text("Venta rápida", color = DangerColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
 
