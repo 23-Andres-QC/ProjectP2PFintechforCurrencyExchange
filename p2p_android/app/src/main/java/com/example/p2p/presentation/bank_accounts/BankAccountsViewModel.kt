@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.p2p.core.network.NetworkResult
+import com.example.p2p.core.security.TokenManager
 import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.data.remote.model.CreateBankAccountRequest
 import com.example.p2p.domain.repository.BankAccountRepository
@@ -16,15 +17,24 @@ data class BankAccountsUiState(
     val isLoading: Boolean = false,
     val accounts: List<BankAccount> = emptyList(),
     val error: String? = null,
-    val successMessage: String? = null
+    val successMessage: String? = null,
+    val currentUserName: String? = null
 )
 
 class BankAccountsViewModel(
-    private val repository: BankAccountRepository
+    private val repository: BankAccountRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BankAccountsUiState())
     val uiState: StateFlow<BankAccountsUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val name = tokenManager.getUserName()
+            _uiState.value = _uiState.value.copy(currentUserName = name)
+        }
+    }
 
     fun loadBankAccounts() {
         viewModelScope.launch {
@@ -92,9 +102,12 @@ class BankAccountsViewModel(
         _uiState.value = _uiState.value.copy(error = null, successMessage = null)
     }
 
-    class Factory(private val repo: BankAccountRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val repo: BankAccountRepository,
+        private val tokenManager: TokenManager
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            BankAccountsViewModel(repo) as T
+            BankAccountsViewModel(repo, tokenManager) as T
     }
 }

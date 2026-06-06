@@ -103,8 +103,8 @@ fun HistoryScreen(
             id = "#TX-${dto.id.takeLast(4).uppercase()}",
             status = statusName,
             statusColor = sColor,
-            from = dto.buyer_name?.split(" ")?.firstOrNull() ?: dto.buyer_id.take(6).uppercase(),
-            to = dto.vendor_name?.split(" ")?.firstOrNull() ?: dto.vendor_id.take(6).uppercase(),
+            from = dto.buyer_name ?: dto.buyer_id.take(6).uppercase(),
+            to = dto.vendor_name ?: dto.vendor_id.take(6).uppercase(),
             amount = "${String.format("%.2f", dto.amount_from)} USD",
             rate = "S/ ${String.format("%.3f", dto.exchange_rate)}",
             date = formattedDate,
@@ -229,6 +229,7 @@ fun HistoryScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 SummaryChip("${transactions.size} Total", Primary)
+                SummaryChip("${filteredList.size} Mostrados", TextMuted)
                 SummaryChip("${transactions.count { it.status == "Completado" }} Completados", SuccessColor)
                 SummaryChip("${transactions.count { it.status == "Pendiente" || it.status == "En Proceso" }} Pendientes", WarningColor, onClick = onNavigateToPending)
                 SummaryChip("${transactions.count { it.status == "Disputa" }} Disputas", DangerColor)
