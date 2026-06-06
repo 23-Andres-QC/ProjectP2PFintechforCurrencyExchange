@@ -32,8 +32,11 @@ class TransactionViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             when (val result = transactionRepository.getPendingTransactions()) {
                 is NetworkResult.Success -> {
+                    val activeTxns = result.data.filter { txn ->
+                        txn.status in listOf("pending", "voucher_uploaded")
+                    }
                     _uiState.value = _uiState.value.copy(isLoading = false)
-                    _pendingTransactions.value = result.data
+                    _pendingTransactions.value = activeTxns
                 }
                 is NetworkResult.Error -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
@@ -108,6 +111,20 @@ class TransactionViewModel(
                 }
                 NetworkResult.Loading -> Unit
             }
+        }
+    }
+
+    fun acceptTransaction(id: String) {
+        _pendingTransactions.value = _pendingTransactions.value.filter { it.id != id }
+        viewModelScope.launch {
+            transactionRepository.updateStatus(id, "accepted")
+        }
+    }
+
+    fun cancelTransaction(id: String) {
+        _pendingTransactions.value = _pendingTransactions.value.filter { it.id != id }
+        viewModelScope.launch {
+            transactionRepository.updateStatus(id, "cancelled")
         }
     }
 

@@ -133,7 +133,7 @@ fun ProfileScreen(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Button(
-                onClick = { onNavigate(Screen.History.route) },
+                onClick = { onNavigate(Screen.Vendor.route) },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = WarningColor),

@@ -12,8 +12,8 @@ sealed class Screen(val route: String) {
     object EditProfile   : Screen("edit_profile")
     object BankAccounts  : Screen("bank_accounts")
     object Admin         : Screen("admin")
-    object Rating : Screen("rating/{transactionId}") {
-        fun createRoute(id: String) = "rating/$id"
+    object Rating : Screen("rating/{transactionId}/{score}") {
+        fun createRoute(id: String, score: Int = 5) = "rating/$id/$score"
     }
     object Notifications : Screen("notifications")
     object MyOffers      : Screen("my_offers")

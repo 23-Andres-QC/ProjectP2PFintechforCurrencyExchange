@@ -31,8 +31,8 @@ class ReviewsViewModel(private val ratingApi: RatingApi) : ViewModel() {
             _uiState.value = ReviewsUiState(isLoading = true)
             try {
                 val response = ratingApi.getReceivedRatings()
-                if (response.isSuccessful) {
-                    val body = response.body()!!
+                val body = if (response.isSuccessful) response.body() else null
+                if (body != null) {
                     _uiState.value = ReviewsUiState(
                         ratings = body.ratings,
                         average = body.average,
