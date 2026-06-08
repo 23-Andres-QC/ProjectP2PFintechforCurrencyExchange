@@ -20,13 +20,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Leer URLs desde gradle.properties (un solo lugar para cambiar credenciales)
+    val baseUrlDebug: String = project.findProperty("BASE_URL_DEBUG") as? String
+        ?: "http://10.0.2.2:5000/api/v1/"
+    val baseUrlRelease: String = project.findProperty("BASE_URL_RELEASE") as? String
+        ?: "http://157.137.189.178/api/v1/"
+
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"$baseUrlDebug\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "BASE_URL", "\"$baseUrlRelease\"")
         }
     }
     compileOptions {
@@ -35,6 +45,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true   // necesario para acceder a BuildConfig.BASE_URL
     }
 }
 

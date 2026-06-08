@@ -23,14 +23,19 @@ class RegisterViewModel(
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
-    fun register(email: String, password: String, fullName: String) {
+    fun register(email: String, password: String, fullName: String, dni: String = "") {
         if (email.isBlank() || password.isBlank() || fullName.isBlank()) {
             _uiState.value = _uiState.value.copy(error = "Todos los campos son requeridos")
             return
         }
+        if (password.length < 8) {
+            _uiState.value = _uiState.value.copy(error = "La contraseña debe tener mínimo 8 caracteres")
+            return
+        }
+        val cleanDni = dni.trim().ifBlank { null }
         viewModelScope.launch {
             _uiState.value = RegisterUiState(isLoading = true)
-            when (val result = authRepository.register(email.trim(), password, fullName.trim())) {
+            when (val result = authRepository.register(email.trim(), password, fullName.trim(), cleanDni)) {
                 is NetworkResult.Success -> {
                     _uiState.value = RegisterUiState(isSuccess = true)
                 }

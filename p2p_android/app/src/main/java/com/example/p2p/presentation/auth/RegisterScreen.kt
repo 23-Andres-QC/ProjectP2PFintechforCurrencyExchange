@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
@@ -275,7 +276,7 @@ fun RegisterScreen(
                     Button(
                         onClick = {
                             if (password != confirmPassword) return@Button
-                            viewModel?.register(email, password, fullName)
+                            viewModel?.register(email, password, fullName, dni)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -311,7 +312,7 @@ fun RegisterScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Lock,
+                                imageVector = Icons.Default.Warning,
                                 contentDescription = null,
                                 tint = DangerColor,
                                 modifier = Modifier.size(16.dp)

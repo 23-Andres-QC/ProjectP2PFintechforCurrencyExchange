@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -l \"^import\" /c/Mobile/ProyectoFinal/ProjectP2PFintechforCurrencyExchange/p2p_android/app/src/main/java/com/example/p2p/**/*.kt)"
+    ]
+  }
+}

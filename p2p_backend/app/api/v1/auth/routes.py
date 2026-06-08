@@ -40,11 +40,16 @@ def register():
     if User.query.filter_by(email=email).first():
         raise ConflictError('Email already registered')
 
+    dni = data.get('dni', '').strip() or None
+    if dni and User.query.filter_by(dni=dni).first():
+        raise ConflictError('DNI already registered')
+
     user = User(
         email=email,
         full_name=data.get('full_name', ''),
         role=data.get('role', 'buyer'),
         phone=data.get('phone'),
+        dni=dni,
     )
     user.set_password(password)
     db.session.add(user)

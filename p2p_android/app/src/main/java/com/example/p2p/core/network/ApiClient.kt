@@ -1,6 +1,7 @@
 package com.example.p2p.core.network
 
 import android.content.Context
+import com.example.p2p.BuildConfig
 import com.example.p2p.core.security.TokenManager
 import com.example.p2p.data.remote.api.AdminApi
 import com.example.p2p.data.remote.api.AuthApi
@@ -23,15 +24,11 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
 
-    // Toggle this to true if you want to connect to your local backend, false for the VM
-    private const val IS_LOCAL = false 
-
-    // Local emulator URL
-    private const val LOCAL_URL = "http://10.0.2.2:5000/api/v1/"
-    // Your Oracle VM URL
-    private const val REMOTE_URL = "http://157.137.189.178/api/v1/"
-
-    private val BASE_URL = if (IS_LOCAL) LOCAL_URL else REMOTE_URL
+    // La URL se define en gradle.properties:
+    //   BASE_URL_DEBUG  → se usa en builds debug  (emulador → 10.0.2.2)
+    //   BASE_URL_RELEASE→ se usa en builds release (servidor Oracle VM)
+    // Para cambiar de local a remoto: solo recompila en Debug o Release.
+    private val BASE_URL = BuildConfig.BASE_URL
 
     private var tokenManager: TokenManager? = null
 
