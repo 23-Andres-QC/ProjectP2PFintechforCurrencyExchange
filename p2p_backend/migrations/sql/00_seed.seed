@@ -1,32 +1,19 @@
 #!/usr/bin/env python3
-"""
-Seed de datos de prueba — usuarios, monedas, tasas y ofertas iniciales.
-Se ejecuta al arrancar el contenedor en modo development.
-
-Usuarios de prueba:
-  comprador@peruexchange.com  /  Comprador123!  (rol: buyer)
-  vendedor@peruexchange.com   /  Vendedor123!   (rol: vendor)
-  admin@peruexchange.com      /  Admin123!      (rol: admin)
-"""
 import time
 import sys
 import os
 
-# Subir dos niveles: sql/ -> migrations/ -> p2p_backend/
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 def seed():
     from app import create_app
-    from app.models import Currency, ExchangeRate, Offer
     from app.models.user import User
-    import json
+    from sqlalchemy import text
+    from app.core.database import db
 
     app = create_app('development')
     with app.app_context():
-        # Espera a que la DB esté lista (max 30s)
-        from sqlalchemy import text
-        from app.core.database import db
         for attempt in range(15):
             try:
                 db.session.execute(text('SELECT 1'))
@@ -39,48 +26,13 @@ def seed():
             print('  DB no disponible después de 30s, abortando seed.')
             return
 
-        # ── Monedas ───────────────────────────────────────────
-        for code, name, symbol in [
-            ('PEN', 'Sol Peruano',      'S/'),
-            ('USD', 'Dólar Americano',  '$'),
-            ('EUR', 'Euro',             '€'),
-            ('BRL', 'Real Brasileño',   'R$'),
-        ]:
-            if not Currency.query.filter_by(code=code).first():
-                db.session.add(Currency(code=code, name=name, symbol=symbol))
-                print(f'  + Moneda {code}')
-
-        # ── Tasas de cambio ───────────────────────────────────
-        for frm, to, rate in [
-            ('USD', 'PEN', 3.72),
-            ('PEN', 'USD', 0.2688),
-            ('EUR', 'PEN', 4.05),
-            ('PEN', 'EUR', 0.2469),
-            ('USD', 'EUR', 0.9220),
-            ('EUR', 'USD', 1.0845),
-        ]:
-            if not ExchangeRate.query.filter_by(from_currency=frm, to_currency=to).first():
-                db.session.add(ExchangeRate(from_currency=frm, to_currency=to, rate=rate))
-                print(f'  + Tasa {frm}->{to}: {rate}')
-
-        # ── Usuarios de prueba ────────────────────────────────
         users_seed = [
             {'email': 'comprador@peruexchange.com', 'password': 'Comprador123!',
-             'full_name': 'Carlos Comprador', 'role': 'buyer',  'rating': 4.8, 'txns': 12},
-            {'email': 'vendedor@peruexchange.com',  'password': 'Vendedor123!',
-             'full_name': 'Victor Vendedor',  'role': 'vendor', 'rating': 4.8, 'txns': 12},
-            {'email': 'admin@peruexchange.com',     'password': 'Admin123!',
-             'full_name': 'Ana Admin',         'role': 'admin',  'rating': 5.0, 'txns': 0},
-            {'email': 'maria@peruexchange.com',     'password': 'Maria123!',
-             'full_name': 'Maria Cambista',    'role': 'vendor', 'rating': 4.9, 'txns': 34},
-            {'email': 'luis@peruexchange.com',      'password': 'Luis123!',
-             'full_name': 'Luis Trader',       'role': 'vendor', 'rating': 4.6, 'txns': 7},
-            {'email': 'rosa@peruexchange.com',      'password': 'Rosa123!',
-             'full_name': 'Rosa Exchange',     'role': 'vendor', 'rating': 4.7, 'txns': 21},
-            {'email': 'pedro@peruexchange.com',     'password': 'Pedro123!',
-             'full_name': 'Pedro P2P',         'role': 'vendor', 'rating': 4.5, 'txns': 5},
-            {'email': 'juan@peruexchange.com',      'password': 'Juan123!',
-             'full_name': 'Juan Cambio',       'role': 'vendor', 'rating': 4.8, 'txns': 18},
+             'full_name': 'Carlos Quispe', 'role': 'buyer'},
+            {'email': 'vendedor@peruexchange.com', 'password': 'Vendedor123!',
+             'full_name': 'Victor Mamani', 'role': 'buyer'},
+            {'email': 'admin@peruexchange.com', 'password': 'Admin123!',
+             'full_name': 'Ana Torres', 'role': 'admin'},
         ]
         for ud in users_seed:
             if not User.query.filter_by(email=ud['email']).first():
@@ -89,48 +41,12 @@ def seed():
                     full_name=ud['full_name'],
                     role=ud['role'],
                     kyc_verified=True,
-                    rating=ud['rating'],
-                    total_transactions=ud['txns'],
+                    rating=5.0,
+                    total_transactions=0,
                 )
                 u.set_password(ud['password'])
                 db.session.add(u)
-                print(f"  + Usuario {ud['email']} [{ud['role']}]")
-
-        db.session.commit()
-
-        # ── 8 Ofertas de prueba ───────────────────────────────
-        offers_config = [
-            # (vendor_email, from, to, amount, price, type, min, max, methods)
-            ('vendedor@peruexchange.com', 'USD', 'PEN', 1200.0, 3.780, 'partial',
-             50.0,  600.0,  ['BCP', 'Yape']),
-            ('vendedor@peruexchange.com', 'USD', 'PEN',  800.0, 3.750, 'full',
-             800.0, 800.0,  ['BCP']),
-            ('maria@peruexchange.com',    'USD', 'PEN',  500.0, 3.795, 'partial',
-             30.0,  250.0,  ['Interbank', 'Plin']),
-            ('luis@peruexchange.com',     'USD', 'PEN', 2000.0, 3.770, 'partial',
-             100.0, 1000.0, ['BCP', 'BBVA']),
-            ('rosa@peruexchange.com',     'USD', 'PEN',  300.0, 3.760, 'full',
-             300.0, 300.0,  ['Yape']),
-            ('pedro@peruexchange.com',    'EUR', 'PEN',  600.0, 4.100, 'partial',
-             50.0,  300.0,  ['BCP', 'Interbank']),
-            ('juan@peruexchange.com',     'EUR', 'PEN',  400.0, 4.080, 'full',
-             400.0, 400.0,  ['BBVA']),
-            ('maria@peruexchange.com',    'USD', 'PEN', 1500.0, 3.785, 'partial',
-             50.0,  500.0,  ['BCP', 'Interbank', 'Yape']),
-        ]
-        for (email, frm, to, amt, price, otype, mn, mx, methods) in offers_config:
-            v = User.query.filter_by(email=email).first()
-            if v and not Offer.query.filter_by(vendor_id=v.id, from_currency=frm,
-                                               price_per_unit=price).first():
-                db.session.add(Offer(
-                    vendor_id=v.id,
-                    from_currency=frm, to_currency=to,
-                    amount=amt, available_amount=amt,
-                    price_per_unit=price, offer_type=otype, status='active',
-                    min_transaction=mn, max_transaction=mx,
-                    payment_methods=json.dumps(methods)
-                ))
-                print(f'  + Oferta {frm}->{to} S/{price} ({otype}) para {email}')
+                print(f"  + Usuario {ud['email']}")
 
         db.session.commit()
         print('Seed completado.')

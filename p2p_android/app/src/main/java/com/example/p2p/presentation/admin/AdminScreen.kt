@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -44,7 +43,7 @@ import java.util.Locale
 @Composable
 fun AdminScreen(
     viewModel: AdminViewModel,
-    onNavigate: (String) -> Unit = {},  // ← agrega esto
+    onNavigate: (String) -> Unit = {},
     onBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -86,7 +85,7 @@ fun AdminScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 24.dp),
         ) {
-            // Admin header card
+
             item {
                 AdminHeaderCard(
                     volume = uiState.stats?.total_volume ?: 0.0,
@@ -96,7 +95,6 @@ fun AdminScreen(
                 )
             }
 
-            // Status pills
             item {
                 StatusPillsRow(
                     openCount = uiState.disputes.count { it.status == "open" },
@@ -106,7 +104,6 @@ fun AdminScreen(
                 )
             }
 
-            // Filter tabs
             item {
                 Spacer(Modifier.height(16.dp))
                 FilterTabsRow(
@@ -117,7 +114,6 @@ fun AdminScreen(
                 )
             }
 
-            // Section title
             item {
                 Spacer(Modifier.height(20.dp))
                 Text(
@@ -130,11 +126,9 @@ fun AdminScreen(
                 Spacer(Modifier.height(12.dp))
             }
 
-            // Dispute cards
-            // Content by tab
             when (selectedTab) {
                 0 -> {
-                    // ── Disputas ──────────────────────────────────────────────
+
                     item {
                         Spacer(Modifier.height(20.dp))
                         Text(
@@ -200,7 +194,7 @@ fun AdminScreen(
                 }
 
                 1 -> {
-                    // ── Reclamos ───────────────────────────────────────────────
+
                     item {
                         Spacer(Modifier.height(20.dp))
                         Text(
@@ -483,7 +477,7 @@ private fun DisputeCard(
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                         modifier = Modifier.height(34.dp).weight(1f),
                     ) {
-                        Text("✓ Comprador", fontSize = 11.sp, color = Color.White)
+                        Text("Favor Comprador", fontSize = 11.sp, color = Color.White)
                     }
                     Button(
                         onClick = { onResolve("favour_vendor") },
@@ -492,7 +486,7 @@ private fun DisputeCard(
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                         modifier = Modifier.height(34.dp).weight(1f),
                     ) {
-                        Text("✓ Vendedor", fontSize = 11.sp, color = Color.White)
+                        Text("Favor Vendedor", fontSize = 11.sp, color = Color.White)
                     }
                 }
             }

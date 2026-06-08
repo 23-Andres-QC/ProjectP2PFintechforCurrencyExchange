@@ -96,7 +96,9 @@ class MarketViewModel(
                 if (combined.isNotEmpty()) {
                     _uiState.value = _uiState.value.copy(exchangeRates = combined)
                 }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "No se pudieron cargar las tasas de cambio")
+            }
         }
     }
 

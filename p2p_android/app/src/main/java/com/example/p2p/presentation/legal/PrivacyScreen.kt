@@ -5,7 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -30,7 +30,7 @@ fun PrivacyScreen(onBack: () -> Unit = {}) {
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = TextMain)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = TextMain)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor)
@@ -46,7 +46,7 @@ fun PrivacyScreen(onBack: () -> Unit = {}) {
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // ── Header ────────────────────────────────────────────────────────
+
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     "Política de Privacidad",
@@ -63,7 +63,6 @@ fun PrivacyScreen(onBack: () -> Unit = {}) {
 
             HorizontalDivider(color = BorderColor, thickness = 1.dp)
 
-            // ── Sections ──────────────────────────────────────────────────────
             PrivacySection(
                 title = "1. Recopilación de Datos",
                 body = "PeruExchange P2P recopila información personal necesaria para la prestación de sus servicios, incluyendo: nombre completo, número de documento de identidad (DNI/CE), dirección de correo electrónico, número de teléfono, datos bancarios para las transacciones, dirección IP y datos de navegación en la plataforma. También recopilamos documentos requeridos para el proceso KYC conforme a la normativa vigente."

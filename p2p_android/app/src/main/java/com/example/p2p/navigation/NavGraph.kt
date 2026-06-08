@@ -84,7 +84,6 @@ import com.example.p2p.ui.theme.Primary
 import com.example.p2p.ui.theme.SurfaceColor
 import kotlinx.coroutines.launch
 
-// Rutas donde NO se muestra la barra inferior (auth)
 private val authRoutes = setOf(
     Screen.Login.route,
     Screen.Register.route,
@@ -125,7 +124,6 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
             modifier = Modifier.padding(innerPadding)
         ) {
 
-            // ── Auth ─────────────────────────────────────────────────────────────
             composable(Screen.Login.route) {
                 val authRepo = AuthRepositoryImpl(tokenManager)
                 val vm: LoginViewModel = viewModel(factory = LoginViewModel.Factory(authRepo))
@@ -176,11 +174,15 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                         navController.navigate(Screen.Market.route) {
                             popUpTo(0) { inclusive = true }
                         }
+                    },
+                    onSkip = {
+                        navController.navigate(Screen.Market.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
                     }
                 )
             }
 
-            // ── Main ─────────────────────────────────────────────────────────────
             composable(Screen.Market.route) {
                 var userName by remember { mutableStateOf("Usuario") }
                 var currentUserId by remember { mutableStateOf("") }
@@ -319,7 +321,6 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 )
             }
 
-            // ── Profile ──────────────────────────────────────────────────────────
             composable(Screen.Profile.route) {
                 val userRepo = UserRepositoryImpl(ApiClient.userApi)
                 val notifRepo = NotificationRepositoryImpl(ApiClient.notificationApi)
@@ -394,7 +395,6 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 )
             }
 
-            // ── Disputes ─────────────────────────────────────────────────────────
             composable(Screen.MyDisputes.route) {
                 val repo = DisputeRepositoryImpl(ApiClient.disputeApi)
                 val vm: DisputesViewModel = viewModel(factory = DisputesViewModel.Factory(repo))
@@ -430,7 +430,6 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 )
             }
 
-            // ── Admin ─────────────────────────────────────────────────────────────
             composable(Screen.Admin.route) {
                 val adminRepo = AdminRepositoryImpl(ApiClient.adminApi)
                 val vm: AdminViewModel = viewModel(factory = AdminViewModel.Factory(adminRepo))
@@ -450,7 +449,6 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 )
             }
 
-            // ── Legal / Info ──────────────────────────────────────────────────────
             composable(Screen.Terms.route) {
                 TermsScreen(onBack = { navController.popBackStack() })
             }

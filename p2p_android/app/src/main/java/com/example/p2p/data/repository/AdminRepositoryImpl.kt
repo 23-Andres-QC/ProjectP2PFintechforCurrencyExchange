@@ -14,12 +14,8 @@ class AdminRepositoryImpl(
     private val api: AdminApi
 ) : AdminRepository {
 
-    // ── Dashboard ─────────────────────────────────────────────────────────────
-
     override suspend fun getDashboardStats(): NetworkResult<AdminDashboardResponse> =
         safeCall { api.getDashboardStats() }
-
-    // ── Disputas ──────────────────────────────────────────────────────────────
 
     override suspend fun getDisputes(
         page: Int,
@@ -57,8 +53,6 @@ class AdminRepositoryImpl(
             NetworkResult.Error(-1, e.message ?: "Error de conexión")
         }
 
-    // ── Usuarios ──────────────────────────────────────────────────────────────
-
     override suspend fun getUsers(
         page: Int,
         perPage: Int,
@@ -84,8 +78,6 @@ class AdminRepositoryImpl(
             NetworkResult.Error(-1, e.message ?: "Error de conexión")
         }
 
-    // ── Reclamos ──────────────────────────────────────────────────────────────
-
     override suspend fun getComplaints(
         page: Int,
         perPage: Int,
@@ -103,9 +95,6 @@ class AdminRepositoryImpl(
         adminNote: String
     ): NetworkResult<com.example.p2p.data.remote.model.Complaint> =
         safeCall { api.resolveComplaint(complaintId, com.example.p2p.data.remote.api.ResolveComplaintRequest(adminNote)) }
-
-
-    // ── Helper ────────────────────────────────────────────────────────────────
 
     private suspend fun <T> safeCall(call: suspend () -> retrofit2.Response<T>): NetworkResult<T> =
         try {

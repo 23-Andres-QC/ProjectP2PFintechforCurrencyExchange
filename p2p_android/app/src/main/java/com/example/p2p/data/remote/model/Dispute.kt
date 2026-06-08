@@ -1,7 +1,5 @@
 package com.example.p2p.data.remote.model
 
-// ── Modelos de respuesta del backend ─────────────────────────────────────────
-
 data class DisputeTransaction(
     val id: String,
     val amount_from: Double,
@@ -12,13 +10,6 @@ data class DisputeTransaction(
     val vendor_id: String
 )
 
-/**
- * Mapea exactamente la respuesta de:
- *   GET  /api/v1/disputes/my-disputes
- *   GET  /api/v1/disputes/{id}
- *   GET  /api/v1/admin/disputes
- *   GET  /api/v1/admin/disputes/{id}
- */
 data class Dispute(
     val id: String,
     val transaction_id: String,
@@ -26,9 +17,9 @@ data class Dispute(
     val initiator_name: String?,
     val reason: String,
     val description: String?,
-    val status: String,                // open | under_review | resolved | closed
+    val status: String,
     val resolved_by: String?,
-    val resolution: String?,           // favour_buyer | favour_vendor
+    val resolution: String?,
     val resolution_note: String?,
     val resolved_at: String?,
     val created_at: String,
@@ -50,25 +41,15 @@ data class PaginationMeta(
     val has_prev: Boolean
 )
 
-// ── Requests ──────────────────────────────────────────────────────────────────
-
-/**
- * Body para POST /api/v1/transactions/{id}/dispute
- */
 data class CreateDisputeRequest(
     val reason: String,
     val description: String?
 )
 
-/**
- * Body para PATCH /api/v1/admin/disputes/{id}/resolve
- */
 data class ResolveDisputeRequest(
-    val resolution: String,           // "favour_buyer" | "favour_vendor"
+    val resolution: String,
     val resolution_note: String?
 )
-
-// ── Constantes de razón (deben coincidir con Dispute.VALID_REASONS en Python) ─
 
 object DisputeReason {
     const val PAYMENT_NOT_RECEIVED = "payment_not_received"
@@ -77,7 +58,6 @@ object DisputeReason {
     const val NO_RESPONSE          = "no_response"
     const val OTHER                = "other"
 
-    /** Texto legible en español para mostrar en la UI */
     fun label(reason: String) = when (reason) {
         PAYMENT_NOT_RECEIVED -> "Pago no recibido"
         WRONG_AMOUNT         -> "Monto incorrecto"

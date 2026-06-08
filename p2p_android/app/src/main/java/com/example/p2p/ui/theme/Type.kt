@@ -27,7 +27,7 @@ val InterFontFamily = FontFamily(
 )
 
 val Typography = Typography(
-    // ── Pantallas / Títulos grandes ─────────────────────────────────────────
+
     displayLarge = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.ExtraBold,
@@ -49,7 +49,6 @@ val Typography = Typography(
         lineHeight = 32.sp,
     ),
 
-    // ── Titulares de sección ────────────────────────────────────────────────
     headlineLarge = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.Bold,
@@ -69,7 +68,6 @@ val Typography = Typography(
         lineHeight = 24.sp,
     ),
 
-    // ── Títulos de componentes ──────────────────────────────────────────────
     titleLarge = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.SemiBold,
@@ -91,7 +89,6 @@ val Typography = Typography(
         letterSpacing = 0.1.sp
     ),
 
-    // ── Cuerpo de texto ─────────────────────────────────────────────────────
     bodyLarge = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.Normal,
@@ -114,7 +111,6 @@ val Typography = Typography(
         letterSpacing = 0.25.sp
     ),
 
-    // ── Etiquetas y chips ───────────────────────────────────────────────────
     labelLarge = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.SemiBold,

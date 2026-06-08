@@ -50,7 +50,6 @@ fun RatingScreen(
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
 
-        // Star icon in circle
         Box(
             modifier = Modifier
                 .size(72.dp)
@@ -88,7 +87,6 @@ fun RatingScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Rating card
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -99,7 +97,7 @@ fun RatingScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            // 5 stars row (tappable!)
+
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -129,7 +127,6 @@ fun RatingScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Comment label
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Start
@@ -144,7 +141,6 @@ fun RatingScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Comment text field
             OutlinedTextField(
                 value = commentText,
                 onValueChange = { commentText = it },
@@ -173,7 +169,6 @@ fun RatingScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Submit button
         Button(
             onClick = {
                 if (transactionId != null) {
@@ -219,7 +214,6 @@ fun RatingScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Ghost skip button
         TextButton(
             onClick = onSkip,
             modifier = Modifier.fillMaxWidth()

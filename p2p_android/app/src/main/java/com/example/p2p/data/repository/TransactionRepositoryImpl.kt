@@ -68,7 +68,7 @@ class TransactionRepositoryImpl(
         if (!errorBody.isNullOrBlank()) {
             return try {
                 val json = JSONObject(errorBody)
-                // El backend retorna {"error": {"code": "...", "message": "..."}}
+
                 val errorObj = json.optJSONObject("error")
                 val errorCode = errorObj?.optString("code", "") ?: ""
                 val message = errorObj?.optString("message", "") ?: ""
@@ -107,14 +107,13 @@ class TransactionRepositoryImpl(
 
     override suspend fun uploadVoucherWithBase64(id: String, base64: String): NetworkResult<Unit> {
         return try {
-            // Paso 1: subir imagen al servidor, obtener URL
+
             val uploadResponse = api.uploadImage(mapOf("image_base64" to base64))
             if (!uploadResponse.isSuccessful || uploadResponse.body() == null) {
                 return NetworkResult.Error(uploadResponse.code(), "Error al subir la imagen")
             }
             val imageUrl = uploadResponse.body()!!["url"] ?: ""
 
-            // Paso 2: registrar voucher con la URL obtenida
             val voucherResponse = api.uploadVoucher(id, mapOf("image_url" to imageUrl))
             if (voucherResponse.isSuccessful) {
                 NetworkResult.Success(Unit)

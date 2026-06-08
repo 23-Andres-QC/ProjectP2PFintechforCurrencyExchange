@@ -66,7 +66,7 @@ class ComplaintsViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSubmitting = true, submitSuccess = false)
             val request = CreateComplaintRequest(
-                    type = type.name.lowercase(),  // ← agrega .lowercase()
+                    type = type.name.lowercase(),
             description = description
             )
             when (val result = repository.createComplaint(request)) {

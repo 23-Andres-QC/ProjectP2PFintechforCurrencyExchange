@@ -7,7 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
@@ -48,7 +48,6 @@ fun ForgotPasswordScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // ── Top Bar ───────────────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -57,7 +56,7 @@ fun ForgotPasswordScreen(
             ) {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
                         tint = TextMain
                     )
@@ -71,7 +70,6 @@ fun ForgotPasswordScreen(
                 )
             }
 
-            // ── Lock Icon ─────────────────────────────────────
             Box(
                 modifier = Modifier
                     .size(100.dp)
@@ -89,7 +87,6 @@ fun ForgotPasswordScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // ── Subtitle ─────────────────────────────────────
             Text(
                 text = "Ingresa tu correo para recibir un enlace de restablecimiento seguro.",
                 fontSize = 14.sp,
@@ -103,7 +100,6 @@ fun ForgotPasswordScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            // ── Form Card ─────────────────────────────────────
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
@@ -115,7 +111,6 @@ fun ForgotPasswordScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
 
-                    // Success banner (shows after tapping button)
                     if (sent) {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -145,7 +140,6 @@ fun ForgotPasswordScreen(
                         }
                     }
 
-                    // Email field label
                     Text(
                         text = "CORREO ELECTRÓNICO",
                         fontSize = 10.sp,
@@ -178,7 +172,6 @@ fun ForgotPasswordScreen(
                         singleLine = true
                     )
 
-                    // Send Button
                     Button(
                         onClick = { sent = true },
                         modifier = Modifier
@@ -196,14 +189,13 @@ fun ForgotPasswordScreen(
                         )
                     }
 
-                    // Cancel Button
                     OutlinedButton(
                         onClick = onNavigateBack,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
                         shape = RoundedCornerShape(14.dp),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
                             width = 1.5.dp
                         ),
                         colors = ButtonDefaults.outlinedButtonColors(
@@ -221,7 +213,6 @@ fun ForgotPasswordScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // ── Info Footer ───────────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

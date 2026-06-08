@@ -24,10 +24,6 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
 
-    // La URL se define en gradle.properties:
-    //   BASE_URL_DEBUG  → se usa en builds debug  (emulador → 10.0.2.2)
-    //   BASE_URL_RELEASE→ se usa en builds release (servidor Oracle VM)
-    // Para cambiar de local a remoto: solo recompila en Debug o Release.
     private val BASE_URL = BuildConfig.BASE_URL
 
     private var tokenManager: TokenManager? = null

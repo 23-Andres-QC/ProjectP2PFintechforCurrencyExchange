@@ -109,7 +109,7 @@ fun MyOffersScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // ── Filtros ──────────────────────────────────────────────
+
             item {
                 FilterBar(
                     activeFilter = uiState.activeFilter,
@@ -120,7 +120,6 @@ fun MyOffersScreen(
                 )
             }
 
-            // ── Contenido ─────────────────────────────────────────────
             when {
                 uiState.isLoading && uiState.offers.isEmpty() -> item {
                     Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
@@ -153,8 +152,6 @@ fun MyOffersScreen(
         }
     }
 }
-
-// ── FilterBar ────────────────────────────────────────────────────────────────
 
 @Composable
 private fun FilterBar(
@@ -193,7 +190,7 @@ private fun FilterBar(
                     .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // Hacemos clickable con OutlinedButton invisible debajo
+
                 TextButton(
                     onClick = { onFilterChange(filter) },
                     modifier = Modifier.fillMaxSize(),
@@ -219,8 +216,6 @@ private fun FilterBar(
     }
 }
 
-// ── OfferCard ────────────────────────────────────────────────────────────────
-
 @Composable
 private fun OfferCard(
     offer: Offer,
@@ -238,7 +233,6 @@ private fun OfferCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Divisa + estado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -277,7 +271,6 @@ private fun OfferCard(
 
             Spacer(Modifier.height(12.dp))
 
-            // Tasa + disponible
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -304,7 +297,6 @@ private fun OfferCard(
                 color = TextMuted
             )
 
-            // Tipo de oferta
             Spacer(Modifier.height(4.dp))
             Text(
                 text = if (offer.offer_type == "full") "Venta completa" else "Venta por partes",
@@ -315,7 +307,6 @@ private fun OfferCard(
 
             Spacer(Modifier.height(14.dp))
 
-            // Botones
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
                     onClick = onPauseResume,

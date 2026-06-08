@@ -66,7 +66,7 @@ fun ComplaintsScreen(
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // ── Nuevo Reclamo ─────────────────────────────────────────────────
+
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceColor),
@@ -84,7 +84,6 @@ fun ComplaintsScreen(
                         color = TextMain
                     )
 
-                    // Dropdown tipo de reclamo
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("Tipo de Reclamo", fontSize = 12.sp, color = TextMuted)
                         ExposedDropdownMenuBox(
@@ -125,7 +124,6 @@ fun ComplaintsScreen(
                         }
                     }
 
-                    // Descripción
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
@@ -149,7 +147,6 @@ fun ComplaintsScreen(
                         )
                     )
 
-                    // Botón enviar
                     Button(
                         onClick = {
                             if (description.isBlank()) {
@@ -200,7 +197,6 @@ fun ComplaintsScreen(
                 }
             }
 
-            // ── Mis Reclamos ──────────────────────────────────────────────────
             Text(
                 "Mis Reclamos",
                 fontSize = 15.sp,

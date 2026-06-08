@@ -91,7 +91,8 @@ def delete_account(account_id):
     active_tx = Transaction.query.filter(
         Transaction.buyer_payment_account == account_label,
         Transaction.status.in_([
-            'pending_payment',
+            'pending',
+            'accepted',
             'voucher_uploaded',
             'disputed'
         ])

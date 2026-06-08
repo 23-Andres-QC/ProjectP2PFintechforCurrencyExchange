@@ -9,7 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
@@ -35,11 +35,9 @@ fun EditProfileScreen(
     val uiState by viewModel?.uiState?.collectAsState(initial = EditProfileUiState())
         ?: remember { mutableStateOf(EditProfileUiState()) }
 
-    // Pre-fill fields from loaded user
     var fullNameText by remember { mutableStateOf("") }
     var phoneText by remember { mutableStateOf("") }
 
-    // Sync fields once user data arrives
     LaunchedEffect(uiState.user) {
         uiState.user?.let {
             if (fullNameText.isEmpty()) fullNameText = it.full_name ?: ""
@@ -47,7 +45,6 @@ fun EditProfileScreen(
         }
     }
 
-    // Show toast on save success
     LaunchedEffect(uiState.saveSuccess) {
         if (uiState.saveSuccess) {
             Toast.makeText(context, "Perfil actualizado", Toast.LENGTH_SHORT).show()
@@ -56,7 +53,6 @@ fun EditProfileScreen(
         }
     }
 
-    // Show error
     LaunchedEffect(uiState.error) {
         if (uiState.error != null) {
             Toast.makeText(context, uiState.error, Toast.LENGTH_LONG).show()
@@ -74,7 +70,7 @@ fun EditProfileScreen(
                 title = { Text("Editar Perfil", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = TextMain) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = TextMain)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = TextMain)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor)
@@ -97,7 +93,7 @@ fun EditProfileScreen(
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            // Avatar section
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth(),
@@ -117,7 +113,6 @@ fun EditProfileScreen(
                 }
             }
 
-            // Form Card
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceColor),
@@ -197,7 +192,6 @@ fun EditProfileScreen(
                 }
             }
 
-            // Save button
             Button(
                 onClick = {
                     val name = fullNameText.trim()
@@ -219,7 +213,6 @@ fun EditProfileScreen(
                 }
             }
 
-            // KYC Banner
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

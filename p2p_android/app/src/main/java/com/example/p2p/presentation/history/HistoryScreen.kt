@@ -28,8 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.ui.theme.*
 
-// ─── Data ────────────────────────────────────────────────────────────────────
-
 private data class Transaction(
     val rawId: String,
     val id: String,
@@ -53,8 +51,6 @@ private val sampleTransactions = listOf(
 )
 
 private val filterChips = listOf("Todos", "Completados", "Pendientes", "Disputas")
-
-// ─── Screen ──────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -170,7 +166,7 @@ fun HistoryScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // ── Search field ──────────────────────────────────────────────────
+
             Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                 OutlinedTextField(
                     value = searchQuery,
@@ -197,7 +193,6 @@ fun HistoryScreen(
                 )
             }
 
-            // ── Filter chips ──────────────────────────────────────────────────
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp),
@@ -231,7 +226,6 @@ fun HistoryScreen(
                 }
             }
 
-            // ── Transaction list ──────────────────────────────────────────────
             if (filteredList.isEmpty() && !uiState.isLoading) {
                 Box(
                     modifier = Modifier
@@ -286,8 +280,6 @@ fun HistoryScreen(
     }
 }
 
-// ─── Transaction Card ─────────────────────────────────────────────────────────
-
 @Composable
 private fun TransactionCard(
     tx: Transaction,
@@ -314,7 +306,7 @@ private fun TransactionCard(
             )
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            // Row 1: icon + ID + status badge
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -344,7 +336,6 @@ private fun TransactionCard(
 
             HorizontalDivider(color = BorderColor, thickness = 0.5.dp)
 
-            // Row 2: parties + amount
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -359,7 +350,6 @@ private fun TransactionCard(
                 Text(tx.amount, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextMain)
             }
 
-            // Row 3: rate + date
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

@@ -23,8 +23,6 @@ class DisputeRepositoryImpl(
     ): NetworkResult<Dispute> =
         safeCall { api.createDispute(transactionId, request) }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
     private suspend fun <T> safeCall(call: suspend () -> retrofit2.Response<T>): NetworkResult<T> =
         try {
             val response = call()

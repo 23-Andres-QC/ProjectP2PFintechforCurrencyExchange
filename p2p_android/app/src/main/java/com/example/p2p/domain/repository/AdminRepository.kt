@@ -8,10 +8,8 @@ import com.example.p2p.data.remote.model.DisputesResponse
 
 interface AdminRepository {
 
-    // ── Dashboard ─────────────────────────────────────────────────────────────
     suspend fun getDashboardStats(): NetworkResult<AdminDashboardResponse>
 
-    // ── Disputas ──────────────────────────────────────────────────────────────
     suspend fun getDisputes(
         page: Int = 1,
         perPage: Int = 20,
@@ -20,17 +18,14 @@ interface AdminRepository {
 
     suspend fun getDisputeDetail(disputeId: String): NetworkResult<Dispute>
 
-    /** Tomar una disputa para revisión (under_review). */
     suspend fun takeDispute(disputeId: String): NetworkResult<Unit>
 
-    /** Resolver disputa. resolution = "favour_buyer" | "favour_vendor" */
     suspend fun resolveDispute(
         disputeId: String,
         resolution: String,
         resolutionNote: String? = null
     ): NetworkResult<Unit>
 
-    // ── Usuarios ──────────────────────────────────────────────────────────────
     suspend fun getUsers(
         page: Int = 1,
         perPage: Int = 20,
@@ -39,7 +34,6 @@ interface AdminRepository {
 
     suspend fun banUser(userId: String, banned: Boolean): NetworkResult<Unit>
 
-    // ── Reclamos ──────────────────────────────────────────────────────────────
     suspend fun getComplaints(
         page: Int = 1,
         perPage: Int = 20,
@@ -54,6 +48,5 @@ interface AdminRepository {
         complaintId: String,
         adminNote: String
     ): NetworkResult<com.example.p2p.data.remote.model.Complaint>
-
 
 }

@@ -13,21 +13,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// ── UI State ──────────────────────────────────────────────────────────────────
-
 data class DisputesUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val disputes: List<Dispute> = emptyList(),
     val totalPages: Int = 1,
     val currentPage: Int = 1,
-    // Para el detalle de una disputa
+
     val selectedDispute: Dispute? = null,
     val isSubmitting: Boolean = false,
     val submitSuccess: Boolean = false,
 )
-
-// ── ViewModel ─────────────────────────────────────────────────────────────────
 
 class DisputesViewModel(
     private val disputeRepository: DisputeRepository
@@ -39,8 +35,6 @@ class DisputesViewModel(
     init {
         loadMyDisputes()
     }
-
-    // ── Carga disputas del usuario ────────────────────────────────────────────
 
     fun loadMyDisputes(page: Int = 1) {
         viewModelScope.launch {
@@ -66,8 +60,6 @@ class DisputesViewModel(
         }
     }
 
-    // ── Detalle de una disputa ────────────────────────────────────────────────
-
     fun loadDisputeDetail(disputeId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, selectedDispute = null)
@@ -90,8 +82,6 @@ class DisputesViewModel(
         }
     }
 
-    // ── Abrir disputa ─────────────────────────────────────────────────────────
-
     fun createDispute(
         transactionId: String,
         reason: String,
@@ -113,7 +103,7 @@ class DisputesViewModel(
                         isSubmitting = false,
                         submitSuccess = true,
                     )
-                    loadMyDisputes()   // Refrescar lista
+                    loadMyDisputes()
                     onSuccess()
                 }
                 is NetworkResult.Error -> {
@@ -131,8 +121,6 @@ class DisputesViewModel(
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
-
-    // ── Factory ───────────────────────────────────────────────────────────────
 
     class Factory(private val repo: DisputeRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")

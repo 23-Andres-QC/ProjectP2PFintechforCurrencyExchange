@@ -60,10 +60,6 @@ import com.example.p2p.ui.theme.WarningColor
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-// ---------------------------------------------------------------------------
-// Data model
-// ---------------------------------------------------------------------------
-
 private data class Dispute(
     val id: String,
     val rawId: String,
@@ -75,10 +71,6 @@ private data class Dispute(
     val date: String,
     val unreadMessages: Int
 )
-
-// ---------------------------------------------------------------------------
-// Screen
-// ---------------------------------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -164,8 +156,6 @@ fun MyDisputesScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
 
-
-            // Filter chips
             item {
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -197,7 +187,6 @@ fun MyDisputesScreen(
                 }
             }
 
-            // Dispute cards
             items(filteredList.size) { index ->
                 DisputeCard(
                     dispute = filteredList[index],
@@ -210,10 +199,6 @@ fun MyDisputesScreen(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Dispute Card
-// ---------------------------------------------------------------------------
-
 @Composable
 private fun DisputeCard(dispute: Dispute, onViewDetail: (String) -> Unit = {}) {
     Card(
@@ -224,7 +209,7 @@ private fun DisputeCard(dispute: Dispute, onViewDetail: (String) -> Unit = {}) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // TX id + status badge
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -241,7 +226,6 @@ private fun DisputeCard(dispute: Dispute, onViewDetail: (String) -> Unit = {}) {
 
             Spacer(Modifier.height(8.dp))
 
-            // Opponent -> TX ID
             Text(
                 text = dispute.transactionId,
                 fontSize = 13.sp,
@@ -250,7 +234,6 @@ private fun DisputeCard(dispute: Dispute, onViewDetail: (String) -> Unit = {}) {
 
             Spacer(Modifier.height(6.dp))
 
-            // Amount + date row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -271,7 +254,6 @@ private fun DisputeCard(dispute: Dispute, onViewDetail: (String) -> Unit = {}) {
 
             Spacer(Modifier.height(12.dp))
 
-            // Ver detalle button
             OutlinedButton(
                 onClick = { onViewDetail(dispute.rawId) },
                 shape = RoundedCornerShape(8.dp),
@@ -302,10 +284,6 @@ private fun DisputeStatusBadge(label: String, color: Color) {
         )
     }
 }
-
-// ---------------------------------------------------------------------------
-// Preview
-// ---------------------------------------------------------------------------
 
 @Preview(showBackground = true)
 @Composable

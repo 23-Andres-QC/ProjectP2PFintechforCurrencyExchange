@@ -10,7 +10,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
@@ -76,7 +76,6 @@ fun RegisterScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // ── Top Bar ───────────────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -85,7 +84,7 @@ fun RegisterScreen(
             ) {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
                         tint = TextMain
                     )
@@ -99,7 +98,6 @@ fun RegisterScreen(
                 )
             }
 
-            // ── Main Card ─────────────────────────────────────
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
@@ -111,7 +109,6 @@ fun RegisterScreen(
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
 
-                    // Full Name
                     FieldLabel("NOMBRE COMPLETO")
                     OutlinedTextField(
                         value = fullName,
@@ -130,7 +127,6 @@ fun RegisterScreen(
                         singleLine = true
                     )
 
-                    // Email
                     FieldLabel("CORREO ELECTRÓNICO")
                     OutlinedTextField(
                         value = email,
@@ -149,7 +145,6 @@ fun RegisterScreen(
                         singleLine = true
                     )
 
-                    // DNI
                     FieldLabel("DNI")
                     OutlinedTextField(
                         value = dni,
@@ -175,7 +170,6 @@ fun RegisterScreen(
                         singleLine = true
                     )
 
-                    // Password
                     FieldLabel("CONTRASEÑA")
                     OutlinedTextField(
                         value = password,
@@ -206,7 +200,6 @@ fun RegisterScreen(
                         singleLine = true
                     )
 
-                    // Confirm Password
                     FieldLabel("CONFIRMAR CONTRASEÑA")
                     OutlinedTextField(
                         value = confirmPassword,
@@ -241,7 +234,6 @@ fun RegisterScreen(
                         singleLine = true
                     )
 
-                    // Terms Checkbox
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -272,7 +264,6 @@ fun RegisterScreen(
 
                     Spacer(Modifier.height(4.dp))
 
-                    // Register Button
                     Button(
                         onClick = {
                             if (password != confirmPassword) return@Button
@@ -330,7 +321,6 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Login link
             Text(
                 buildAnnotatedString {
                     append("¿Ya tienes cuenta? ")

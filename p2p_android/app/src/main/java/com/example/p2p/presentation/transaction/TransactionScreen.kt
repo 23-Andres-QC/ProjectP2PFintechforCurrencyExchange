@@ -99,7 +99,6 @@ fun TransactionScreen(
         }
     }
 
-    // Auto-refresh transaction status every 5 seconds to catch vendor confirmations
     LaunchedEffect(transactionId) {
         while (true) {
             delay(5000L)
@@ -119,8 +118,7 @@ fun TransactionScreen(
     LaunchedEffect(uiState.transaction?.status, currentUserId) {
         val t = uiState.transaction
         val newStatus = t?.status ?: return@LaunchedEffect
-        // Solo muestra el dialog cuando la transacción ACABA de completarse en tiempo real
-        // (transición voucher_uploaded → completed), no cuando se abre una ya completada
+
         if (newStatus == "completed" &&
             previousStatus in listOf("voucher_uploaded", "pending", "accepted") &&
             currentUserId.isNotBlank() &&
@@ -179,16 +177,20 @@ fun TransactionScreen(
         },
         containerColor = BackgroundApp
     ) { innerPadding ->
+        val scrollState = rememberScrollState()
+        val isTimerActive = txn?.status in listOf("pending", "accepted") && timeLeft > 0
+        val isExpired = txn?.status in listOf("pending", "accepted") && timeLeft == 0
+        val showStickyTimer = isTimerActive && scrollState.value > 300
+
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
 
-            // Dark gradient card
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -204,7 +206,7 @@ fun TransactionScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Badge
+
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(50.dp))
@@ -223,7 +225,6 @@ fun TransactionScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Timer
                     if (txn?.status == "voucher_uploaded" || txn?.status == "completed") {
                         Text(
                             text = "VOUCHER SUBIDO",
@@ -246,7 +247,6 @@ fun TransactionScreen(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // Subtitle
                     Text(
                         text = "Capital en custodia · Operación segura",
                         fontSize = 12.sp,
@@ -265,7 +265,6 @@ fun TransactionScreen(
                 else               -> 0
             }
 
-            // Timeline Row
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -279,7 +278,7 @@ fun TransactionScreen(
                 ) {
                     val steps = listOf("Pagar", "Voucher", "Confirmar", "Liberado")
                     steps.forEachIndexed { index, label ->
-                        // Step circle
+
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
@@ -302,7 +301,6 @@ fun TransactionScreen(
                             )
                         }
 
-                        // Connector line (except after last)
                         if (index < steps.size - 1) {
                             Box(
                                 modifier = Modifier
@@ -319,7 +317,6 @@ fun TransactionScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Labels row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -338,7 +335,6 @@ fun TransactionScreen(
                 }
             }
 
-            // Receiver info card
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -383,7 +379,6 @@ fun TransactionScreen(
                 }
             }
 
-            // Amount card
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -423,7 +418,6 @@ fun TransactionScreen(
                 )
             }
 
-            // Vendor accepted banner
             if (txn?.status == "accepted") {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = SuccessColor.copy(alpha = 0.1f)),
@@ -444,7 +438,6 @@ fun TransactionScreen(
                 }
             }
 
-            // Waiting banner for pending (vendor hasn't accepted yet)
             if (txn?.status == "pending" && !isUploadingVoucher) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Primary.copy(alpha = 0.07f)),
@@ -465,7 +458,6 @@ fun TransactionScreen(
                 }
             }
 
-            // Upload Zone (active when pending or accepted)
             if (txn?.status == "pending" || txn?.status == "accepted") {
                 Column(
                     modifier = Modifier
@@ -498,7 +490,7 @@ fun TransactionScreen(
                             }
                         }
                     } else {
-                        // Image preview
+
                         if (selectedBitmap != null) {
                             Box(modifier = Modifier.fillMaxWidth()) {
                                 Image(
@@ -522,7 +514,6 @@ fun TransactionScreen(
                                 }
                             }
 
-                            // Filename + success indicator
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -555,7 +546,6 @@ fun TransactionScreen(
                             }
                         }
 
-                        // Upload / change button
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -595,7 +585,6 @@ fun TransactionScreen(
                 }
             }
 
-            // Waiting box / Dispute flow
             if (txn?.status == "voucher_uploaded") {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -632,7 +621,6 @@ fun TransactionScreen(
                 }
             }
 
-            // Success View Receipt Option
             if (txn?.status == "completed") {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = SuccessColor.copy(alpha = 0.1f)),
@@ -679,7 +667,6 @@ fun TransactionScreen(
                 }
             }
 
-            // Cancel button (when pending or accepted)
             if (txn?.status == "pending" || txn?.status == "accepted") {
                 OutlinedButton(
                     onClick = {
@@ -703,7 +690,57 @@ fun TransactionScreen(
                 }
             }
 
+            if (isExpired) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = DangerColor.copy(alpha = 0.1f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, DangerColor.copy(alpha = 0.4f)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(Icons.Filled.Warning, contentDescription = null, tint = DangerColor)
+                        Column {
+                            Text("Tiempo expirado", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = DangerColor)
+                            Text("El tiempo de la operación venció. Puedes cancelarla.", fontSize = 11.sp, color = TextMuted)
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        if (showStickyTimer) {
+            val minutes = timeLeft / 60
+            val seconds = timeLeft % 60
+            val timerColor = if (timeLeft < 120) DangerColor else WarningColor
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+                    .background(timerColor.copy(alpha = 0.95f))
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(Icons.Filled.Schedule, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "Tiempo restante: ${String.format("%02d:%02d", minutes, seconds)}",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+        }
         }
     }
 

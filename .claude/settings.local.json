@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -l \"^import\" /c/Mobile/ProyectoFinal/ProjectP2PFintechforCurrencyExchange/p2p_android/app/src/main/java/com/example/p2p/**/*.kt)"
+      "Bash(grep -l \"^import\" /c/Mobile/ProyectoFinal/ProjectP2PFintechforCurrencyExchange/p2p_android/app/src/main/java/com/example/p2p/**/*.kt)",
+      "Bash(find *)",
+      "Bash(python3 *)",
+      "Bash(docker-compose up *)",
+      "Bash(curl *)",
+      "Bash(grep -n \"INSERT\" \"C:/Mobile/ProyectoFinal/ProjectP2PFintechforCurrencyExchange/p2p_backend/migrations/sql/\"*.sql)",
+      "Bash(docker exec p2p_postgres *)",
+      "Bash(grep *)",
+      "Bash(docker-compose down *)",
+      "Bash(docker-compose build *)"
     ]
   }
 }

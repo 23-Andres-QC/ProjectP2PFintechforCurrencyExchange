@@ -48,6 +48,7 @@ import android.widget.Toast
 @Composable
 fun KycScreen(
     onNavigateBack: () -> Unit = {},
+    onSkip: () -> Unit = {},
     viewModel: KycViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -60,9 +61,8 @@ fun KycScreen(
         }
     }
 
-    // Helper to create temp URI
     var tempUri by remember { mutableStateOf<Uri?>(null) }
-    
+
     fun createUri(): Uri {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
@@ -80,7 +80,6 @@ fun KycScreen(
         if (success) tempUri?.let { viewModel.onSelfieSelected(it) }
     }
 
-    // Permission Launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -126,7 +125,6 @@ fun KycScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                // ── Top Bar ───────────────────────────────────────
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -149,7 +147,6 @@ fun KycScreen(
                 )
             }
 
-            // ── Step Indicators ───────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -164,14 +161,13 @@ fun KycScreen(
                 KycStepDot(stepIndex = 3, currentStep = currentStep, label = "Selfie")
             }
 
-            // ── Step 1: DNI Frontal ───────────────────────────
             KycStepCard(
                 isActive = currentStep == 1,
                 isCompleted = currentStep > 1,
                 stepNumber = 1
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Icon
+
                     Box(
                         modifier = Modifier
                             .size(72.dp)
@@ -208,7 +204,6 @@ fun KycScreen(
 
                     Spacer(Modifier.height(16.dp))
 
-                    // DNI Preview Upload Zone
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -235,7 +230,7 @@ fun KycScreen(
                                 contentScale = androidx.compose.ui.layout.ContentScale.Crop
                             )
                         } else {
-                            // Simulated DNI card (Clickable)
+
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -245,7 +240,7 @@ fun KycScreen(
                                     .border(1.dp, BorderColor, RoundedCornerShape(10.dp))
                                     .padding(horizontal = 10.dp, vertical = 8.dp)
                             ) {
-                                // ... (Rest of simulated DNI)
+
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -289,7 +284,6 @@ fun KycScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // ── Step 2: DNI Dorso ─────────────────────────────
             KycStepCard(
                 isActive = currentStep == 2,
                 isCompleted = currentStep > 2,
@@ -337,7 +331,6 @@ fun KycScreen(
                     if (currentStep == 2) {
                         Spacer(Modifier.height(16.dp))
 
-                        // Back side upload zone
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -405,7 +398,6 @@ fun KycScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // ── Step 3: Selfie ────────────────────────────────
             KycStepCard(
                 isActive = currentStep == 3,
                 isCompleted = false,
@@ -528,7 +520,6 @@ fun KycScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Info note
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -547,13 +538,24 @@ fun KycScreen(
                 )
             }
 
+            Spacer(Modifier.height(16.dp))
+
+            TextButton(
+                onClick = onSkip,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Completar después",
+                    fontSize = 13.sp,
+                    color = TextMuted
+                )
+            }
+
             Spacer(Modifier.height(24.dp))
             }
         }
     }
 }
-
-// ── Reusable composables ─────────────────────────────────
 
 @Composable
 private fun KycStepDot(

@@ -7,7 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -39,7 +39,7 @@ fun ReviewsScreen(
                 title = { Text("Mis Reseñas", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = TextMain) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = TextMain)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = TextMain)
                     }
                 },
                 actions = {
@@ -82,7 +82,7 @@ fun ReviewsScreen(
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            // ── Rating Summary Card ─────────────────────────────────────────────
+
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceColor),
@@ -110,7 +110,7 @@ fun ReviewsScreen(
                             modifier = Modifier.padding(bottom = 6.dp)
                         )
                     }
-                    // Stars
+
                     Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                         val fullStars = uiState.average.toInt()
                         repeat(5) { i ->
@@ -122,7 +122,7 @@ fun ReviewsScreen(
                             )
                         }
                     }
-                    // Distribution bars
+
                     listOf(5, 4, 3, 2, 1).forEach { stars ->
                         val count = uiState.distribution[stars.toString()] ?: 0
                         RatingBar(stars = stars, count = count, total = uiState.total)
@@ -130,10 +130,8 @@ fun ReviewsScreen(
                 }
             }
 
-            // ── Section title ────────────────────────────────────────────────────
             Text("Comentarios Recibidos", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextMain)
 
-            // ── Review items ─────────────────────────────────────────────────────
             if (uiState.total == 0) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),

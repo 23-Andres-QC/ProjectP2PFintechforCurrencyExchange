@@ -52,7 +52,7 @@ fun ProfileScreen(
             .padding(bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // ── User hero card ────────────────────────────────────────────────────
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -95,14 +95,11 @@ fun ProfileScreen(
                 ) {
                     StatColumn(txCount, "Operaciones")
                     VerticalDividerLine()
-                    StatColumn("100%", "Completadas")
-                    VerticalDividerLine()
-                    StatColumn("~1m", "Respuesta")
+                    StatColumn(ratingStr, "Calificación")
                 }
             }
         }
 
-        // ── KYC Banner ───────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -129,7 +126,7 @@ fun ProfileScreen(
         }
 
         if (isAdmin) {
-            // ── Admin: solo Panel Administrador ──────────────────────────────
+
             MenuSection(title = "ADMINISTRACIÓN") {
                 MenuItem(
                     icon = Icons.Default.AdminPanelSettings, iconBg = DangerColor.copy(.1f), iconTint = DangerColor,
@@ -139,7 +136,7 @@ fun ProfileScreen(
                 )
             }
         } else {
-            // ── Quick Actions ─────────────────────────────────────────────────────
+
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -168,7 +165,6 @@ fun ProfileScreen(
                 }
             }
 
-            // ── Mi Cuenta ────────────────────────────────────────────────────────
             MenuSection(title = "MI CUENTA") {
                 MenuItem(
                     icon = Icons.Default.CreditCard, iconBg = Primary.copy(.12f), iconTint = Primary,
@@ -193,7 +189,6 @@ fun ProfileScreen(
                 )
             }
 
-            // ── Soporte ───────────────────────────────────────────────────────────
             MenuSection(title = "SOPORTE") {
                 MenuItem(
                     icon = Icons.Default.Store, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
@@ -214,7 +209,6 @@ fun ProfileScreen(
                 )
             }
 
-            // ── Legal ─────────────────────────────────────────────────────────────
             MenuSection(title = "LEGAL") {
                 MenuItem(
                     icon = Icons.Default.Description, iconBg = Primary.copy(.1f), iconTint = Primary,
@@ -240,7 +234,6 @@ fun ProfileScreen(
             }
         }
 
-        // ── Bottom Actions ────────────────────────────────────────────────────
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -269,8 +262,6 @@ fun ProfileScreen(
         }
     }
 }
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 @Composable
 private fun ProfileBadge(text: String, bg: Color, textColor: Color) {

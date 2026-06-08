@@ -9,6 +9,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -38,7 +40,7 @@ fun HelpScreen(onBack: () -> Unit = {}) {
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = TextMain)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = TextMain)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor)
@@ -55,7 +57,7 @@ fun HelpScreen(onBack: () -> Unit = {}) {
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // ── Support Channels Card ─────────────────────────────────────────
+
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceColor),
@@ -76,7 +78,7 @@ fun HelpScreen(onBack: () -> Unit = {}) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // WhatsApp button
+
                         Button(
                             onClick = {
                                 val intent = Intent(Intent.ACTION_VIEW,
@@ -91,7 +93,7 @@ fun HelpScreen(onBack: () -> Unit = {}) {
                             contentPadding = PaddingValues(horizontal = 8.dp)
                         ) {
                             Icon(
-                                Icons.Default.Chat,
+                                Icons.AutoMirrored.Filled.Chat,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp),
                                 tint = Color.White
@@ -107,7 +109,7 @@ fun HelpScreen(onBack: () -> Unit = {}) {
                                 Text("24/7", fontSize = 10.sp, color = Color.White.copy(alpha = 0.85f))
                             }
                         }
-                        // Email button
+
                         Button(
                             onClick = {
                                 val intent = Intent(Intent.ACTION_SENDTO).apply {
@@ -142,7 +144,6 @@ fun HelpScreen(onBack: () -> Unit = {}) {
                 }
             }
 
-            // ── FAQ Section ───────────────────────────────────────────────────
             Text(
                 "Preguntas Frecuentes",
                 fontSize = 15.sp,
@@ -150,12 +151,11 @@ fun HelpScreen(onBack: () -> Unit = {}) {
                 color = TextMain
             )
 
-            // Q1 expanded
             FaqItemExpanded(
                 question = "¿Cómo funciona el sistema P2P?",
                 answer = "El sistema P2P (Peer-to-Peer) conecta directamente a compradores y vendedores de divisas. El comprador publica una oferta o acepta una existente, transfiere los soles al vendedor y sube el comprobante. Nuestro sistema OCR verifica automáticamente el comprobante y libera los dólares al comprador. Todo el proceso es supervisado por nuestra plataforma para garantizar la seguridad de ambas partes."
             )
-            // Q2–Q4 closed
+
             FaqItemCollapsed("¿Cuáles son los límites de operación diarios?")
             FaqItemCollapsed("¿Cómo verifico mi identidad (KYC)?")
             FaqItemCollapsed("¿Qué hago si hay un problema con mi transacción?")

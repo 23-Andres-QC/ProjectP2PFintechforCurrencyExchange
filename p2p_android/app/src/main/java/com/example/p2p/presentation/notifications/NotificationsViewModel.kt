@@ -40,7 +40,7 @@ class NotificationsViewModel(
                         notifications = data.notifications,
                         unreadCount = data.unread_count,
                     )
-                    // Marcar todas como leídas automáticamente al abrir la pantalla
+
                     if (data.unread_count > 0) {
                         repo.markAllRead()
                         _uiState.value = _uiState.value.copy(unreadCount = 0)

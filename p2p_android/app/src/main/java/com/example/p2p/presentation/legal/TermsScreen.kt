@@ -5,7 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -30,7 +30,7 @@ fun TermsScreen(onBack: () -> Unit = {}) {
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = TextMain)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = TextMain)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor)
@@ -46,7 +46,7 @@ fun TermsScreen(onBack: () -> Unit = {}) {
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // ── Header ────────────────────────────────────────────────────────
+
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     "Términos de Servicio",
@@ -63,7 +63,6 @@ fun TermsScreen(onBack: () -> Unit = {}) {
 
             HorizontalDivider(color = BorderColor, thickness = 1.dp)
 
-            // ── Sections ──────────────────────────────────────────────────────
             LegalSection(
                 title = "1. Aceptación de Términos",
                 body = "Al acceder y utilizar la plataforma PeruExchange P2P, usted acepta estar vinculado por estos Términos de Servicio y todas las leyes y regulaciones aplicables. Si no está de acuerdo con alguno de estos términos, tiene prohibido usar o acceder a este sitio. Los materiales contenidos en esta plataforma están protegidos por las leyes de propiedad intelectual aplicables."

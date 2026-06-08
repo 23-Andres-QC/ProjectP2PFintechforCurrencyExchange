@@ -14,21 +14,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// ── UI State ──────────────────────────────────────────────────────────────────
-
 data class AdminUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val stats: AdminDashboardResponse? = null,
     val disputes: List<Dispute> = emptyList(),
-    val complaints: List<com.example.p2p.data.remote.model.Complaint> = emptyList(), // ← agrega
+    val complaints: List<com.example.p2p.data.remote.model.Complaint> = emptyList(),
     val users: List<AdminUser> = emptyList(),
     val selectedDispute: Dispute? = null,
     val actionInProgress: String? = null,
     val actionSuccess: String? = null,
 )
-
-// ── ViewModel ─────────────────────────────────────────────────────────────────
 
 class AdminViewModel(
     private val repository: AdminRepository
@@ -37,25 +33,23 @@ class AdminViewModel(
     private val _uiState = MutableStateFlow(AdminUiState())
     val uiState: StateFlow<AdminUiState> = _uiState.asStateFlow()
 
-    // ── Carga inicial ─────────────────────────────────────────────────────────
-
     fun loadData() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
             val statsResult = repository.getDashboardStats()
             val disputesResult = repository.getDisputes()
-            val complaintsResult = repository.getComplaints() // ← agrega
+            val complaintsResult = repository.getComplaints()
 
             val stats = (statsResult as? NetworkResult.Success)?.data
             val disputes = (disputesResult as? NetworkResult.Success)?.data?.disputes ?: emptyList()
-            val complaints = (complaintsResult as? NetworkResult.Success)?.data?.complaints ?: emptyList() // ← agrega
+            val complaints = (complaintsResult as? NetworkResult.Success)?.data?.complaints ?: emptyList()
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 stats = stats,
                 disputes = disputes,
-                complaints = complaints, // ← agrega
+                complaints = complaints,
                 error = null,
             )
         }
@@ -94,8 +88,6 @@ class AdminViewModel(
             }
         }
     }
-
-    // ── Acciones sobre disputas ───────────────────────────────────────────────
 
     fun takeDispute(
         disputeId: String,
@@ -157,8 +149,6 @@ class AdminViewModel(
         }
     }
 
-    // ── Acciones sobre reclamos ───────────────────────────────────────────────
-
     fun loadComplaints(status: String? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
@@ -205,8 +195,6 @@ class AdminViewModel(
         }
     }
 
-    // ── Acciones sobre usuarios ───────────────────────────────────────────────
-
     fun banUser(
         userId: String,
         banned: Boolean,
@@ -238,8 +226,6 @@ class AdminViewModel(
 
     fun clearError() { _uiState.value = _uiState.value.copy(error = null) }
     fun clearSuccess() { _uiState.value = _uiState.value.copy(actionSuccess = null) }
-
-    // ── Factory ───────────────────────────────────────────────────────────────
 
     class Factory(private val repo: AdminRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")

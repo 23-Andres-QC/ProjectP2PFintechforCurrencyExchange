@@ -3,6 +3,7 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.core.database import db
 from app.core.exceptions import NotFoundError
+from app.core.notifications import notify
 from app.models.user import User
 
 users_bp = Blueprint('users', __name__, url_prefix='/users')
@@ -33,6 +34,30 @@ def update_profile():
 
     db.session.commit()
     return user.to_dict(), 200
+
+
+@users_bp.route('/kyc', methods=['POST'])
+@jwt_required()
+def submit_kyc():
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if not user:
+        raise NotFoundError('User not found')
+
+    # In this demo the images are received but not processed by OCR.
+    # Receiving the multipart request is sufficient to approve KYC.
+    user.kyc_verified = True
+    db.session.commit()
+
+    notify(
+        user_id=user.id,
+        type='kyc',
+        title='Verificación KYC aprobada',
+        body='Tu identidad ha sido verificada exitosamente.',
+    )
+    db.session.commit()
+
+    return {'message': 'KYC aprobado', 'kyc_verified': True}, 200
 
 
 @users_bp.route('/<user_id>', methods=['GET'])

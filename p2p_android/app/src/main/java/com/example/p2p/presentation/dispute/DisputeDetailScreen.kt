@@ -83,7 +83,7 @@ fun DisputeDetailScreen(
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // ID + estado
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -104,7 +104,6 @@ fun DisputeDetailScreen(
                 }
             }
 
-            // Info de la disputa
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceColor),
@@ -120,7 +119,6 @@ fun DisputeDetailScreen(
                 }
             }
 
-            // Info de la transacción
             dispute?.transaction?.let { txn ->
                 Card(
                     shape = RoundedCornerShape(16.dp),
@@ -144,7 +142,6 @@ fun DisputeDetailScreen(
                 }
             }
 
-            // Resolución (si existe)
             if (dispute?.status == "resolved") {
                 Card(
                     shape = RoundedCornerShape(16.dp),

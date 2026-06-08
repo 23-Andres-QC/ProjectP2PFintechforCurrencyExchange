@@ -61,7 +61,6 @@ fun ReceiptScreen(
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
 
-        // Success circle
         Box(
             modifier = Modifier
                 .size(80.dp)
@@ -102,7 +101,6 @@ fun ReceiptScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Receipt card
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -110,7 +108,7 @@ fun ReceiptScreen(
                 .clip(RoundedCornerShape(20.dp))
                 .background(SurfaceColor)
         ) {
-            // Card header
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -134,7 +132,6 @@ fun ReceiptScreen(
 
             HorizontalDivider(color = BorderColor, thickness = 1.dp)
 
-            // Detail rows
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -145,7 +142,6 @@ fun ReceiptScreen(
                 ReceiptRow(label = "Vendedor:", value = vendorName, valueColor = TextMain)
                 ReceiptRow(label = "Tasa Aplicada:", value = "S/ $rate", valueColor = TextMain)
 
-                // OCR row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -183,7 +179,6 @@ fun ReceiptScreen(
 
                 HorizontalDivider(color = BorderColor, thickness = 0.5.dp)
 
-                // Amount row — emphasized
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -207,7 +202,6 @@ fun ReceiptScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Download PDF button
         Button(
             onClick = {
                 Toast.makeText(context, "Comprobante PDF descargado.", Toast.LENGTH_SHORT).show()
@@ -233,7 +227,6 @@ fun ReceiptScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Rate seller button
         OutlinedButton(
             onClick = {
                 onNavigateToRating(transactionId ?: "")
@@ -260,7 +253,6 @@ fun ReceiptScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Ghost button
         TextButton(
             onClick = onNavigateToMarket,
             modifier = Modifier.fillMaxWidth()

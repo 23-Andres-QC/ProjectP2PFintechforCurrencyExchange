@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.p2p.BuildConfig
 import com.example.p2p.ui.theme.*
 
 @Composable
@@ -54,7 +55,6 @@ fun LoginScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // ── Fondo degradado oscuro (parte superior) ────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -66,7 +66,6 @@ fun LoginScreen(
                 )
         )
 
-        // ── Fondo claro (parte inferior) ───────────────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -75,7 +74,6 @@ fun LoginScreen(
                 .background(BackgroundApp)
         )
 
-        // ── Contenido principal ────────────────────────────────────────────────
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -85,7 +83,6 @@ fun LoginScreen(
         ) {
             Spacer(Modifier.height(64.dp))
 
-            // Logo
             Box(
                 modifier = Modifier
                     .size(88.dp)
@@ -122,7 +119,6 @@ fun LoginScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            // ── Tarjeta de login ───────────────────────────────────────────────
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -160,7 +156,6 @@ fun LoginScreen(
                         modifier = Modifier.padding(top = 2.dp, bottom = 20.dp)
                     )
 
-                    // Error banner
                     AnimatedVisibility(
                         visible = uiState.error != null,
                         enter = fadeIn(),
@@ -184,7 +179,6 @@ fun LoginScreen(
                         Spacer(Modifier.height(14.dp))
                     }
 
-                    // Email
                     Text(
                         "CORREO ELECTRÓNICO",
                         fontSize = 10.sp, fontWeight = FontWeight.Bold,
@@ -220,7 +214,6 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(16.dp))
 
-                    // Contraseña
                     Text(
                         "CONTRASEÑA",
                         fontSize = 10.sp, fontWeight = FontWeight.Bold,
@@ -268,7 +261,6 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(24.dp))
 
-                    // Botón principal
                     Button(
                         onClick = { focusManager.clearFocus(); viewModel.login() },
                         modifier = Modifier.fillMaxWidth().height(54.dp),
@@ -291,34 +283,35 @@ fun LoginScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // ── Credenciales demo ──────────────────────────────────────────────
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Primary.copy(alpha = 0.07f)
-                ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Primary.copy(alpha = 0.2f))
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        "CUENTAS DE PRUEBA",
-                        fontSize = 9.sp, fontWeight = FontWeight.ExtraBold,
-                        color = Primary, letterSpacing = 1.sp
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    listOf(
-                        Pair("Comprador", "comprador@peruexchange.com  /  Comprador123!"),
-                        Pair("Vendedor",  "vendedor@peruexchange.com   /  Vendedor123!"),
-                        Pair("Admin",     "admin@peruexchange.com      /  Admin123!")
-                    ).forEach { (rol, cred) ->
-                        Row(modifier = Modifier.padding(top = 4.dp)) {
-                            Text(
-                                "$rol: ",
-                                fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
-                                color = Primary
-                            )
-                            Text(cred, fontSize = 10.sp, color = TextMuted)
+            if (BuildConfig.DEBUG) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Primary.copy(alpha = 0.07f)
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Primary.copy(alpha = 0.2f))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "CUENTAS DE PRUEBA",
+                            fontSize = 9.sp, fontWeight = FontWeight.ExtraBold,
+                            color = Primary, letterSpacing = 1.sp
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        listOf(
+                            Pair("Comprador", "comprador@peruexchange.com  /  Comprador123!"),
+                            Pair("Vendedor",  "vendedor@peruexchange.com   /  Vendedor123!"),
+                            Pair("Admin",     "admin@peruexchange.com      /  Admin123!")
+                        ).forEach { (rol, cred) ->
+                            Row(modifier = Modifier.padding(top = 4.dp)) {
+                                Text(
+                                    "$rol: ",
+                                    fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                                    color = Primary
+                                )
+                                Text(cred, fontSize = 10.sp, color = TextMuted)
+                            }
                         }
                     }
                 }

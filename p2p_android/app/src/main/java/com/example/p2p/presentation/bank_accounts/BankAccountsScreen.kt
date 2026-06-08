@@ -188,7 +188,6 @@ fun BankAccountsScreen(
                 Text("Agregar Cuenta Bancaria", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextMain)
             }
 
-            // ── Selector de banco ─────────────────────────────────────────────
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Selecciona tu banco", fontSize = 13.sp, color = TextMuted, fontWeight = FontWeight.Medium)
@@ -219,7 +218,6 @@ fun BankAccountsScreen(
                 }
             }
 
-            // ── Número de cuenta / CCI ────────────────────────────────────────
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     OutlinedTextField(
@@ -286,7 +284,6 @@ fun BankAccountsScreen(
                 }
             }
 
-            // ── Selector de moneda ────────────────────────────────────────────
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Moneda de la cuenta", fontSize = 13.sp, color = TextMuted, fontWeight = FontWeight.Medium)
@@ -317,7 +314,6 @@ fun BankAccountsScreen(
                 }
             }
 
-            // ── Botón agregar ─────────────────────────────────────────────────
             item {
                 Button(
                     onClick = {
@@ -343,7 +339,6 @@ fun BankAccountsScreen(
                 }
             }
 
-            // ── Cuentas registradas ───────────────────────────────────────────
             item {
                 HorizontalDivider(color = BorderColor)
                 Spacer(Modifier.height(12.dp))

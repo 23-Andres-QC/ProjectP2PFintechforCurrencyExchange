@@ -74,7 +74,7 @@ fun RegisterDisputeScreen(
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // ── Info banner ───────────────────────────────────────────────────
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -99,7 +99,6 @@ fun RegisterDisputeScreen(
                 )
             }
 
-            // ── Transaction selection ─────────────────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     "Transacción Seleccionada",
@@ -107,7 +106,7 @@ fun RegisterDisputeScreen(
                     fontWeight = FontWeight.Bold,
                     color = TextMain
                 )
-                // TX selected
+
                 TransactionCard(
                     id = transactionId ?: "No seleccionada",
                     amount = "Monto en disputa",
@@ -115,7 +114,6 @@ fun RegisterDisputeScreen(
                 )
             }
 
-            // ── Dispute reason ────────────────────────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     "Motivo de la Disputa",
@@ -124,7 +122,6 @@ fun RegisterDisputeScreen(
                     color = TextMain
                 )
 
-                // Dropdown reason selector
                 ExposedDropdownMenuBox(
                     expanded = reasonExpanded,
                     onExpandedChange = { reasonExpanded = it }
@@ -190,7 +187,6 @@ fun RegisterDisputeScreen(
                 )
             }
 
-            // ── Evidence upload ───────────────────────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     "Adjuntar Evidencia",
@@ -211,32 +207,20 @@ fun RegisterDisputeScreen(
                         .background(Color(0xFFF8FAFC)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Upload,
-                            contentDescription = null,
-                            tint = TextMuted,
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Text(
-                            "Evidencia adjunta (Simulada)",
-                            fontSize = 13.sp,
-                            color = TextMuted
-                        )
-                    }
+                    Text(
+                        "Adjuntar evidencia — próximamente",
+                        fontSize = 13.sp,
+                        color = TextMuted
+                    )
                 }
             }
 
-            // ── Submit button ─────────────────────────────────────────────────
             Button(
                 onClick = {
                     if (transactionId != null) {
                         viewModel?.createDispute(
                             transactionId = transactionId,
-                            reason = selectedReason.second,   // ← envía la KEY, no el label
+                            reason = selectedReason.second,
                             description = description,
                             onSuccess = {
                                 Toast.makeText(context, "Disputa registrada con éxito", Toast.LENGTH_SHORT).show()

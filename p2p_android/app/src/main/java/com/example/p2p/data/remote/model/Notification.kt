@@ -3,7 +3,7 @@ package com.example.p2p.data.remote.model
 data class Notification(
     val id: String,
     val user_id: String,
-    val type: String,       // login | transaction | voucher | dispute | offer | security | admin
+    val type: String,
     val title: String,
     val body: String,
     val is_read: Boolean,

@@ -36,8 +36,6 @@ import com.example.p2p.data.remote.model.Offer
 import com.example.p2p.data.remote.model.Transaction
 import com.example.p2p.ui.theme.*
 
-// ─── Screen ──────────────────────────────────────────────────────────────────
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MarketScreen(
@@ -264,8 +262,6 @@ fun MarketScreen(
     }
 }
 
-// ─── TopBar ──────────────────────────────────────────────────────────────────
-
 @Composable
 private fun MarketTopBar(
     exchangeRates: List<ExchangeRate> = emptyList(),
@@ -345,8 +341,6 @@ private fun MarketTopBar(
         }
     }
 }
-
-// ─── Filter Section ───────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -441,8 +435,6 @@ private fun FilterDropdown(
     }
 }
 
-// ─── Action Row ───────────────────────────────────────────────────────────────
-
 @Composable
 private fun ActionRow(isLoading: Boolean, onMatchingClick: () -> Unit) {
     Row(
@@ -471,8 +463,6 @@ private fun ActionRow(isLoading: Boolean, onMatchingClick: () -> Unit) {
     }
 }
 
-// ─── Offers Header ────────────────────────────────────────────────────────────
-
 @Composable
 private fun OffersHeader(count: Int, from: String, to: String) {
     Row(
@@ -493,8 +483,6 @@ private fun OffersHeader(count: Int, from: String, to: String) {
         }
     }
 }
-
-// ─── Bank Account Selector ────────────────────────────────────────────────────
 
 @Composable
 fun BankAccountSelector(
@@ -569,8 +557,6 @@ fun BankAccountSelector(
         }
     }
 }
-
-// ─── Matching Dialog ──────────────────────────────────────────────────────────
 
 @Composable
 private fun MatchingDialog(
@@ -666,8 +652,6 @@ private fun MatchingDialog(
     )
 }
 
-// ─── Active Transaction Banner ───────────────────────────────────────────────
-
 @Composable
 private fun ActiveTransactionBanner(
     transaction: Transaction,
@@ -728,8 +712,6 @@ private fun ActiveTransactionBanner(
         )
     }
 }
-
-// ─── Offer Card ───────────────────────────────────────────────────────────────
 
 @Composable
 private fun OfferCard(

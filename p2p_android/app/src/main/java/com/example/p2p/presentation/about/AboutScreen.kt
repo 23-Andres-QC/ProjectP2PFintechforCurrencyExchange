@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -38,7 +39,7 @@ fun AboutScreen(onBack: () -> Unit = {}) {
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = TextMain)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = TextMain)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor)
@@ -55,7 +56,7 @@ fun AboutScreen(onBack: () -> Unit = {}) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // ── Logo ──────────────────────────────────────────────────────────
+
             Box(
                 modifier = Modifier
                     .size(80.dp)
@@ -71,7 +72,6 @@ fun AboutScreen(onBack: () -> Unit = {}) {
                 )
             }
 
-            // ── App name & version ────────────────────────────────────────────
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -90,7 +90,6 @@ fun AboutScreen(onBack: () -> Unit = {}) {
                 )
             }
 
-            // ── Description ───────────────────────────────────────────────────
             Text(
                 "PeruExchange P2P es la plataforma líder en intercambio de divisas entre personas en el Perú. " +
                     "Conectamos compradores y vendedores de manera directa, ofreciendo tasas competitivas, " +
@@ -104,7 +103,6 @@ fun AboutScreen(onBack: () -> Unit = {}) {
 
             HorizontalDivider(color = BorderColor, thickness = 1.dp)
 
-            // ── Features 2x2 grid ─────────────────────────────────────────────
             Text(
                 "Nuestras Características",
                 fontSize = 14.sp,
@@ -156,7 +154,6 @@ fun AboutScreen(onBack: () -> Unit = {}) {
 
             HorizontalDivider(color = BorderColor, thickness = 1.dp)
 
-            // ── Footer ────────────────────────────────────────────────────────
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp)

@@ -133,8 +133,6 @@ fun NotificationsScreen(
     }
 }
 
-// ── Notification Card con swipe ──────────────────────────────────────────────
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
@@ -151,7 +149,7 @@ private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
         enableDismissFromStartToEnd = true,
         enableDismissFromEndToStart = false,
         backgroundContent = {
-            // Fondo rojo que aparece al deslizar a la derecha
+
             val progress = dismissState.progress
             val alpha = (progress * 2f).coerceIn(0f, 1f)
             Box(
@@ -184,7 +182,7 @@ private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                // Icono
+
                 Box(
                     modifier = Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)).background(accentColor.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center,
@@ -192,7 +190,6 @@ private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
                     Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(21.dp))
                 }
 
-                // Contenido
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -208,7 +205,6 @@ private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
                     Text(item.body, fontSize = 13.sp, color = TextMuted, lineHeight = 18.sp)
                 }
 
-                // Punto azul de no leído
                 if (!item.is_read) {
                     Box(
                         modifier = Modifier
@@ -220,7 +216,6 @@ private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
                 }
             }
 
-            // Barra de acento izquierda para no leídas
             if (!item.is_read) {
                 Box(
                     modifier = Modifier
@@ -233,8 +228,6 @@ private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
         }
     }
 }
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 private fun notifIconAndColor(type: String): Pair<ImageVector, Color> = when (type) {
     "login"       -> Icons.Default.CheckCircle          to SuccessColor
@@ -249,7 +242,7 @@ private fun notifIconAndColor(type: String): Pair<ImageVector, Color> = when (ty
 
 private fun formatRelativeTime(isoDate: String): String {
     return try {
-        // Soporta tanto "2026-06-04T23:47:44" como "2026-06-04T23:47:44.123456"
+
         val clean = isoDate.substringBefore('.')
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
         sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")

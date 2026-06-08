@@ -43,7 +43,6 @@ fun VendorInboxScreen(
         viewModel.loadPendingTransactions()
     }
 
-    // Auto-refresh every 5 seconds to catch new buyer orders
     LaunchedEffect(Unit) {
         while (true) {
             delay(5000L)
@@ -165,7 +164,7 @@ fun VendorInboxScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header card
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -355,7 +354,6 @@ private fun VendorTransactionCard(
                 }
             }
 
-            // New order banner
             if (isNewOrder) {
                 Row(
                     modifier = Modifier

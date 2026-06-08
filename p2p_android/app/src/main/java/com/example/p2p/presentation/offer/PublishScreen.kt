@@ -35,7 +35,6 @@ import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.data.remote.model.CreateOfferRequest
 import com.example.p2p.ui.theme.*
 
-// Todas las divisas que el backend soporta
 private val ALL_CURRENCIES = listOf("PEN", "USD", "EUR", "USDT", "COP", "MXN", "ARS", "GBP", "BRL", "CAD", "AUD", "JPY", "CLP")
 
 private fun fiatSymbol(currency: String) = when (currency) {
@@ -75,10 +74,9 @@ fun PublishScreen(
         }
     }
 
-    // ── Estado local ──────────────────────────────────────────────────────────
     var amountText           by remember { mutableStateOf("") }
-    var selectedSaleMode     by remember { mutableStateOf(0) }  // 0=Completa 1=Partes
-    var selectedRateMode     by remember { mutableStateOf(0) }  // 0=Mercado 1=Rápida
+    var selectedSaleMode     by remember { mutableStateOf(0) }
+    var selectedRateMode     by remember { mutableStateOf(0) }
     var customRateEnabled    by remember { mutableStateOf(false) }
     var customRateText       by remember { mutableStateOf("") }
     var minTransactionText   by remember { mutableStateOf("") }
@@ -90,20 +88,16 @@ fun PublishScreen(
     var selectedFiatCurrency by remember { mutableStateOf("PEN") }
     var expandedFiat         by remember { mutableStateOf(false) }
 
-    // Cuentas filtradas por la moneda fiat seleccionada
     val accountsForFiat = uiState.bankAccounts.filter { it.currency == selectedFiatCurrency }
     val selectedAccount = accountsForFiat.find { it.id == selectedAccountId }
         ?: accountsForFiat.firstOrNull()
 
-    // Resetear cuenta seleccionada al cambiar moneda fiat
     LaunchedEffect(selectedFiatCurrency) { selectedAccountId = null }
 
-    // Cargar tasa real cuando cambia el par
     LaunchedEffect(selectedCurrency, selectedFiatCurrency) {
         viewModel?.loadExchangeRate(selectedCurrency, selectedFiatCurrency)
     }
 
-    // Sincronizar customRateText con la tasa de mercado cuando llega
     LaunchedEffect(uiState.marketRate) {
         val rate = uiState.marketRate ?: return@LaunchedEffect
         if (!customRateEnabled) {
@@ -113,7 +107,7 @@ fun PublishScreen(
 
     val symbol       = fiatSymbol(selectedFiatCurrency)
     val marketRate   = uiState.marketRate
-    val quickRate    = marketRate?.let { it * 0.9950 } // 0.5% por debajo = venta rápida
+    val quickRate    = marketRate?.let { it * 0.9950 }
     val amountDouble = amountText.toDoubleOrNull() ?: 0.0
 
     val currentRate = when {
@@ -149,7 +143,6 @@ fun PublishScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
 
-            // ── Par de Divisas ────────────────────────────────────────────────
             PublishSectionCard(title = "Par de Divisas") {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -184,7 +177,7 @@ fun PublishScreen(
                         modifier = Modifier.weight(1f)
                     )
                 }
-                // Indicador de tasa de referencia en tiempo real
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -211,7 +204,6 @@ fun PublishScreen(
                 }
             }
 
-            // ── Monto disponible ──────────────────────────────────────────────
             PublishSectionCard(title = "Monto Total Disponible") {
                 OutlinedTextField(
                     value = amountText,
@@ -256,7 +248,6 @@ fun PublishScreen(
                 }
             }
 
-            // ── Modo de Venta ─────────────────────────────────────────────────
             PublishSectionCard(title = "Modo de Venta") {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     SaleModeOption(
@@ -278,7 +269,6 @@ fun PublishScreen(
                 }
             }
 
-            // ── Tasa de Cambio ────────────────────────────────────────────────
             PublishSectionCard(title = "Tasa de Cambio") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -310,7 +300,6 @@ fun PublishScreen(
                         )
                     }
 
-                    // Tasa personalizada
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -357,7 +346,6 @@ fun PublishScreen(
                 }
             }
 
-            // ── Cuenta de Pago ───────────────────────────────────────────────
             PublishSectionCard(title = "Cuenta donde recibirás el pago") {
                 if (uiState.isLoadingAccounts) {
                     Box(Modifier.fillMaxWidth().height(48.dp), contentAlignment = Alignment.Center) {
@@ -452,7 +440,6 @@ fun PublishScreen(
                 }
             }
 
-            // ── Vista Previa ──────────────────────────────────────────────────
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -484,7 +471,6 @@ fun PublishScreen(
                 }
             }
 
-            // ── Botón Publicar ────────────────────────────────────────────────
             Button(
                 onClick = {
                     val minVal = if (selectedSaleMode == 0) amountDouble else (minTransactionText.toDoubleOrNull() ?: 50.0)
@@ -530,8 +516,6 @@ fun PublishScreen(
         }
     }
 }
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 @Composable
 private fun PreviewRow(label: String, value: String, valueColor: Color) {
