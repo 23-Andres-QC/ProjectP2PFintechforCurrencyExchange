@@ -1,10 +1,9 @@
-"""Modelo de Usuario"""
 from app.core.database import db, BaseModel
 from app.core.security import hash_password, verify_password
 
 class User(BaseModel):
     __tablename__ = 'users'
-    
+
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(255), nullable=False)
@@ -17,13 +16,13 @@ class User(BaseModel):
     total_transactions = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
     is_banned = db.Column(db.Boolean, default=False)
-    
+
     def set_password(self, password: str):
         self.password_hash = hash_password(password)
-    
+
     def check_password(self, password: str) -> bool:
         return verify_password(self.password_hash, password)
-    
+
     def to_dict(self):
         return {
             'id': self.id,

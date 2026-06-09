@@ -1,17 +1,7 @@
-"""Modelo Dispute — tabla disputes"""
 from app.core.database import db, BaseModel
 
 
 class Dispute(BaseModel):
-    """
-    Representa una disputa abierta sobre una transacción.
-
-    Estados posibles:
-        open       → recién abierta, esperando revisión admin
-        under_review → admin la tomó, está revisando
-        resolved   → resuelta (liberado al comprador o revertido al vendedor)
-        closed     → cerrada sin acción (ej. partes llegaron a acuerdo)
-    """
     __tablename__ = 'disputes'
 
     transaction_id  = db.Column(db.String(36), db.ForeignKey('transactions.id'),
@@ -22,19 +12,16 @@ class Dispute(BaseModel):
     description     = db.Column(db.Text)
     status          = db.Column(db.String(20), default='open', index=True)
 
-    # Campos de resolución — se rellenan cuando admin resuelve
     resolved_by     = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
-    resolution      = db.Column(db.String(20), nullable=True)   # 'favour_buyer' | 'favour_vendor'
+    resolution      = db.Column(db.String(20), nullable=True)
     resolution_note = db.Column(db.Text, nullable=True)
     resolved_at     = db.Column(db.DateTime, nullable=True)
 
-    # Relationships (lazy para evitar N+1 en listados)
     transaction = db.relationship('Transaction', foreign_keys=[transaction_id],
                                   backref=db.backref('disputes', lazy='dynamic'), lazy='joined')
     initiator   = db.relationship('User', foreign_keys=[initiator_id], lazy='joined')
     resolver    = db.relationship('User', foreign_keys=[resolved_by], lazy='select')
 
-    # ── Razones de disputa predefinidas ──────────────────────────────────────
     REASON_PAYMENT_NOT_RECEIVED  = 'payment_not_received'
     REASON_WRONG_AMOUNT          = 'wrong_amount'
     REASON_VOUCHER_FAKE          = 'voucher_fake'

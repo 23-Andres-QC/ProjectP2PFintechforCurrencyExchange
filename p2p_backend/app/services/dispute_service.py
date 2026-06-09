@@ -1,4 +1,3 @@
-"""DisputeService — lógica de negocio para disputas"""
 from app.core.database import db
 from app.core.exceptions import (
     AppException, NotFoundError, AuthorizationError, ConflictError
@@ -10,23 +9,10 @@ from app.repositories.dispute_repository import DisputeRepository
 
 
 class DisputeService:
-    """
-    Orquesta las operaciones de disputas.
-    No escribe queries directos; usa DisputeRepository.
-    """
-
-    # ─────────────────────────── Acciones de usuario ──────────────────────
 
     @staticmethod
     def open_dispute(user_id: str, transaction_id: str,
                      reason: str, description: str | None = None) -> Dispute:
-        """
-        El usuario (comprador o vendedor) abre una disputa sobre su transacción.
-        Reglas:
-          - La transacción debe existir y el usuario debe ser parte de ella.
-          - No se puede disputar una TX completada.
-          - Solo puede haber una disputa abierta por transacción.
-        """
         txn: Transaction | None = db.session.get(Transaction, transaction_id)
         if not txn:
             raise NotFoundError('Transaction not found')
@@ -62,15 +48,10 @@ class DisputeService:
 
     @staticmethod
     def get_my_disputes(user_id: str, page: int = 1, per_page: int = 20):
-        """Devuelve todas las disputas donde el usuario es parte."""
         return DisputeRepository.get_by_user(user_id, page, per_page)
 
     @staticmethod
     def get_dispute_detail(user_id: str, dispute_id: str) -> Dispute:
-        """
-        Retorna el detalle de una disputa si el usuario es parte de ella
-        o si es admin.
-        """
         dispute = DisputeRepository.get_by_id(dispute_id)
         if not dispute:
             raise NotFoundError('Dispute not found')
@@ -86,17 +67,13 @@ class DisputeService:
 
         return dispute
 
-    # ─────────────────────────── Acciones de admin ────────────────────────
-
     @staticmethod
     def list_disputes_admin(page: int = 1, per_page: int = 20,
                             status: str | None = None):
-        """Listado paginado para el panel admin."""
         return DisputeRepository.get_all(page, per_page, status)
 
     @staticmethod
     def take_dispute(admin_id: str, dispute_id: str) -> Dispute:
-        """Admin toma la disputa para revisarla (cambia estado a under_review)."""
         dispute = DisputeRepository.get_by_id(dispute_id)
         if not dispute:
             raise NotFoundError('Dispute not found')
@@ -112,12 +89,6 @@ class DisputeService:
     @staticmethod
     def resolve_dispute(admin_id: str, dispute_id: str,
                         resolution: str, resolution_note: str | None = None) -> Dispute:
-        """
-        Admin resuelve la disputa.
-        resolution:
-          'favour_buyer'  → TX queda como completed (fondos al comprador)
-          'favour_vendor' → TX queda como cancelled  (revertido al vendedor)
-        """
         if resolution not in ('favour_buyer', 'favour_vendor'):
             raise AppException('INVALID_RESOLUTION',
                                "resolution must be 'favour_buyer' or 'favour_vendor'", 400)
@@ -132,12 +103,10 @@ class DisputeService:
         if dispute.status == 'closed':
             raise AppException('INVALID_STATE', 'Cannot resolve a closed dispute', 400)
 
-        # Actualizar estado de la transacción según la resolución
         txn: Transaction = dispute.transaction
         if txn:
             txn.status = 'completed' if resolution == 'favour_buyer' else 'cancelled'
 
-            # Actualizar contadores si el resultado favorece al comprador
             if resolution == 'favour_buyer':
                 buyer: User | None = db.session.get(User, txn.buyer_id)
                 vendor: User | None = db.session.get(User, txn.vendor_id)

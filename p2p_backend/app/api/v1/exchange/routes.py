@@ -1,12 +1,3 @@
-"""Exchange rates — /api/v1/exchange/*
-
-Fuente primaria: ExchangeRate-API (https://api.exchangerate-api.com)
-  • Endpoint público gratuito, sin API key, actualizado cada hora.
-  • URL: https://api.exchangerate-api.com/v4/latest/{base}
-  • Cubre 161 monedas, incluido PEN (Sol peruano).
-
-Cache en memoria: 10 minutos para no saturar la API externa.
-"""
 import time
 import requests as http
 from flask import Blueprint, request
@@ -14,18 +5,15 @@ from flask_jwt_extended import jwt_required
 
 exchange_bp = Blueprint('exchange', __name__, url_prefix='/exchange')
 
-# ── Cache en memoria ─────────────────────────────────────────────────────────
-_CACHE: dict[str, dict] = {}   # base_currency → {rates, fetched_at}
-_CACHE_TTL = 600               # 10 minutos
+_CACHE: dict[str, dict] = {}
+_CACHE_TTL = 600
 
 EXTERNAL_URL = "https://api.exchangerate-api.com/v4/latest/{base}"
 
-# Monedas más relevantes para la app (Perú + globales)
 MAIN_CURRENCIES = ["USD", "PEN", "EUR", "GBP", "BRL", "CLP", "COP", "ARS", "MXN", "JPY", "CAD", "AUD"]
 
 
 def _fetch_rates(base: str) -> dict:
-    """Obtiene tasas desde ExchangeRate-API con caché de 10 min."""
     now = time.time()
     cached = _CACHE.get(base)
     if cached and (now - cached['fetched_at']) < _CACHE_TTL:
@@ -46,17 +34,9 @@ def _fetch_rates(base: str) -> dict:
     return result
 
 
-# ── GET /exchange/rates ──────────────────────────────────────────────────────
 @exchange_bp.route('/rates', methods=['GET'])
 @jwt_required()
 def get_rates():
-    """Retorna tasas de cambio reales.
-
-    Query params:
-      from  — moneda base (default USD)
-      to    — moneda destino (opcional, si se omite devuelve todas las principales)
-      amount — monto a convertir (opcional, default 1)
-    """
     from_c  = request.args.get('from', 'USD').upper()
     to_c    = request.args.get('to', '').upper()
     amount  = float(request.args.get('amount', 1))
@@ -82,7 +62,6 @@ def get_rates():
             'updated_at': data['next_update'],
         }, 200
 
-    # Devuelve solo las monedas principales
     rates_list = [
         {
             'from_currency': from_c,
@@ -103,17 +82,9 @@ def get_rates():
     }, 200
 
 
-# ── GET /exchange/convert ─────────────────────────────────────────────────────
 @exchange_bp.route('/convert', methods=['GET'])
 @jwt_required()
 def convert():
-    """Conversión directa entre dos monedas.
-
-    Query params:
-      from   — moneda origen  (ej: USD)
-      to     — moneda destino (ej: PEN)
-      amount — monto a convertir (ej: 100)
-    """
     from_c  = request.args.get('from', 'USD').upper()
     to_c    = request.args.get('to', 'PEN').upper()
     amount  = float(request.args.get('amount', 1))
@@ -138,11 +109,9 @@ def convert():
     }, 200
 
 
-# ── GET /exchange/currencies ──────────────────────────────────────────────────
 @exchange_bp.route('/currencies', methods=['GET'])
 @jwt_required()
 def list_currencies():
-    """Lista todas las monedas disponibles desde la API externa."""
     try:
         data = _fetch_rates('USD')
     except Exception as e:

@@ -46,4 +46,3 @@ class CreateBankAccountSchema(Schema):
         elif bank in BANCOS_CCI:
             if not value.isdigit() or len(value) != 20:
                 raise ValidationError("El CCI debe tener exactamente 20 dígitos")
-        # Wise, Binance, Otro y demás: cualquier formato de 4-60 chars es válido

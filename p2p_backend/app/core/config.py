@@ -1,9 +1,7 @@
-"""Configuración de la aplicación"""
 import os
 from datetime import timedelta
 
 class Config:
-    """Configuración base"""
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-prod')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'dev-secret-key-change-in-prod')
@@ -11,7 +9,6 @@ class Config:
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
 class DevelopmentConfig(Config):
-    """Desarrollo"""
     DEBUG = True
     SQLALCHEMY_ECHO = True
     SQLALCHEMY_DATABASE_URI = os.getenv(
@@ -20,13 +17,11 @@ class DevelopmentConfig(Config):
     )
 
 class ProductionConfig(Config):
-    """Producción"""
     DEBUG = False
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
 
 class TestingConfig(Config):
-    """Testing"""
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
 

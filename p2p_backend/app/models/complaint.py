@@ -1,4 +1,3 @@
-"""Modelo Complaint — reclamos de usuarios"""
 import uuid
 from datetime import datetime
 from app.core.database import db

@@ -20,7 +20,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // Leer URLs desde gradle.properties (un solo lugar para cambiar credenciales)
     val baseUrlDebug: String = project.findProperty("BASE_URL_DEBUG") as? String
         ?: "http://10.0.2.2:5000/api/v1/"
     val baseUrlRelease: String = project.findProperty("BASE_URL_RELEASE") as? String
@@ -45,16 +44,14 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true   // necesario para acceder a BuildConfig.BASE_URL
+        buildConfig = true
     }
 }
 
 dependencies {
-    // Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    // Compose BOM
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -63,21 +60,14 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui.text.google.fonts)
-    // Navigation
     implementation(libs.navigation.compose)
-    // ViewModel
     implementation(libs.lifecycle.viewmodel.compose)
-    // Networking
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp.logging)
-    // Coroutines
     implementation(libs.coroutines.android)
-    // DataStore
     implementation(libs.datastore.preferences)
-    // Coil
     implementation(libs.coil.compose)
-    // Tests
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

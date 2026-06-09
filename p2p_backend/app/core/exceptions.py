@@ -1,4 +1,3 @@
-"""Excepciones y manejadores de errores globales"""
 
 
 class AppException(Exception):

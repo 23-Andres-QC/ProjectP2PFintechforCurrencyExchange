@@ -1,4 +1,3 @@
-"""Uploads — /api/v1/uploads/*  (recibe imagen en base64, la guarda en disco y devuelve URL)"""
 import os
 import base64
 import uuid
@@ -24,7 +23,6 @@ def upload_image():
     if not image_b64:
         return {'error': {'code': 'NO_IMAGE', 'message': 'Se requiere image_base64'}}, 400
 
-    # Quitar prefijo data URI si viene incluido
     if ',' in image_b64:
         image_b64 = image_b64.split(',', 1)[1]
 

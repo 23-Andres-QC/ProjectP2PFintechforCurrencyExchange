@@ -1,4 +1,3 @@
-"""Modelos para las tablas"""
 from app.core.database import db, BaseModel
 
 
@@ -31,12 +30,12 @@ class BankAccount(BaseModel):
 class Offer(BaseModel):
     __tablename__ = 'offers'
     vendor_id      = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False, index=True)
-    from_currency  = db.Column(db.String(10), nullable=False)   # divisa que ofrece el vendedor
-    to_currency    = db.Column(db.String(10), nullable=False)   # divisa que recibe el vendedor
+    from_currency  = db.Column(db.String(10), nullable=False)
+    to_currency    = db.Column(db.String(10), nullable=False)
     amount         = db.Column(db.Float, nullable=False)
     available_amount = db.Column(db.Float, nullable=False)
     price_per_unit = db.Column(db.Float, nullable=False)
-    offer_type     = db.Column(db.String(20), nullable=False)   # 'full' | 'partial'
+    offer_type     = db.Column(db.String(20), nullable=False)
     status         = db.Column(db.String(20), default='active', index=True)
     min_transaction = db.Column(db.Float, default=0)
     max_transaction = db.Column(db.Float)
@@ -48,8 +47,8 @@ class Transaction(BaseModel):
     offer_id       = db.Column(db.String(36), db.ForeignKey('offers.id'), nullable=False)
     buyer_id       = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False, index=True)
     vendor_id      = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False, index=True)
-    amount_from    = db.Column(db.Float, nullable=False)   # monto en divisa origen
-    amount_to      = db.Column(db.Float, nullable=False)   # monto en divisa destino
+    amount_from    = db.Column(db.Float, nullable=False)
+    amount_to      = db.Column(db.Float, nullable=False)
     exchange_rate  = db.Column(db.Float, nullable=False)
     status         = db.Column(db.String(20), default='pending', index=True)
     buyer_payment_account  = db.Column(db.Text)
@@ -74,9 +73,6 @@ class Rating(BaseModel):
     comment        = db.Column(db.Text)
 
 
-
-
-
 class AuditLog(BaseModel):
     __tablename__ = 'audit_logs'
     user_id  = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
@@ -91,8 +87,8 @@ from app.models.complaint import Complaint
 class Notification(BaseModel):
     __tablename__ = 'notifications'
     user_id     = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False, index=True)
-    type        = db.Column(db.String(50), nullable=False)   # login | transaction | voucher | dispute | offer | security | admin
+    type        = db.Column(db.String(50), nullable=False)
     title       = db.Column(db.String(255), nullable=False)
     body        = db.Column(db.Text, nullable=False)
     is_read     = db.Column(db.Boolean, default=False, nullable=False)
-    resource_id = db.Column(db.String(36), nullable=True)    # id del recurso relacionado
+    resource_id = db.Column(db.String(36), nullable=True)
