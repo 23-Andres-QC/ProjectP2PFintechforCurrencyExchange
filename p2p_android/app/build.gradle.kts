@@ -21,7 +21,7 @@ android {
     }
 
     val baseUrlDebug: String = project.findProperty("BASE_URL_DEBUG") as? String
-        ?: "http://10.0.2.2:5000/api/v1/"
+        ?: "http://157.137.189.178/api/v1/"
     val baseUrlRelease: String = project.findProperty("BASE_URL_RELEASE") as? String
         ?: "http://157.137.189.178/api/v1/"
 
@@ -38,6 +38,7 @@ android {
             buildConfigField("String", "BASE_URL", "\"$baseUrlRelease\"")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -45,6 +46,25 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+tasks.whenTaskAdded {
+    if (name == "assembleDebug") {
+        doLast {
+            val apkDir = file("build/outputs/apk/debug")
+            apkDir.listFiles()?.filter { it.extension == "apk" }?.forEach { apk ->
+                apk.renameTo(File(apkDir, "p2p-debug.apk"))
+            }
+        }
+    }
+    if (name == "assembleRelease") {
+        doLast {
+            val apkDir = file("build/outputs/apk/release")
+            apkDir.listFiles()?.filter { it.extension == "apk" }?.forEach { apk ->
+                apk.renameTo(File(apkDir, "p2p-release.apk"))
+            }
+        }
     }
 }
 
