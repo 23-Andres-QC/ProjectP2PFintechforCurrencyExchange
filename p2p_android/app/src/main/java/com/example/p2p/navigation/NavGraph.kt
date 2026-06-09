@@ -80,6 +80,7 @@ import com.example.p2p.presentation.transaction.TransactionDetailScreen
 import com.example.p2p.presentation.transaction.TransactionScreen
 import com.example.p2p.presentation.transaction.TransactionViewModel
 import com.example.p2p.presentation.vendor.VendorInboxScreen
+import com.example.p2p.ui.theme.BackgroundApp
 import com.example.p2p.ui.theme.Primary
 import com.example.p2p.ui.theme.SurfaceColor
 import kotlinx.coroutines.launch
@@ -103,6 +104,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
     val showBottomBar = currentRoute != null && currentRoute !in authRoutes
 
     Scaffold(
+        containerColor = BackgroundApp,
         bottomBar = {
             if (showBottomBar) {
                 AppBottomBar(

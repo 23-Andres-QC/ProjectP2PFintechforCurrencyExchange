@@ -11,7 +11,8 @@
       "Bash(grep *)",
       "Bash(docker-compose down *)",
       "Bash(docker-compose build *)",
-      "Bash(python -m json.tool)"
+      "Bash(python -m json.tool)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Login OK -', d['email']\\)\")"
     ]
   }
 }
