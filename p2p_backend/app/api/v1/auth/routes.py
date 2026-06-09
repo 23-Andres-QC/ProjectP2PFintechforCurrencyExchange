@@ -40,6 +40,14 @@ def refresh():
     return {'access_token': create_access_token(identity=user_id)}, 200
 
 
+@auth_bp.route('/me', methods=['GET'])
+@jwt_required()
+def me():
+    user_id = get_jwt_identity()
+    user = UserService.get_by_id(user_id)
+    return user.to_dict(), 200
+
+
 @auth_bp.route('/logout', methods=['POST'])
 @jwt_required()
 def logout():
