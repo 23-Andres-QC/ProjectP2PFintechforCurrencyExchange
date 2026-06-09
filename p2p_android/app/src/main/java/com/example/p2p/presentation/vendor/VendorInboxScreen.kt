@@ -258,18 +258,14 @@ fun VendorInboxScreen(
                     items(pendingTransactions) { txn ->
                         VendorTransactionCard(
                             transaction = txn,
-                            onAccept = {
-                                confirmAcceptTxnId = txn.id
-                            },
+                            onAccept = { confirmAcceptTxnId = txn.id },
                             onConfirm = {
                                 viewModel.confirmTransaction(txn.id,
                                     onSuccess = { Toast.makeText(context, "Operación liberada con éxito", Toast.LENGTH_SHORT).show() },
                                     onError = { err -> Toast.makeText(context, "Error al confirmar: $err", Toast.LENGTH_LONG).show() }
                                 )
                             },
-                            onCancel = {
-                                confirmCancelTxnId = txn.id
-                            }
+                            onCancel = { confirmCancelTxnId = txn.id }
                         )
                     }
                 }
@@ -288,23 +284,27 @@ private fun VendorTransactionCard(
     val isNewOrder = transaction.status == "pending"
     val isVoucherUploaded = transaction.status == "voucher_uploaded"
     val isAccepted = transaction.status == "accepted"
+    val isCompleted = transaction.status == "completed"
 
     val statusLabel = when (transaction.status) {
         "pending"          -> "NUEVA ORDEN DE COMPRA"
         "accepted"         -> "ORDEN ACEPTADA · ESPERANDO PAGO"
         "voucher_uploaded" -> "PAGO RECIBIDO · CONFIRMAR"
+        "completed"        -> "FONDOS LIBERADOS · CERRAR"
         else               -> transaction.status.uppercase()
     }
     val statusColor = when (transaction.status) {
         "pending"          -> Primary
         "accepted"         -> SuccessColor
         "voucher_uploaded" -> WarningColor
+        "completed"        -> SuccessColor
         else               -> TextMuted
     }
     val cardBorder = when (transaction.status) {
         "pending"          -> Primary.copy(alpha = 0.4f)
         "accepted"         -> SuccessColor.copy(alpha = 0.3f)
         "voucher_uploaded" -> WarningColor.copy(alpha = 0.3f)
+        "completed"        -> SuccessColor.copy(alpha = 0.4f)
         else               -> BorderColor
     }
 
@@ -477,6 +477,27 @@ private fun VendorTransactionCard(
                     Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
                     Spacer(Modifier.width(6.dp))
                     Text("Confirmar Pago y Liberar", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            if (isCompleted) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(SuccessColor.copy(alpha = 0.07f))
+                        .border(1.dp, SuccessColor.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
+                        .padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(16.dp))
+                    Text(
+                        text = "Fondos liberados. El comprador está cerrando la operación.",
+                        fontSize = 11.sp,
+                        color = SuccessColor,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }

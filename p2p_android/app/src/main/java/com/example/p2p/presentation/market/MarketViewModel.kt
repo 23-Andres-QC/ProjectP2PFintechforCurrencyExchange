@@ -128,7 +128,7 @@ class MarketViewModel(
         viewModelScope.launch {
             when (val result = transactionRepository.listTransactions()) {
                 is NetworkResult.Success -> {
-                    val active = result.data.filter { it.status in listOf("pending", "accepted", "voucher_uploaded") }
+                    val active = result.data.filter { it.status in listOf("pending", "accepted", "voucher_uploaded", "completed") }
                     _uiState.value = _uiState.value.copy(activeTransactions = active)
                 }
                 else -> Unit

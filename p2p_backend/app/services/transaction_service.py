@@ -5,6 +5,7 @@ from app.models import Transaction
 from app.repositories.transaction_repository import TransactionRepository
 from app.repositories.offer_repository import OfferRepository
 from app.repositories.user_repository import UserRepository
+from app.services.dispute_service import DisputeService
 
 
 class TransactionService:
@@ -143,22 +144,14 @@ class TransactionService:
 
     @staticmethod
     def open_dispute(user_id: str, txn_id: str, data: dict) -> dict:
-        txn = TransactionRepository.get_by_id(txn_id)
-        if not txn:
-            raise NotFoundError('Transaction not found')
-        if txn.buyer_id != user_id and txn.vendor_id != user_id:
-            raise AuthorizationError('Not your transaction')
-        if txn.status == 'completed':
-            raise AppException('INVALID_STATE', 'Cannot dispute completed transaction', 400)
-
-        dispute = TransactionRepository.create_dispute(
-            transaction_id=txn.id,
-            initiator_id=user_id,
-            reason=data.get('reason', 'No reason provided'),
+        dispute = DisputeService.open_dispute(
+            user_id=user_id,
+            transaction_id=txn_id,
+            reason=data.get('reason', 'payment_not_received'),
             description=data.get('description'),
         )
-        txn.status = 'disputed'
 
+        txn = TransactionRepository.get_by_id(txn_id)
         other_id = txn.vendor_id if user_id == txn.buyer_id else txn.buyer_id
         notify(
             user_id=other_id,
@@ -167,7 +160,6 @@ class TransactionService:
             body=f'Se abrió una disputa por motivo: {dispute.reason}. Un administrador revisará el caso.',
             resource_id=dispute.id,
         )
-
         db.session.commit()
         return {'id': dispute.id, 'status': 'open', 'transaction_status': 'disputed'}
 
@@ -178,7 +170,13 @@ class TransactionService:
             raise NotFoundError('Transaction not found')
         if txn.buyer_id != user_id and txn.vendor_id != user_id:
             raise AuthorizationError('Not your transaction')
-        if new_status not in ('cancelled', 'paused'):
+
+        if new_status == 'closed':
+            if txn.status != 'completed':
+                raise AppException('INVALID_STATE', 'Can only close completed transactions', 400)
+            if txn.buyer_id != user_id:
+                raise AuthorizationError('Only buyer can close the transaction')
+        elif new_status not in ('cancelled', 'paused'):
             raise AppException('INVALID_STATUS', 'Status must be cancelled or paused', 400)
 
         txn.status = new_status

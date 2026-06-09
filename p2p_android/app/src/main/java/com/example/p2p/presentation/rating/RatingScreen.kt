@@ -215,7 +215,13 @@ fun RatingScreen(
         Spacer(modifier = Modifier.height(10.dp))
 
         TextButton(
-            onClick = onSkip,
+            onClick = {
+                if (transactionId != null) {
+                    viewModel?.closeTransaction(transactionId) { onSkip() }
+                } else {
+                    onSkip()
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(

@@ -28,8 +28,8 @@ class OfferService:
     @staticmethod
     def create(user_id: str, data: dict) -> dict:
         user = UserRepository.get_by_id(user_id)
-        if not user or user.role not in ('vendor', 'admin'):
-            raise AuthorizationError('Only vendors can create offers')
+        if not user:
+            raise AuthorizationError('User not found')
 
         offer = OfferRepository.create(
             vendor_id=user_id,

@@ -66,5 +66,8 @@ class RatingService:
             avg = RatingRepository.average_for_user(ratee_id)
             ratee.rating = round(float(avg if avg is not None else score), 2)
 
+        if txn.buyer_id == user_id:
+            txn.status = 'closed'
+
         db.session.commit()
         return {'id': rating.id, 'score': rating.score, 'message': 'Rating submitted'}

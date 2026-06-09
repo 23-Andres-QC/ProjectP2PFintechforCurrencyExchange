@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.p2p.core.network.NetworkResult
 import com.example.p2p.data.remote.api.RatingResponse
 import com.example.p2p.domain.repository.RatingRepository
+import com.example.p2p.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +19,8 @@ data class RatingUiState(
 )
 
 class RatingViewModel(
-    private val repository: RatingRepository
+    private val repository: RatingRepository,
+    private val transactionRepository: TransactionRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RatingUiState())
@@ -41,13 +43,23 @@ class RatingViewModel(
         }
     }
 
+    fun closeTransaction(transactionId: String, onDone: () -> Unit) {
+        viewModelScope.launch {
+            transactionRepository?.updateStatus(transactionId, "closed")
+            onDone()
+        }
+    }
+
     fun resetState() {
         _uiState.value = RatingUiState()
     }
 
-    class Factory(private val repo: RatingRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val repo: RatingRepository,
+        private val txnRepo: TransactionRepository? = null
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            RatingViewModel(repo) as T
+            RatingViewModel(repo, txnRepo) as T
     }
 }

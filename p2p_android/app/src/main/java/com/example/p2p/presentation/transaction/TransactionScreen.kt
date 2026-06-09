@@ -115,19 +115,8 @@ fun TransactionScreen(
         }
     }
 
-    LaunchedEffect(uiState.transaction?.status, currentUserId) {
-        val t = uiState.transaction
-        val newStatus = t?.status ?: return@LaunchedEffect
-
-        if (newStatus == "completed" &&
-            previousStatus in listOf("voucher_uploaded", "pending", "accepted") &&
-            currentUserId.isNotBlank() &&
-            currentUserId == t.buyer_id
-        ) {
-            delay(1500L)
-            showRatingDialog = true
-        }
-        previousStatus = newStatus
+    LaunchedEffect(uiState.transaction?.status) {
+        previousStatus = uiState.transaction?.status ?: ""
     }
 
     val txn = uiState.transaction
@@ -641,14 +630,14 @@ fun TransactionScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "¡Cambio de divisas realizado con éxito!",
+                            text = "¡Fondos liberados!",
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                             color = TextMain,
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "Los fondos han sido liberados correctamente.",
+                            text = "El cambio de divisas se completó. Puedes cerrar la operación o abrir una disputa si hay algún problema.",
                             fontSize = 12.sp,
                             color = TextMuted,
                             textAlign = TextAlign.Center
@@ -656,14 +645,25 @@ fun TransactionScreen(
                     }
                 }
                 Button(
-                    onClick = { onNavigateToReceipt(transactionId ?: "") },
+                    onClick = { showRatingDialog = true },
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = SuccessColor)
                 ) {
                     Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color.White)
                     Spacer(Modifier.width(8.dp))
-                    Text("Ver Comprobante Exitoso", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("Cerrar y Calificar", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                }
+                OutlinedButton(
+                    onClick = { onNavigateToDispute(transactionId ?: "") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerColor),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, DangerColor)
+                ) {
+                    Icon(Icons.Filled.Warning, contentDescription = null, tint = DangerColor, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Abrir Disputa", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                 }
             }
 
@@ -826,7 +826,13 @@ fun TransactionScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showRatingDialog = false }) {
+                TextButton(onClick = {
+                    showRatingDialog = false
+                    if (transactionId != null) {
+                        viewModel?.updateStatus(transactionId, "closed")
+                    }
+                    onNavigateBack()
+                }) {
                     Text("Omitir por ahora", color = TextMuted)
                 }
             }

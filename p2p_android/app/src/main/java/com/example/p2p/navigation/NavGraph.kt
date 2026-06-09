@@ -209,6 +209,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                         navController.navigate(Screen.Notifications.route)
                     },
                     onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) },
+                    onNavigateToPending = { navController.navigate(Screen.Vendor.route) },
                     onNavigateToAddBankAccount = { navController.navigate(Screen.BankAccounts.route) }
                 )
             }
@@ -249,7 +250,8 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 )
             ) { backStack ->
                 val ratingRepo = RatingRepositoryImpl(ApiClient.ratingApi)
-                val vm: RatingViewModel = viewModel(factory = RatingViewModel.Factory(ratingRepo))
+                val txnRepo = TransactionRepositoryImpl(ApiClient.transactionApi)
+                val vm: RatingViewModel = viewModel(factory = RatingViewModel.Factory(ratingRepo, txnRepo))
                 val id = backStack.arguments?.getString("transactionId") ?: ""
                 val score = backStack.arguments?.getInt("score") ?: 5
                 RatingScreen(
