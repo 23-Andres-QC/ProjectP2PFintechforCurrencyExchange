@@ -144,9 +144,12 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
 
             composable(Screen.Register.route) {
                 val authRepo = AuthRepositoryImpl(tokenManager)
+                val userRepo = UserRepositoryImpl(ApiClient.userApi)
                 val vm: RegisterViewModel = viewModel(factory = RegisterViewModel.Factory(authRepo))
+                val kycVm: KycViewModel = viewModel(factory = KycViewModel.Factory(userRepo))
                 RegisterScreen(
                     viewModel = vm,
+                    kycViewModel = kycVm,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToLogin = {
                         navController.navigate(Screen.Login.route) {
@@ -154,7 +157,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                         }
                     },
                     onRegisterSuccess = {
-                        navController.navigate(Screen.Kyc.route) {
+                        navController.navigate(Screen.Market.route) {
                             popUpTo(Screen.Register.route) { inclusive = true }
                         }
                     }

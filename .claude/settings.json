@@ -14,7 +14,8 @@
       "Read(//c/Mobile/ProyectoFinal/**)",
       "Bash(find /mnt/c/Mobile /c/Mobile 2>/dev/null | grep \"docker-compose.yml\" | head -5)",
       "Read(//mnt/c/**)",
-      "Bash(docker restart *)"
+      "Bash(docker restart *)",
+      "Bash(docker compose *)"
     ]
   }
 }
