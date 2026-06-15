@@ -57,13 +57,14 @@ private val filterChips = listOf("Todos", "Completados", "Pendientes", "Disputas
 fun HistoryScreen(
     viewModel: HistoryViewModel? = null,
     currentUserId: String = "",
+    initialFilter: Int = 0,
     onBack: () -> Unit = {},
     onNavigateToTransaction: (String) -> Unit = {},
     onNavigateToTransactionDetail: (String) -> Unit = {},
     onNavigateToPending: () -> Unit = {}
 ) {
     val uiState by viewModel?.uiState?.collectAsState(initial = HistoryUiState()) ?: remember { mutableStateOf(HistoryUiState()) }
-    var selectedFilter by remember { mutableStateOf(0) }
+    var selectedFilter by remember { mutableStateOf(initialFilter) }
     var searchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {

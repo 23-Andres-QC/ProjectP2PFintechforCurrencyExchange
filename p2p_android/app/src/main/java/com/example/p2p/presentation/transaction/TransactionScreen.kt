@@ -246,13 +246,15 @@ fun TransactionScreen(
             }
 
             val currentStep = when (txn?.status) {
-                "pending"          -> if (isUploadingVoucher) 1 else 0
-                "accepted"         -> 0
-                "voucher_uploaded" -> 1
-                "completed"        -> 3
-                "disputed"         -> 2
+                "pending"          -> if (isUploadingVoucher) 2 else 1
+                "accepted"         -> 1
+                "voucher_uploaded" -> 2
+                "completed"        -> 4
+                "disputed"         -> 3
                 else               -> 0
             }
+
+            val steps = listOf("Inicio", "Pagar", "Voucher", "Confirmar", "Liberado")
 
             Column(
                 modifier = Modifier
@@ -265,12 +267,10 @@ fun TransactionScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val steps = listOf("Pagar", "Voucher", "Confirmar", "Liberado")
-                    steps.forEachIndexed { index, label ->
-
+                    steps.forEachIndexed { index, _ ->
                         Box(
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(28.dp)
                                 .clip(CircleShape)
                                 .background(
                                     if (index <= currentStep) Primary
@@ -284,7 +284,7 @@ fun TransactionScreen(
                         ) {
                             Text(
                                 text = "${index + 1}",
-                                fontSize = 13.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (index <= currentStep) Color.White else Primary
                             )
@@ -310,11 +310,10 @@ fun TransactionScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    val steps = listOf("Pagar", "Voucher", "Confirmar", "Liberado")
                     steps.forEachIndexed { index, label ->
                         Text(
                             text = label,
-                            fontSize = 10.sp,
+                            fontSize = 9.sp,
                             fontWeight = if (index <= currentStep) FontWeight.Bold else FontWeight.Normal,
                             color = if (index <= currentStep) Primary else TextMuted,
                             textAlign = TextAlign.Center,
@@ -407,168 +406,195 @@ fun TransactionScreen(
                 )
             }
 
-            if (txn?.status == "accepted") {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = SuccessColor.copy(alpha = 0.1f)),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, SuccessColor.copy(alpha = 0.3f)),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = SuccessColor)
-                        Column {
-                            Text("¡El vendedor aceptó tu orden!", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextMain)
-                            Text("Realiza el pago a la cuenta indicada y sube tu comprobante.", fontSize = 11.sp, color = TextMuted)
-                        }
-                    }
-                }
-            }
-
-            if (txn?.status == "pending" && !isUploadingVoucher) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Primary.copy(alpha = 0.07f)),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Primary.copy(alpha = 0.2f)),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(Icons.Filled.Schedule, contentDescription = null, tint = Primary)
-                        Column {
-                            Text("Esperando al vendedor...", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextMain)
-                            Text("El vendedor fue notificado. Aceptará tu orden en breve.", fontSize = 11.sp, color = TextMuted)
-                        }
-                    }
-                }
-            }
-
+            // ── Sección de subir comprobante (siempre visible al pagar) ──────────
             if (txn?.status == "pending" || txn?.status == "accepted") {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(SurfaceColor)
-                        .border(
-                            width = 1.5.dp,
-                            color = when {
-                                isUploadingVoucher -> Primary
-                                selectedBitmap != null -> SuccessColor
-                                else -> BorderColor
-                            },
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    if (isUploadingVoucher || uiState.isLoading) {
+                    // Título de sección
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Box(
-                            modifier = Modifier.fillMaxWidth().height(80.dp),
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Primary.copy(alpha = 0.12f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            Icon(Icons.Filled.Receipt, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
+                        }
+                        Text(
+                            text = "Comprobante de pago",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = TextMain
+                        )
+                        if (selectedBitmap != null) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(SuccessColor.copy(alpha = 0.12f))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
-                                CircularProgressIndicator(modifier = Modifier.size(28.dp), color = Primary, strokeWidth = 3.dp)
-                                Text("Subiendo voucher...", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextMain)
+                                Text("Listo", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = SuccessColor)
                             }
                         }
-                    } else {
+                    }
 
-                        if (selectedBitmap != null) {
-                            Box(modifier = Modifier.fillMaxWidth()) {
-                                Image(
-                                    bitmap = selectedBitmap!!.asImageBitmap(),
-                                    contentDescription = "Comprobante de pago",
+                    // Área de voucher
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(SurfaceColor)
+                            .border(
+                                width = 1.5.dp,
+                                color = when {
+                                    isUploadingVoucher -> Primary
+                                    selectedBitmap != null -> SuccessColor
+                                    else -> Primary.copy(alpha = 0.35f)
+                                },
+                                shape = RoundedCornerShape(14.dp)
+                            )
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (isUploadingVoucher || uiState.isLoading) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().height(80.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    CircularProgressIndicator(modifier = Modifier.size(28.dp), color = Primary, strokeWidth = 3.dp)
+                                    Text("Subiendo comprobante...", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextMain)
+                                }
+                            }
+                        } else {
+                            if (selectedBitmap != null) {
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    Image(
+                                        bitmap = selectedBitmap!!.asImageBitmap(),
+                                        contentDescription = "Comprobante de pago",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(200.dp)
+                                            .clip(RoundedCornerShape(10.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(6.dp)
+                                            .clip(RoundedCornerShape(50.dp))
+                                            .background(SuccessColor)
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text("✓ Cargado", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+
+                                Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(200.dp)
-                                        .clip(RoundedCornerShape(10.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(6.dp)
-                                        .clip(RoundedCornerShape(50.dp))
-                                        .background(SuccessColor)
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(SuccessColor.copy(alpha = 0.08f))
+                                        .border(1.dp, SuccessColor.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Text("✓ Cargado", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Icon(Icons.Filled.Image, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(18.dp))
+                                    Text(
+                                        text = if (selectedFileName.isNotEmpty()) selectedFileName else "comprobante_pago.jpg",
+                                        fontSize = 12.sp,
+                                        color = SuccessColor,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(16.dp))
                                 }
                             }
 
-                            Row(
+                            // Botón principal de subir
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(SuccessColor.copy(alpha = 0.08f))
-                                    .border(1.dp, SuccessColor.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(
+                                        if (selectedBitmap != null) SuccessColor.copy(alpha = 0.08f)
+                                        else Primary.copy(alpha = 0.07f)
+                                    )
+                                    .border(
+                                        1.5.dp,
+                                        if (selectedBitmap != null) SuccessColor.copy(alpha = 0.4f) else Primary.copy(alpha = 0.4f),
+                                        RoundedCornerShape(12.dp)
+                                    )
+                                    .clickable { imagePicker.launch("image/*") }
+                                    .padding(vertical = 18.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Image,
-                                    contentDescription = null,
-                                    tint = SuccessColor,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Text(
-                                    text = if (selectedFileName.isNotEmpty()) selectedFileName else "comprobante_pago.jpg",
-                                    fontSize = 12.sp,
-                                    color = SuccessColor,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Icon(
-                                    imageVector = Icons.Filled.CheckCircle,
-                                    contentDescription = null,
-                                    tint = SuccessColor,
-                                    modifier = Modifier.size(16.dp)
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (selectedBitmap != null) Icons.Filled.PhotoLibrary else Icons.Filled.CloudUpload,
+                                        contentDescription = null,
+                                        tint = if (selectedBitmap != null) SuccessColor else Primary,
+                                        modifier = Modifier.size(30.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = if (selectedBitmap != null) "Cambiar comprobante" else "Subir Comprobante de Pago",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (selectedBitmap != null) SuccessColor else Primary
+                                        )
+                                        Text(
+                                            text = if (selectedBitmap != null) "Toca para reemplazar" else "Toca aquí · Galería o cámara",
+                                            fontSize = 11.sp,
+                                            color = TextMuted
+                                        )
+                                    }
+                                }
                             }
                         }
+                    }
 
-                        Box(
+                    // Banner informativo secundario (más compacto)
+                    if (txn?.status == "accepted") {
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (selectedBitmap != null) SuccessColor.copy(alpha = 0.06f) else Primary.copy(alpha = 0.06f))
-                                .border(1.dp, if (selectedBitmap != null) SuccessColor.copy(alpha = 0.3f) else Primary.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
-                                .clickable { imagePicker.launch("image/*") }
-                                .padding(14.dp),
-                            contentAlignment = Alignment.Center
+                                .background(SuccessColor.copy(alpha = 0.08f))
+                                .border(1.dp, SuccessColor.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (selectedBitmap != null) Icons.Filled.PhotoLibrary else Icons.Filled.CloudUpload,
-                                    contentDescription = null,
-                                    tint = if (selectedBitmap != null) SuccessColor else Primary,
-                                    modifier = Modifier.size(26.dp)
-                                )
-                                Column {
-                                    Text(
-                                        text = if (selectedBitmap != null) "Cambiar imagen" else "Subir Comprobante de Pago",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (selectedBitmap != null) SuccessColor else TextMain
-                                    )
-                                    Text(
-                                        text = "Selecciona desde galería",
-                                        fontSize = 11.sp,
-                                        color = TextMuted
-                                    )
-                                }
-                            }
+                            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(18.dp))
+                            Text("El vendedor aceptó tu orden · Sube tu comprobante", fontSize = 12.sp, color = SuccessColor, fontWeight = FontWeight.SemiBold)
+                        }
+                    } else if (txn?.status == "pending" && selectedBitmap == null) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Primary.copy(alpha = 0.05f))
+                                .border(1.dp, Primary.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Filled.Schedule, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
+                            Text("Puedes subir tu comprobante ahora y el vendedor lo revisará.", fontSize = 11.sp, color = TextMuted)
                         }
                     }
                 }

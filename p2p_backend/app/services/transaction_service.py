@@ -40,14 +40,21 @@ class TransactionService:
         amount_from = data.get('amount_from', 0)
         amount_to = data.get('amount_to', 0)
 
-        if offer.offer_type == 'full':
-            if amount_from != offer.available_amount:
+        is_complete = offer.offer_type in ('full', 'complete')
+        if is_complete:
+            if abs(amount_from - offer.available_amount) > 0.001:
                 raise AppException('INVALID_AMOUNT', 'Must buy the full available amount', 400)
         else:
-            if amount_from < offer.min_transaction or amount_from > offer.max_transaction:
+            if amount_from < offer.min_transaction:
                 raise AppException(
                     'INVALID_AMOUNT',
-                    f'Amount must be between {offer.min_transaction} and {offer.max_transaction}',
+                    f'Monto mínimo: {offer.min_transaction}',
+                    400,
+                )
+            if offer.max_transaction is not None and amount_from > offer.max_transaction:
+                raise AppException(
+                    'INVALID_AMOUNT',
+                    f'Monto máximo: {offer.max_transaction}',
                     400,
                 )
             if amount_from > offer.available_amount:
@@ -63,6 +70,8 @@ class TransactionService:
             buyer_payment_account=data.get('buyer_payment_account'),
             vendor_payment_account=data.get('vendor_payment_account'),
         )
+
+        db.session.flush()
 
         offer.available_amount -= amount_from
         if offer.available_amount <= 0:
@@ -87,31 +96,53 @@ class TransactionService:
         return TransactionService._to_dict(txn)
 
     @staticmethod
-    def upload_voucher(user_id: str, txn_id: str, data: dict) -> dict:
+    def upload_voucher(user_id: str, txn_id: str, data: dict, image_bytes: bytes, uploader) -> dict:
         txn = TransactionRepository.get_by_id(txn_id)
         if not txn:
             raise NotFoundError('Transaction not found')
-        if txn.buyer_id != user_id:
-            raise AuthorizationError('Only buyer can upload voucher')
+
+        if user_id == txn.buyer_id:
+            role = 'buyer'
+        elif user_id == txn.vendor_id:
+            role = 'seller'
+        else:
+            raise AuthorizationError('No eres parte de esta transacción')
+
+        image_url = uploader(image_bytes, role)
 
         voucher = TransactionRepository.add_voucher(
             transaction_id=txn.id,
             sender_id=user_id,
-            image_url=data.get('image_url', ''),
+            image_url=image_url,
             description=data.get('description'),
         )
-        txn.status = 'voucher_uploaded'
 
-        notify(
-            user_id=txn.vendor_id,
-            type='voucher',
-            title='Comprobante de pago subido',
-            body='El comprador subió su comprobante. Por favor revísalo y confirma la transacción.',
-            resource_id=txn.id,
-        )
+        if role == 'buyer':
+            txn.status = 'voucher_uploaded'
+            notify(
+                user_id=txn.vendor_id,
+                type='voucher',
+                title='Comprobante de pago subido',
+                body='El comprador subió su comprobante. Por favor revísalo y confirma la transacción.',
+                resource_id=txn.id,
+            )
+        else:
+            txn.status = 'seller_voucher_uploaded'
+            notify(
+                user_id=txn.buyer_id,
+                type='voucher',
+                title='Comprobante del vendedor subido',
+                body='El vendedor subió su comprobante de envío. Revisa y cierra la transacción.',
+                resource_id=txn.id,
+            )
 
         db.session.commit()
-        return {'id': voucher.id, 'status': 'pending', 'transaction_status': 'voucher_uploaded'}
+        return {
+            'id': voucher.id,
+            'role': role,
+            'image_url': image_url,
+            'transaction_status': txn.status,
+        }
 
     @staticmethod
     def confirm(user_id: str, txn_id: str) -> dict:
@@ -216,6 +247,6 @@ class TransactionService:
             'status': t.status,
             'buyer_payment_account': t.buyer_payment_account,
             'vendor_payment_account': t.vendor_payment_account,
-            'created_at': t.created_at.isoformat(),
+            'created_at': t.created_at.isoformat() if t.created_at else None,
             'updated_at': t.updated_at.isoformat() if t.updated_at else None,
         }
