@@ -1,8 +1,26 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.notification_service import NotificationService
+from app.core.database import db
+from app.models.user import User
 
 notifications_bp = Blueprint('notifications', __name__, url_prefix='/notifications')
+
+
+@notifications_bp.route('/fcm-token', methods=['POST'])
+@jwt_required()
+def register_fcm_token():
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+    token = data.get('fcm_token', '').strip()
+    if not token:
+        return {'error': 'fcm_token is required'}, 400
+    user = db.session.get(User, user_id)
+    if not user:
+        return {'error': 'User not found'}, 404
+    user.fcm_token = token
+    db.session.commit()
+    return {'message': 'FCM token registered'}, 200
 
 
 @notifications_bp.route('', methods=['GET'])
