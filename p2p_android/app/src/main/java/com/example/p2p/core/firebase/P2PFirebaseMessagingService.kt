@@ -33,7 +33,7 @@ class P2PFirebaseMessagingService : FirebaseMessagingService() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val tokenManager = TokenManager.getInstance(applicationContext)
-                if (tokenManager.getToken() != null) {
+                if (tokenManager.getAccessToken() != null) {
                     ApiClient.notificationApi.registerFcmToken(mapOf("fcm_token" to token))
                 }
             } catch (_: Exception) {}
