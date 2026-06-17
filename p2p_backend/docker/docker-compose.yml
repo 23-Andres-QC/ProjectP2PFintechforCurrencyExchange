@@ -55,8 +55,8 @@ services:
       REDIS_URL: redis://p2p_redis:6379/0
       SECRET_KEY: p2p-secret-key-change-in-prod
       JWT_SECRET_KEY: p2p-jwt-secret-key-change-in-prod
-      SUPABASE_URL: https://vrllsmgbryarqpdlzxor.supabase.co
-      SUPABASE_SERVICE_KEY: Psb_secret_2p7yOFy_oOwQyyCyp_QzqQ_6WauBPmT
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY}
     depends_on:
       p2p_postgres:
         condition: service_healthy

@@ -79,12 +79,20 @@ fun TransactionScreen(
                     if (bytes != null) {
                         selectedBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                         val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
-                        viewModel?.uploadVoucherFromBase64(transactionId, base64)
-                        Toast.makeText(context, "Voucher subido. Esperando confirmación del vendedor.", Toast.LENGTH_LONG).show()
+                        val result = viewModel?.uploadVoucherFromBase64Async(transactionId, base64)
+                        if (result == true) {
+                            Toast.makeText(context, "Voucher subido. Esperando confirmación del vendedor.", Toast.LENGTH_LONG).show()
+                        } else {
+                            selectedBitmap = null
+                            selectedFileName = ""
+                            Toast.makeText(context, "Error al subir el comprobante. Intenta de nuevo.", Toast.LENGTH_LONG).show()
+                        }
                     } else {
                         Toast.makeText(context, "No se pudo leer la imagen.", Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
+                    selectedBitmap = null
+                    selectedFileName = ""
                     Toast.makeText(context, "Error al procesar imagen: ${e.message}", Toast.LENGTH_SHORT).show()
                 } finally {
                     isUploadingVoucher = false
