@@ -108,7 +108,9 @@ class TransactionService:
         else:
             raise AuthorizationError('No eres parte de esta transacción')
 
-        image_url = uploader(image_bytes, role)
+        user = UserRepository.get_by_id(user_id)
+        user_email = user.email if user else user_id
+        image_url = uploader(image_bytes, user_email, txn.id)
 
         voucher = TransactionRepository.add_voucher(
             transaction_id=txn.id,
@@ -127,7 +129,8 @@ class TransactionService:
                 resource_id=txn.id,
             )
         else:
-            txn.status = 'seller_voucher_uploaded'
+            # Vendedor sube boleta: imagen guardada en Supabase y registrada.
+            # El status permanece en voucher_uploaded para poder confirmar luego.
             notify(
                 user_id=txn.buyer_id,
                 type='voucher',
@@ -145,13 +148,36 @@ class TransactionService:
         }
 
     @staticmethod
+    def list_vouchers(user_id: str) -> list[dict]:
+        vouchers = TransactionRepository.get_vouchers_by_user(user_id)
+        result = []
+        for v in vouchers:
+            txn = TransactionRepository.get_by_id(v.transaction_id)
+            sender = UserRepository.get_by_id(v.sender_id)
+            result.append({
+                'id': v.id,
+                'transaction_id': v.transaction_id,
+                'sender_name': sender.full_name if sender else None,
+                'sender_email': sender.email if sender else None,
+                'image_url': v.image_url,
+                'description': v.description,
+                'status': v.status,
+                'created_at': v.created_at.isoformat() if v.created_at else None,
+                'amount_from': txn.amount_from if txn else None,
+                'amount_to': txn.amount_to if txn else None,
+                'exchange_rate': txn.exchange_rate if txn else None,
+                'transaction_status': txn.status if txn else None,
+            })
+        return result
+
+    @staticmethod
     def confirm(user_id: str, txn_id: str) -> dict:
         txn = TransactionRepository.get_by_id(txn_id)
         if not txn:
             raise NotFoundError('Transaction not found')
         if txn.vendor_id != user_id:
             raise AuthorizationError('Only vendor can confirm')
-        if txn.status not in ('voucher_uploaded', 'pending'):
+        if txn.status not in ('voucher_uploaded', 'pending', 'seller_voucher_uploaded'):
             raise AppException('INVALID_STATE', f'Cannot confirm from {txn.status}', 400)
 
         txn.status = 'completed'

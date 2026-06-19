@@ -22,6 +22,13 @@ def pending_transactions():
     return {'transactions': TransactionService.pending_for_vendor(user_id)}, 200
 
 
+@transactions_bp.route('/vouchers', methods=['GET'])
+@jwt_required()
+def list_vouchers():
+    user_id = get_jwt_identity()
+    return {'vouchers': TransactionService.list_vouchers(user_id)}, 200
+
+
 @transactions_bp.route('/<txn_id>', methods=['GET'])
 @jwt_required()
 def get_transaction(txn_id):

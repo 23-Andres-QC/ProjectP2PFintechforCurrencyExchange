@@ -17,14 +17,15 @@ def _get_client():
     return _client
 
 
-def upload_voucher(image_bytes: bytes, role: str) -> str:
+def upload_voucher(image_bytes: bytes, user_email: str, transaction_id: str) -> str:
     """
-    Sube imagen al bucket 'vouchers' en Supabase.
-    role: 'buyer' | 'seller'
+    Sube voucher al bucket 'vouchers' en Supabase.
+    Estructura: {email_sanitizado}/{transaction_id}/{uuid}.jpg
     Retorna la URL pública de la imagen.
     """
     client = _get_client()
-    path = f"{role}/{uuid.uuid4()}.jpg"
+    safe_name = user_email.replace('@', '_').replace('.', '_').replace('+', '_')
+    path = f"{safe_name}/{transaction_id}/{uuid.uuid4()}.jpg"
     client.storage.from_(BUCKET).upload(
         path=path,
         file=image_bytes,

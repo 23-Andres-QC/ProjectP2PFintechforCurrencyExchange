@@ -112,9 +112,8 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                     tokenManager = tokenManager
                 ) { route ->
                     navController.navigate(route) {
+                        popUpTo(Screen.Market.route) { inclusive = false }
                         launchSingleTop = true
-                        popUpTo(Screen.Market.route) { saveState = true }
-                        restoreState = true
                     }
                 }
             }

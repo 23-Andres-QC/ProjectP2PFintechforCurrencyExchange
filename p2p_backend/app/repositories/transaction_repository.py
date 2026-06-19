@@ -81,6 +81,15 @@ class TransactionRepository:
         )
 
     @staticmethod
+    def get_vouchers_by_user(user_id: str):
+        return (
+            Voucher.query
+            .filter_by(sender_id=user_id)
+            .order_by(Voucher.created_at.desc())
+            .all()
+        )
+
+    @staticmethod
     def set_status(txn: Transaction, status: str) -> Transaction:
         txn.status = status
         return txn
