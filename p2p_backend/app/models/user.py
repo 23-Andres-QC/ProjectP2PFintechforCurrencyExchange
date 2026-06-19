@@ -10,6 +10,9 @@ class User(BaseModel):
     dni = db.Column(db.String(20), unique=True, nullable=True)
     phone = db.Column(db.String(20), nullable=True)
     avatar_url = db.Column(db.String(500), nullable=True)
+    signature_url = db.Column(db.String(500), nullable=True)  # ← AGREGÉ
+    dni_image_url = db.Column(db.String(500), nullable=True)# ← AGREGÉ
+    
     role = db.Column(db.String(20), default='buyer')
     kyc_verified = db.Column(db.Boolean, default=False)
     rating = db.Column(db.Float, default=0.0)
