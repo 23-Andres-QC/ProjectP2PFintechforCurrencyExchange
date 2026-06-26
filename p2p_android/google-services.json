@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "145264996837",
+    "project_id": "p2pexchange-92aa3",
+    "storage_bucket": "p2pexchange-92aa3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:145264996837:android:ce4ec111c5db0235623f0c",
+        "android_client_info": {
+          "package_name": "com.example.p2p"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "145264996837-rqft9v0q9s34si12thbbimeoiabilps6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDluIX8rWgCJX7EhY1b2KNnFI9yPzPtAOo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "145264996837-rqft9v0q9s34si12thbbimeoiabilps6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

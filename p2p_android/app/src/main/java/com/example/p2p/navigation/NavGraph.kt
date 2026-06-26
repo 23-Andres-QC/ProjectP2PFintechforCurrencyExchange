@@ -137,6 +137,9 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                     },
                     onNavigateToRegister = {
                         navController.navigate(Screen.Register.route)
+                    },
+                    onNavigateToForgotPassword = {
+                        navController.navigate(Screen.ForgotPass.route)
                     }
                 )
             }

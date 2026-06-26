@@ -43,7 +43,8 @@ import com.example.p2p.ui.theme.*
 fun LoginScreen(
     viewModel: LoginViewModel,
     onLoginSuccess: () -> Unit,
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
@@ -259,7 +260,20 @@ fun LoginScreen(
                         singleLine = true
                     )
 
-                    Spacer(Modifier.height(24.dp))
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        text = "¿Olvidaste tu contraseña?",
+                        fontSize = 13.sp,
+                        color = Primary,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .align(Alignment.End)
+                            .clickable { onNavigateToForgotPassword() }
+                            .padding(vertical = 4.dp)
+                    )
+
+                    Spacer(Modifier.height(16.dp))
 
                     Button(
                         onClick = { focusManager.clearFocus(); viewModel.login() },

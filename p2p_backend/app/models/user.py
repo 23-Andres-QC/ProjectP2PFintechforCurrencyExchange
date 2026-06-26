@@ -16,6 +16,7 @@ class User(BaseModel):
     total_transactions = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
     is_banned = db.Column(db.Boolean, default=False)
+    fcm_token = db.Column(db.String(500), nullable=True)
 
     def set_password(self, password: str):
         self.password_hash = hash_password(password)
