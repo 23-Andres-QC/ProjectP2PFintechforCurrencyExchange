@@ -16,7 +16,15 @@
       "Read(//mnt/c/**)",
       "Bash(docker restart *)",
       "Bash(docker compose *)",
-      "Bash(.\\\\gradlew clean *)"
+      "Bash(.\\\\gradlew clean *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Mobile\\\\ProyectoFinal\\\\ProjectP2PFintechforCurrencyExchange\\\\p2p_android\\\\app\\\\src\\\\main\\\\java\\\\com\\\\example\\\\p2p\\\\presentation\" -Recurse -Filter \"*.kt\")",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "Bash(docker exec *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(./gradlew :app:compileDebugKotlin)"
     ]
   }
 }
