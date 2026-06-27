@@ -9,18 +9,18 @@ private val AppColorScheme = lightColorScheme(
 
     primary          = Primary,
     onPrimary        = Color.White,
-    primaryContainer = Color(0xFFB2EBF2),
+    primaryContainer = Color(0xFFDCEBFF),
     onPrimaryContainer = PrimaryDark,
 
     secondary        = PrimaryLight,
     onSecondary      = Color.White,
-    secondaryContainer = Color(0xFFE0F7FA),
+    secondaryContainer = Color(0xFFE7F0FF),
     onSecondaryContainer = PrimaryDark,
 
     tertiary         = PrimaryMint,
-    onTertiary       = Color(0xFF003829),
-    tertiaryContainer = Color(0xFFB7F5E4),
-    onTertiaryContainer = Color(0xFF003829),
+    onTertiary       = PrimaryDark,
+    tertiaryContainer = Color(0xFFE0F2FE),
+    onTertiaryContainer = Color(0xFF075985),
 
     error            = DangerColor,
     onError          = Color.White,
@@ -33,7 +33,7 @@ private val AppColorScheme = lightColorScheme(
     onSurface    = TextMain,
 
     surfaceVariant   = SurfaceElevated,
-    onSurfaceVariant = TextMuted,
+    onSurfaceVariant = TextSecond,
 
     outline        = BorderColor,
     outlineVariant = DividerColor,
@@ -43,6 +43,8 @@ private val AppColorScheme = lightColorScheme(
     inverseSurface   = DarkSurface,
     inverseOnSurface = Color.White,
     inversePrimary   = PrimaryLight,
+
+    surfaceTint = Primary,
 )
 
 @Composable

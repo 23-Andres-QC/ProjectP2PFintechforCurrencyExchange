@@ -146,40 +146,20 @@ fun VendorInboxScreen(
             modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(Brush.linearGradient(colors = listOf(Color(0xFF1E293B), Color(0xFF0F172A))))
-                    .padding(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("ÓRDENES ACTIVAS", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = WarningColor, letterSpacing = 1.sp)
-                        Text("Órdenes Pendientes", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 4.dp))
-                        Text("Acepta, cancela o confirma los pagos activos", fontSize = 11.sp, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.padding(top = 2.dp))
-                    }
-                    Box(
-                        modifier = Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(WarningColor.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.Store, contentDescription = null, tint = WarningColor)
-                    }
-                }
-            }
-
             if (uiState.isLoading && pendingTransactions.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = Primary)
                 }
             } else if (pendingTransactions.isEmpty()) {
                 Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(imageVector = Icons.Default.Inbox, contentDescription = null, tint = BorderColor, modifier = Modifier.size(48.dp))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(
+                            modifier = Modifier.size(64.dp).clip(CircleShape)
+                                .background(Primary.copy(alpha = 0.08f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(imageVector = Icons.Default.Inbox, contentDescription = null, tint = Primary, modifier = Modifier.size(30.dp))
+                        }
                         Text("Sin órdenes activas", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextMain)
                         Text("Las órdenes pendientes de acción aparecerán aquí. El historial completo está en tu perfil.", fontSize = 12.sp, color = TextMuted, textAlign = TextAlign.Center)
                     }
@@ -392,7 +372,7 @@ private fun VendorConfirmScreen(
                     Text(
                         text = "Capital en custodia · Operación segura",
                         fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.55f),
+                        color = Color.White.copy(alpha = 0.82f),
                         textAlign = TextAlign.Center
                     )
                 }

@@ -86,7 +86,7 @@ fun ReviewsScreen(
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-                elevation = CardDefaults.cardElevation(1.dp),
+                elevation = CardDefaults.cardElevation(2.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -133,14 +133,23 @@ fun ReviewsScreen(
             Text("Comentarios Recibidos", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextMain)
 
             if (uiState.total == 0) {
-                Box(
+                Column(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                    contentAlignment = Alignment.Center
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    Box(
+                        modifier = Modifier.size(56.dp).clip(CircleShape)
+                            .background(WarningColor.copy(alpha = 0.08f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.StarBorder, contentDescription = null, tint = WarningColor, modifier = Modifier.size(26.dp))
+                    }
                     Text(
                         "Aún no tienes reseñas. Completa transacciones para recibirlas.",
                         fontSize = 13.sp,
-                        color = TextMuted
+                        color = TextMuted,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
             } else {
@@ -162,7 +171,14 @@ private fun RatingBar(stars: Int, count: Int, total: Int) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Text("$stars★", fontSize = 12.sp, color = TextMuted, modifier = Modifier.width(28.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(1.dp),
+            modifier = Modifier.width(34.dp)
+        ) {
+            Text("$stars", fontSize = 12.sp, color = TextMuted)
+            Icon(Icons.Default.Star, contentDescription = null, tint = TextMuted, modifier = Modifier.size(11.dp))
+        }
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -197,7 +213,7 @@ private fun ReviewItem(rating: ReceivedRating) {
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(1.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(

@@ -3,6 +3,7 @@ package com.example.p2p.presentation.auth
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -21,10 +23,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -36,7 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.p2p.BuildConfig
+import com.example.p2p.R
 import com.example.p2p.ui.theme.*
 
 @Composable
@@ -54,102 +58,78 @@ fun LoginScreen(
         if (uiState.isSuccess) onLoginSuccess()
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.42f)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color(0xFF0A1628), Color(0xFF0D2137), Color(0xFF0A3040))
-                    )
-                )
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.58f)
-                .align(Alignment.BottomCenter)
-                .background(BackgroundApp)
-        )
+    Box(modifier = Modifier.fillMaxSize().background(BackgroundApp)) {
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp),
+                .navigationBarsPadding()
+                .imePadding()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(64.dp))
 
-            Box(
+            Column(
                 modifier = Modifier
-                    .size(88.dp)
-                    .clip(RoundedCornerShape(28.dp))
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
                     .background(
-                        Brush.linearGradient(listOf(Primary, PrimaryMint))
-                    ),
-                contentAlignment = Alignment.Center
+                        Brush.verticalGradient(
+                            colors = listOf(Primary, PrimaryDark, PrimaryLight)
+                        )
+                    )
+                    .statusBarsPadding()
+                    .padding(top = 12.dp, bottom = 36.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Box(
+                    modifier = Modifier
+                        .size(104.dp)
+                        .clipToBounds(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.login_logo),
+                        contentDescription = "PeruExchange",
+                        modifier = Modifier.size(96.dp)
+                    )
+                }
+
+                Spacer(Modifier.height(10.dp))
+
                 Text(
-                    text = "PE",
+                    text = "PeruExchange",
                     color = Color.White,
                     fontWeight = FontWeight.ExtraBold,
-                    fontSize = 30.sp,
-                    letterSpacing = (-1).sp
+                    fontSize = 22.sp,
+                    letterSpacing = 0.sp
+                )
+                Text(
+                    text = "Intercambio P2P · Lima, Perú",
+                    color = Color.White.copy(alpha = 0.82f),
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = "PeruExchange",
-                color = Color.White,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 22.sp,
-                letterSpacing = (-0.5).sp
-            )
-            Text(
-                text = "Intercambio P2P · Lima, Perú",
-                color = Color.White.copy(alpha = 0.55f),
-                fontSize = 12.sp,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            Spacer(Modifier.height(32.dp))
-
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .offset(y = (-28).dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceColor),
                 elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Iniciar Sesión",
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 20.sp,
-                            color = TextMain
-                        )
-                        Text(
-                            text = "Crear cuenta",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Primary,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable { onNavigateToRegister() }
-                                .padding(vertical = 4.dp, horizontal = 8.dp)
-                        )
-                    }
+                    Text(
+                        text = "Iniciar Sesión",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 20.sp,
+                        color = TextMain
+                    )
                     Text(
                         text = "Bienvenido de nuevo",
                         fontSize = 13.sp,
@@ -162,30 +142,33 @@ fun LoginScreen(
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(DangerColor.copy(alpha = 0.08f))
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = uiState.error ?: "",
-                                color = DangerColor,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium
-                            )
+                        Column {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(DangerColor.copy(alpha = 0.08f))
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.ErrorOutline, contentDescription = null,
+                                    tint = DangerColor, modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = uiState.error ?: "",
+                                    color = DangerColor,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            Spacer(Modifier.height(14.dp))
                         }
-                        Spacer(Modifier.height(14.dp))
                     }
 
-                    Text(
-                        "CORREO ELECTRÓNICO",
-                        fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                        color = TextMuted, letterSpacing = 0.8.sp,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
+                    AuthFieldLabel("CORREO ELECTRÓNICO")
+                    Spacer(Modifier.height(6.dp))
                     OutlinedTextField(
                         value = uiState.email,
                         onValueChange = viewModel::onEmailChange,
@@ -203,24 +186,14 @@ fun LoginScreen(
                         keyboardActions = KeyboardActions(
                             onNext = { focusManager.moveFocus(FocusDirection.Down) }
                         ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary,
-                            unfocusedBorderColor = BorderColor,
-                            focusedLabelColor = Primary,
-                            focusedTextColor = TextMain,
-                            unfocusedTextColor = TextMain,
-                        ),
+                        colors = authFieldColors(),
                         singleLine = true
                     )
 
                     Spacer(Modifier.height(16.dp))
 
-                    Text(
-                        "CONTRASEÑA",
-                        fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                        color = TextMuted, letterSpacing = 0.8.sp,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
+                    AuthFieldLabel("CONTRASEÑA")
+                    Spacer(Modifier.height(6.dp))
                     OutlinedTextField(
                         value = uiState.password,
                         onValueChange = viewModel::onPasswordChange,
@@ -250,13 +223,7 @@ fun LoginScreen(
                         keyboardActions = KeyboardActions(
                             onDone = { focusManager.clearFocus(); viewModel.login() }
                         ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary,
-                            unfocusedBorderColor = BorderColor,
-                            focusedLabelColor = Primary,
-                            focusedTextColor = TextMain,
-                            unfocusedTextColor = TextMain,
-                        ),
+                        colors = authFieldColors(),
                         singleLine = true
                     )
 
@@ -295,43 +262,7 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
-
-            if (BuildConfig.DEBUG) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Primary.copy(alpha = 0.07f)
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Primary.copy(alpha = 0.2f))
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "CUENTAS DE PRUEBA",
-                            fontSize = 9.sp, fontWeight = FontWeight.ExtraBold,
-                            color = Primary, letterSpacing = 1.sp
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        listOf(
-                            Pair("Comprador", "comprador@peruexchange.com  /  Comprador123!"),
-                            Pair("Vendedor",  "vendedor@peruexchange.com   /  Vendedor123!"),
-                            Pair("Admin",     "admin@peruexchange.com      /  Admin123!")
-                        ).forEach { (rol, cred) ->
-                            Row(modifier = Modifier.padding(top = 4.dp)) {
-                                Text(
-                                    "$rol: ",
-                                    fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
-                                    color = Primary
-                                )
-                                Text(cred, fontSize = 10.sp, color = TextMuted)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(4.dp))
 
             Text(
                 buildAnnotatedString {

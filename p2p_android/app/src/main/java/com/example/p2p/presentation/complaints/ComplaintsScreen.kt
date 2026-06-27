@@ -1,9 +1,11 @@
 package com.example.p2p.presentation.complaints
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -14,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -70,7 +73,7 @@ fun ComplaintsScreen(
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-                elevation = CardDefaults.cardElevation(1.dp),
+                elevation = CardDefaults.cardElevation(2.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -94,6 +97,8 @@ fun ComplaintsScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(BackgroundApp)
                                     .border(1.dp, BorderColor, RoundedCornerShape(10.dp))
                                     .padding(horizontal = 14.dp, vertical = 14.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -211,11 +216,24 @@ fun ComplaintsScreen(
                     }
                 }
                 uiState.complaints.isEmpty() -> {
-                    Text(
-                        "No tienes reclamos registrados.",
-                        fontSize = 13.sp,
-                        color = TextMuted
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier.size(56.dp).clip(CircleShape)
+                                .background(DangerColor.copy(alpha = 0.08f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.HeadsetMic, contentDescription = null, tint = DangerColor, modifier = Modifier.size(26.dp))
+                        }
+                        Text(
+                            "No tienes reclamos registrados.",
+                            fontSize = 13.sp,
+                            color = TextMuted
+                        )
+                    }
                 }
                 else -> {
                     uiState.complaints.forEach { complaint ->
@@ -243,7 +261,7 @@ private fun ComplaintItem(complaint: Complaint) {
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(1.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(

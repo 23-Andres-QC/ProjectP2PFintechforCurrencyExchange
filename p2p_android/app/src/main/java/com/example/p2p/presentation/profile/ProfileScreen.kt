@@ -56,41 +56,41 @@ fun ProfileScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
+                .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
                 .background(Brush.verticalGradient(listOf(Primary, PrimaryLight)))
-                .padding(top = 48.dp, bottom = 28.dp, start = 20.dp, end = 20.dp)
+                .padding(top = 24.dp, bottom = 16.dp, start = 20.dp, end = 20.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(74.dp)
+                        .size(54.dp)
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.25f))
-                        .border(3.dp, Color.White.copy(alpha = 0.5f), CircleShape),
+                        .border(2.dp, Color.White.copy(alpha = 0.5f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(initials, color = Color.White, fontWeight = FontWeight.Black, fontSize = 24.sp)
+                    Text(initials, color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
                 }
-                Text(fullName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text(email, color = PrimaryMint, fontSize = 12.sp)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    ProfileBadge("⭐ $ratingStr", Color.White.copy(alpha = 0.2f), Color.White)
-                    ProfileBadge(roleStr, PrimaryMint.copy(alpha = 0.2f), PrimaryMint)
+                Text(fullName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(email, color = PrimaryMint, fontSize = 11.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                    ProfileBadge(ratingStr, Color.White, WarningColor, icon = Icons.Default.Star)
+                    ProfileBadge(roleStr, Color.White, Primary)
                     if (isVerified) {
-                        ProfileBadge("✓ Verificado", Color.White.copy(alpha = 0.15f), Color.White)
+                        ProfileBadge("Verificado", Color.White, SuccessColor, icon = Icons.Default.CheckCircle)
                     }
                 }
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(2.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Color.White.copy(alpha = 0.15f))
-                        .padding(vertical = 14.dp),
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White)
+                        .padding(vertical = 9.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     StatColumn(txCount, "Operaciones")
@@ -141,22 +141,12 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Button(
-                    onClick = { onNavigate(Screen.Pending.route) },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = WarningColor),
-                    contentPadding = PaddingValues(vertical = 12.dp)
-                ) {
-                    Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.size(15.dp))
-                    Spacer(Modifier.width(5.dp))
-                    Text("Pendientes", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                }
-                Button(
+                OutlinedButton(
                     onClick = { onNavigate(Screen.MyDisputes.route) },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = DangerColor),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerColor),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, DangerColor),
                     contentPadding = PaddingValues(vertical = 12.dp)
                 ) {
                     Icon(Icons.Default.Gavel, contentDescription = null, modifier = Modifier.size(15.dp))
@@ -190,11 +180,6 @@ fun ProfileScreen(
             }
 
             MenuSection(title = "SOPORTE") {
-                MenuItem(
-                    icon = Icons.Default.Store, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
-                    label = "Modo Vendedor (Inbox)",
-                    onClick = { onNavigate(Screen.Pending.route) }
-                )
                 MenuItem(
                     icon = Icons.Default.HeadsetMic, iconBg = Primary.copy(.12f), iconTint = Primary,
                     label = "Reclamos",
@@ -264,28 +249,33 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileBadge(text: String, bg: Color, textColor: Color) {
-    Box(
+private fun ProfileBadge(text: String, bg: Color, textColor: Color, icon: ImageVector? = null) {
+    Row(
         modifier = Modifier
             .clip(RoundedCornerShape(50.dp))
             .background(bg)
-            .padding(horizontal = 10.dp, vertical = 4.dp)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(3.dp)
     ) {
-        Text(text, color = textColor, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+        if (icon != null) {
+            Icon(icon, contentDescription = null, tint = textColor, modifier = Modifier.size(10.dp))
+        }
+        Text(text, color = textColor, fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
 @Composable
 private fun StatColumn(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(value, color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
-        Text(label, color = Color.White.copy(alpha = 0.8f), fontSize = 10.sp)
+        Text(value, color = Primary, fontWeight = FontWeight.Black, fontSize = 15.sp)
+        Text(label, color = TextMuted, fontSize = 9.sp)
     }
 }
 
 @Composable
 private fun VerticalDividerLine() {
-    Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.3f)))
+    Box(modifier = Modifier.width(1.dp).height(24.dp).background(BorderColor))
 }
 
 @Composable
@@ -302,7 +292,7 @@ private fun MenuSection(title: String, content: @Composable ColumnScope.() -> Un
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-            elevation = CardDefaults.cardElevation(1.dp),
+            elevation = CardDefaults.cardElevation(2.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(vertical = 4.dp)) { content() }

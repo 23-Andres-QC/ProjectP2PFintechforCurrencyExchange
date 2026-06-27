@@ -25,7 +25,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -279,7 +281,14 @@ fun BankAccountsScreen(
                     if (accountError != null) {
                         Text(accountError, fontSize = 11.sp, color = DangerColor, modifier = Modifier.padding(start = 4.dp))
                     } else if (accountTouched && accountNumber.isNotBlank()) {
-                        Text("✓ Número válido", fontSize = 11.sp, color = SuccessColor, modifier = Modifier.padding(start = 4.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.padding(start = 4.dp)
+                        ) {
+                            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(12.dp))
+                            Text("Número válido", fontSize = 11.sp, color = SuccessColor)
+                        }
                     }
                 }
             }
@@ -365,15 +374,23 @@ fun BankAccountsScreen(
                 }
             } else if (uiState.accounts.isEmpty()) {
                 item {
-                    Box(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(SurfaceColor)
                             .border(1.dp, BorderColor, RoundedCornerShape(12.dp))
                             .padding(24.dp),
-                        contentAlignment = Alignment.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+                        Box(
+                            modifier = Modifier.size(56.dp).clip(CircleShape)
+                                .background(Primary.copy(alpha = 0.08f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Filled.AccountBalance, contentDescription = null, tint = Primary, modifier = Modifier.size(26.dp))
+                        }
                         Text("No tienes cuentas bancarias registradas.", color = TextMuted, fontSize = 13.sp)
                     }
                 }
@@ -405,7 +422,7 @@ private fun BankAccountCard(account: BankAccount, onDelete: () -> Unit) {
         shape     = RoundedCornerShape(16.dp),
         colors    = CardDefaults.cardColors(containerColor = SurfaceColor),
         border    = BorderStroke(1.dp, BorderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),

@@ -153,11 +153,6 @@ fun HistoryScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = Color.White)
                     }
                 },
-                actions = {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.FilterList, contentDescription = "Filtros", tint = Color.White)
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Primary)
             )
         }
@@ -236,14 +231,20 @@ fun HistoryScreen(
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Icon(
-                            Icons.Default.History,
-                            contentDescription = null,
-                            tint = BorderColor,
-                            modifier = Modifier.size(52.dp)
-                        )
+                        Box(
+                            modifier = Modifier.size(64.dp).clip(CircleShape)
+                                .background(Primary.copy(alpha = 0.08f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.History,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(30.dp)
+                            )
+                        }
                         Text(
                             "Sin operaciones",
                             fontWeight = FontWeight.Bold,
@@ -295,7 +296,7 @@ private fun TransactionCard(
             width = if (isActive) 1.5.dp else 1.dp,
             color = if (isActive) WarningColor.copy(alpha = 0.5f) else BorderColor
         ),
-        elevation = CardDefaults.cardElevation(1.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
         modifier = Modifier
             .fillMaxWidth()
             .then(

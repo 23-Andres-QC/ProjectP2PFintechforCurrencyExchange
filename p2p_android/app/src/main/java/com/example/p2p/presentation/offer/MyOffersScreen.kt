@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -128,14 +129,24 @@ fun MyOffersScreen(
                 }
                 uiState.filteredOffers.isEmpty() -> item {
                     Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = when (uiState.activeFilter) {
-                                OfferFilter.ACTIVE -> "No tienes ofertas activas"
-                                OfferFilter.PAUSED -> "No tienes ofertas pausadas"
-                                OfferFilter.ALL    -> "No tienes ofertas publicadas"
-                            },
-                            color = TextMuted
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Box(
+                                modifier = Modifier.size(56.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                                    .background(Primary.copy(alpha = 0.08f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Campaign, contentDescription = null, tint = Primary, modifier = Modifier.size(26.dp))
+                            }
+                            Text(
+                                text = when (uiState.activeFilter) {
+                                    OfferFilter.ACTIVE -> "No tienes ofertas activas"
+                                    OfferFilter.PAUSED -> "No tienes ofertas pausadas"
+                                    OfferFilter.ALL    -> "No tienes ofertas publicadas"
+                                },
+                                color = TextMuted,
+                                fontSize = 13.sp
+                            )
+                        }
                     }
                 }
                 else -> items(uiState.filteredOffers) { offer ->

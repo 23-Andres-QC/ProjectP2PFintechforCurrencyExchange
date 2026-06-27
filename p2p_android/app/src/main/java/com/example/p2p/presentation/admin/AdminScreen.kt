@@ -332,7 +332,7 @@ private fun AdminStat(value: String, label: String, valueColor: Color) {
         Text(
             text = label,
             fontSize = 11.sp,
-            color = Color.White.copy(alpha = 0.65f),
+            color = Color.White.copy(alpha = 0.86f),
         )
     }
 }

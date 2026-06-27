@@ -1,5 +1,6 @@
 package com.example.p2p.navigation
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
@@ -15,7 +16,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -82,8 +85,10 @@ import com.example.p2p.presentation.transaction.TransactionDetailScreen
 import com.example.p2p.presentation.transaction.TransactionScreen
 import com.example.p2p.presentation.transaction.TransactionViewModel
 import com.example.p2p.ui.theme.BackgroundApp
+import com.example.p2p.ui.theme.BorderColor
 import com.example.p2p.ui.theme.Primary
 import com.example.p2p.ui.theme.SurfaceColor
+import com.example.p2p.ui.theme.TextMuted
 import kotlinx.coroutines.launch
 
 private val authRoutes = setOf(
@@ -509,52 +514,87 @@ private fun AppBottomBar(
         isVendor = role != "admin"
     }
 
-    NavigationBar(containerColor = SurfaceColor, tonalElevation = 8.dp) {
-        NavigationBarItem(
-            selected = currentRoute == Screen.Market.route,
-            onClick = { onNavigate(Screen.Market.route) },
-            icon = { Icon(Icons.Default.BarChart, contentDescription = "Mercado") },
-            label = { Text("Mercado", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Primary,
-                selectedTextColor = Primary,
-                indicatorColor = Primary.copy(alpha = 0.12f)
-            )
-        )
-        if (isVendor) {
+    Column {
+        HorizontalDivider(color = BorderColor, thickness = 1.dp)
+        NavigationBar(containerColor = SurfaceColor, tonalElevation = 0.dp) {
             NavigationBarItem(
-                selected = currentRoute == Screen.Pending.route,
-                onClick = { onNavigate(Screen.Pending.route) },
-                icon = { Icon(Icons.Default.Schedule, contentDescription = "Pendientes") },
-                label = { Text("Pendientes", fontSize = 11.sp) },
+                selected = currentRoute == Screen.Market.route,
+                onClick = { onNavigate(Screen.Market.route) },
+                icon = { Icon(Icons.Default.BarChart, contentDescription = "Mercado") },
+                label = {
+                    Text(
+                        "Mercado",
+                        fontSize = 11.sp,
+                        fontWeight = if (currentRoute == Screen.Market.route) FontWeight.Bold else FontWeight.Normal
+                    )
+                },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Primary,
+                    selectedIconColor = Color.White,
                     selectedTextColor = Primary,
-                    indicatorColor = Primary.copy(alpha = 0.12f)
+                    unselectedIconColor = TextMuted,
+                    unselectedTextColor = TextMuted,
+                    indicatorColor = Primary
                 )
             )
+            if (isVendor) {
+                NavigationBarItem(
+                    selected = currentRoute == Screen.Pending.route,
+                    onClick = { onNavigate(Screen.Pending.route) },
+                    icon = { Icon(Icons.Default.Schedule, contentDescription = "Pendientes") },
+                    label = {
+                        Text(
+                            "Pendientes",
+                            fontSize = 11.sp,
+                            fontWeight = if (currentRoute == Screen.Pending.route) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color.White,
+                        selectedTextColor = Primary,
+                        unselectedIconColor = TextMuted,
+                        unselectedTextColor = TextMuted,
+                        indicatorColor = Primary
+                    )
+                )
+                NavigationBarItem(
+                    selected = currentRoute == Screen.Publish.route,
+                    onClick = { onNavigate(Screen.Publish.route) },
+                    icon = { Icon(Icons.Default.AddCircle, contentDescription = "Publicar") },
+                    label = {
+                        Text(
+                            "Publicar",
+                            fontSize = 11.sp,
+                            fontWeight = if (currentRoute == Screen.Publish.route) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color.White,
+                        selectedTextColor = Primary,
+                        unselectedIconColor = TextMuted,
+                        unselectedTextColor = TextMuted,
+                        indicatorColor = Primary
+                    )
+                )
+            }
             NavigationBarItem(
-                selected = currentRoute == Screen.Publish.route,
-                onClick = { onNavigate(Screen.Publish.route) },
-                icon = { Icon(Icons.Default.AddCircle, contentDescription = "Publicar") },
-                label = { Text("Publicar", fontSize = 11.sp) },
+                selected = currentRoute == Screen.Profile.route,
+                onClick = { onNavigate(Screen.Profile.route) },
+                icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
+                label = {
+                    Text(
+                        "Perfil",
+                        fontSize = 11.sp,
+                        fontWeight = if (currentRoute == Screen.Profile.route) FontWeight.Bold else FontWeight.Normal
+                    )
+                },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Primary,
+                    selectedIconColor = Color.White,
                     selectedTextColor = Primary,
-                    indicatorColor = Primary.copy(alpha = 0.12f)
+                    unselectedIconColor = TextMuted,
+                    unselectedTextColor = TextMuted,
+                    indicatorColor = Primary
                 )
             )
         }
-        NavigationBarItem(
-            selected = currentRoute == Screen.Profile.route,
-            onClick = { onNavigate(Screen.Profile.route) },
-            icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
-            label = { Text("Perfil", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Primary,
-                selectedTextColor = Primary,
-                indicatorColor = Primary.copy(alpha = 0.12f)
-            )
-        )
     }
 }

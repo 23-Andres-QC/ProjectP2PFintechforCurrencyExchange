@@ -7,7 +7,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
@@ -69,20 +68,19 @@ fun ForgotPasswordScreen(
 
     Box(modifier = Modifier.fillMaxSize().background(BackgroundApp)) {
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+            modifier = Modifier.fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 28.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = TextMain)
-                }
-                Spacer(Modifier.width(8.dp))
-                Text("Recuperar Contraseña", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = TextMain)
-            }
+            AuthTopBar(
+                title = "Recuperar Contraseña",
+                onBack = onNavigateBack,
+                modifier = Modifier.padding(bottom = 28.dp)
+            )
 
             Box(
                 modifier = Modifier.size(100.dp).clip(RoundedCornerShape(28.dp))
@@ -137,7 +135,7 @@ fun ForgotPasswordScreen(
                             Text("Volver al Login", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
                         }
                     } else {
-                        Text("CORREO ELECTRÓNICO", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted, letterSpacing = 0.8.sp)
+                        AuthFieldLabel("CORREO ELECTRÓNICO")
 
                         OutlinedTextField(
                             value = email, onValueChange = { email = it; error = null },
@@ -146,11 +144,7 @@ fun ForgotPasswordScreen(
                             placeholder = { Text("tu@email.com", color = TextMuted, fontSize = 13.sp) },
                             isError = error != null,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Done),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Primary, unfocusedBorderColor = BorderColor,
-                                focusedContainerColor = SurfaceColor, unfocusedContainerColor = SurfaceColor,
-                                errorBorderColor = DangerColor
-                            ),
+                            colors = authFieldColors(),
                             singleLine = true
                         )
 

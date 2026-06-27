@@ -2,7 +2,6 @@
 import time
 import sys
 import os
-import json
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -10,7 +9,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 def seed():
     from app import create_app
     from app.models.user import User
-    from app.models import Offer
     from sqlalchemy import text
     from app.core.database import db
 
@@ -35,14 +33,7 @@ def seed():
              'full_name': 'Victor Mamani', 'role': 'buyer', 'rating': 4.9, 'transactions': 87},
             {'email': 'admin@peruexchange.com', 'password': 'Admin123!',
              'full_name': 'Ana Torres', 'role': 'admin', 'rating': 5.0, 'transactions': 0},
-            {'email': 'juan.flores@peruexchange.com', 'password': 'Vendedor123!',
-             'full_name': 'Juan Flores', 'role': 'buyer', 'rating': 4.7, 'transactions': 54},
-            {'email': 'maria.lopez@peruexchange.com', 'password': 'Vendedor123!',
-             'full_name': 'María López', 'role': 'buyer', 'rating': 4.6, 'transactions': 21},
-            {'email': 'pedro.gonzalez@peruexchange.com', 'password': 'Vendedor123!',
-             'full_name': 'Pedro González', 'role': 'buyer', 'rating': 4.5, 'transactions': 15},
         ]
-        created_users = {}
         for ud in users_seed:
             existing = User.query.filter_by(email=ud['email']).first()
             if not existing:
@@ -56,180 +47,9 @@ def seed():
                 )
                 u.set_password(ud['password'])
                 db.session.add(u)
-                db.session.flush()
-                created_users[ud['email']] = u
                 print(f"  + Usuario {ud['email']}")
-            else:
-                created_users[ud['email']] = existing
 
         db.session.commit()
-
-        # Obtener IDs de vendedores para las ofertas
-        v1 = created_users['vendedor@peruexchange.com']
-        v2 = created_users['juan.flores@peruexchange.com']
-        v3 = created_users['maria.lopez@peruexchange.com']
-        v4 = created_users['pedro.gonzalez@peruexchange.com']
-
-        # Crear ofertas solo si no existen aún
-        if Offer.query.count() == 0:
-            # ── 10 Ofertas COMPLETAS ────────────────────────────────────────────
-            complete_offers = [
-                # from_curr, to_curr, amount, price,  vendor, methods
-                ('USD', 'PEN', 500.0,   3.750, v1, ['BCP', 'Yape']),
-                ('USD', 'PEN', 1000.0,  3.760, v2, ['Interbank']),
-                ('USD', 'PEN', 200.0,   3.770, v3, ['BBVA', 'Plin']),
-                ('USD', 'PEN', 750.0,   3.780, v4, ['BCP']),
-                ('USD', 'PEN', 300.0,   3.790, v1, ['Yape', 'Plin']),
-                ('USD', 'PEN', 2000.0,  3.800, v2, ['Interbank', 'BCP']),
-                ('USD', 'PEN', 150.0,   3.810, v3, ['Plin']),
-                ('USD', 'PEN', 1500.0,  3.820, v4, ['BBVA']),
-                ('EUR', 'PEN', 400.0,   4.100, v1, ['BCP', 'Interbank']),
-                ('EUR', 'PEN', 600.0,   4.120, v2, ['Yape']),
-            ]
-            seed_offers = []
-            for fc, tc, amt, price, vendor, methods in complete_offers:
-                o = Offer(
-                    vendor_id=vendor.id,
-                    from_currency=fc,
-                    to_currency=tc,
-                    amount=amt,
-                    available_amount=amt,
-                    price_per_unit=price,
-                    offer_type='complete',
-                    status='active',
-                    min_transaction=0,
-                    max_transaction=None,
-                    payment_methods=json.dumps(methods),
-                )
-                db.session.add(o)
-                seed_offers.append(o)
-                print(f"  + Oferta completa {fc}→{tc} {amt} @ {price} ({vendor.full_name})")
-
-            # ── 10 Ofertas PARCIALES ────────────────────────────────────────────
-            partial_offers = [
-                # from_curr, to_curr, amount,   price,  min,   max,    vendor, methods
-                ('USD', 'PEN', 5000.0,  3.740, 50.0,   500.0,  v1, ['BCP']),
-                ('USD', 'PEN', 3000.0,  3.750, 100.0,  1000.0, v2, ['Interbank', 'Yape']),
-                ('USD', 'PEN', 10000.0, 3.755, 200.0,  2000.0, v3, ['BCP', 'BBVA']),
-                ('USD', 'PEN', 2000.0,  3.765, 50.0,   500.0,  v4, ['Yape']),
-                ('USD', 'PEN', 4000.0,  3.775, 100.0,  750.0,  v1, ['Plin', 'BCP']),
-                ('EUR', 'PEN', 1000.0,  4.050, 100.0,  500.0,  v2, ['BCP']),
-                ('USD', 'PEN', 8000.0,  3.785, 500.0,  3000.0, v3, ['Interbank']),
-                ('USD', 'PEN', 2500.0,  3.795, 100.0,  1000.0, v4, ['BBVA', 'Plin']),
-                ('USD', 'PEN', 6000.0,  3.805, 200.0,  2000.0, v1, ['BCP', 'Yape']),
-                ('EUR', 'PEN', 500.0,   4.080, 50.0,   300.0,  v2, ['Yape', 'Plin']),
-            ]
-            for fc, tc, amt, price, mn, mx, vendor, methods in partial_offers:
-                o = Offer(
-                    vendor_id=vendor.id,
-                    from_currency=fc,
-                    to_currency=tc,
-                    amount=amt,
-                    available_amount=amt,
-                    price_per_unit=price,
-                    offer_type='partial',
-                    status='active',
-                    min_transaction=mn,
-                    max_transaction=mx,
-                    payment_methods=json.dumps(methods),
-                )
-                db.session.add(o)
-                print(f"  + Oferta parcial  {fc}→{tc} {amt} @ {price} min={mn} max={mx} ({vendor.full_name})")
-
-            db.session.flush()  # genera IDs para las ofertas
-
-            # ── 5 Transacciones de historial ────────────────────────────────────
-            from app.models import Transaction, BankAccount
-            buyer = created_users['comprador@peruexchange.com']
-
-            buyer_account = json.dumps({
-                'bank_name': 'BCP',
-                'account_number': '00219100123456789012',
-                'account_holder': 'Carlos Quispe',
-                'account_type': 'savings',
-                'currency': 'PEN',
-            })
-
-            txns_data = [
-                # offer_idx, buyer, vendor, amt_from, amt_to, rate, status, vendor_account
-                (0, buyer, v1, 200.0,  750.0,  3.750, 'completed',
-                 json.dumps({'bank_name': 'BCP', 'account_number': '00219100987654321098', 'account_holder': 'Victor Mamani'})),
-                (1, buyer, v2, 500.0,  1880.0, 3.760, 'completed',
-                 json.dumps({'bank_name': 'Interbank', 'account_number': '0983456789012345678', 'account_holder': 'Juan Flores'})),
-                (2, buyer, v3, 150.0,  565.5,  3.770, 'voucher_uploaded',
-                 json.dumps({'bank_name': 'BBVA', 'account_number': '00110101234567890123', 'account_holder': 'María López'})),
-                (3, buyer, v4, 100.0,  378.0,  3.780, 'pending',
-                 json.dumps({'bank_name': 'Yape', 'account_number': '987654321', 'account_holder': 'Pedro González'})),
-                (4, buyer, v1, 100.0,  379.0,  3.790, 'cancelled',
-                 json.dumps({'bank_name': 'BCP', 'account_number': '00219100987654321098', 'account_holder': 'Victor Mamani'})),
-            ]
-            for offer_idx, b, vnd, a_from, a_to, rate, status, vnd_acc in txns_data:
-                t = Transaction(
-                    offer_id=seed_offers[offer_idx].id,
-                    buyer_id=b.id,
-                    vendor_id=vnd.id,
-                    amount_from=a_from,
-                    amount_to=a_to,
-                    exchange_rate=rate,
-                    status=status,
-                    buyer_payment_account=buyer_account,
-                    vendor_payment_account=vnd_acc,
-                )
-                db.session.add(t)
-                print(f"  + Transacción ${a_from} USD → S/{a_to} PEN [{status}]")
-
-            # ── 1 Tarjeta bancaria del comprador ────────────────────────────────
-            ba = BankAccount(
-                user_id=buyer.id,
-                bank_name='BCP',
-                account_number='00219100123456789012',
-                account_holder='Carlos Quispe',
-                account_type='savings',
-                currency='PEN',
-                is_primary=True,
-                is_verified=True,
-            )
-            db.session.add(ba)
-            print(f"  + Tarjeta BCP de {buyer.full_name}")
-
-            db.session.flush()  # genera IDs de transacciones
-
-            # ── 5 Notificaciones del comprador ───────────────────────────────────
-            from app.models import Notification
-            txn_objects = db.session.query(Transaction).filter_by(buyer_id=buyer.id).all()
-            notifs_data = [
-                # title, body, type, is_read, txn_index
-                ('Transacción creada',
-                 'Tu solicitud de cambio de $100.00 USD está pendiente de confirmación por el vendedor.',
-                 'transaction', False, 3),
-                ('Comprobante enviado',
-                 'Tu comprobante de $150.00 USD fue enviado. Esperando confirmación del vendedor.',
-                 'voucher', False, 2),
-                ('Transacción completada',
-                 'El vendedor confirmó el pago de $500.00 USD. Tu transacción fue completada.',
-                 'transaction', False, 1),
-                ('Transacción completada',
-                 'El vendedor confirmó el pago de $200.00 USD. Tu transacción fue completada.',
-                 'transaction', False, 0),
-                ('Transacción cancelada',
-                 'Tu transacción de $100.00 USD fue cancelada.',
-                 'transaction', True, 4),
-            ]
-            for title, body, ntype, is_read, txn_idx in notifs_data:
-                resource_id = txn_objects[txn_idx].id if txn_idx < len(txn_objects) else None
-                n = Notification(
-                    user_id=buyer.id,
-                    type=ntype,
-                    title=title,
-                    body=body,
-                    is_read=is_read,
-                    resource_id=resource_id,
-                )
-                db.session.add(n)
-                print(f"  + Notificación [{ntype}] '{title}'")
-
-            db.session.commit()
-
         print('Seed completado.')
 
 

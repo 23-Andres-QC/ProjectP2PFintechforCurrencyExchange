@@ -24,7 +24,22 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(./gradlew :app:compileDebugKotlin)"
+      "Bash(./gradlew :app:compileDebugKotlin)",
+      "Bash(git fetch *)",
+      "Bash(git checkout *)",
+      "Bash(git stash *)",
+      "Bash(git pull *)",
+      "Bash(curl -s http://localhost:5000/health)",
+      "Bash(docker volume *)",
+      "Bash(docker run *)",
+      "Bash(curl -s -X POST http://localhost:5000/api/v1/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"admin@peruexchange.com\",\"password\":\"Admin123!\"}')",
+      "Bash(curl -s -X POST http://localhost:5000/api/v1/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"comprador@peruexchange.com\",\"password\":\"Comprador123!\"}')",
+      "Bash(python -c \"import sys,json; print\\(json.load\\(sys.stdin\\)['access_token']\\)\")",
+      "Read(//tmp/**)",
+      "Bash(curl -s -X POST http://localhost:5000/api/v1/auth/kyc -H 'Authorization: Bearer __TRACKED_VAR__' -H 'Content-Type: application/json' -d '{\"signature_url\":\"http://test/sig.png\",\"dni_image_url\":\"http://test/dni.png\"}')",
+      "Bash(git check-ignore *)",
+      "Bash(curl -s -X POST http://localhost:5000/api/v1/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"vendedor@peruexchange.com\",\"password\":\"Vendedor123!\"}')",
+      "Bash(./gradlew.bat :app:compileDebugKotlin)"
     ]
   }
 }

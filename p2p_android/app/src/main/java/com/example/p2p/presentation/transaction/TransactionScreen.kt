@@ -247,7 +247,7 @@ fun TransactionScreen(
                     Text(
                         text = "Capital en custodia · Operación segura",
                         fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.55f),
+                        color = Color.White.copy(alpha = 0.82f),
                         textAlign = TextAlign.Center
                     )
                 }

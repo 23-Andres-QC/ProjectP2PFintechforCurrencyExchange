@@ -497,12 +497,12 @@ fun KycScreen(
                                 .height(48.dp),
                             enabled = state.selfieUri != null && !state.isLoading,
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryMint)
+                            colors = ButtonDefaults.buttonColors(containerColor = Primary)
                         ) {
                             if (state.isLoading) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(24.dp),
-                                    color = Color(0xFF004D40),
+                                    color = Color.White,
                                     strokeWidth = 2.dp
                                 )
                             } else {
@@ -510,7 +510,7 @@ fun KycScreen(
                                     "Enviar Verificación",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
-                                    color = Color(0xFF004D40)
+                                    color = Color.White
                                 )
                             }
                         }

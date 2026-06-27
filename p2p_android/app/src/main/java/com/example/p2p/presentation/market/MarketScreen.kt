@@ -1,6 +1,7 @@
 package com.example.p2p.presentation.market
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,10 +25,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.p2p.R
 import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.data.remote.model.CreateTransactionRequest
 import com.example.p2p.data.remote.model.ExchangeRate
@@ -53,6 +55,9 @@ fun MarketScreen(
     val allCurrencies = listOf("PEN", "USD", "EUR", "USDT", "COP", "MXN", "ARS", "GBP", "BRL", "CAD", "AUD", "JPY", "CLP")
     var selectedFiat     by remember { mutableStateOf("PEN") }
     var selectedCurrency by remember { mutableStateOf("USD") }
+
+    val rateMap = uiState.exchangeRates.associateBy { "${it.from_currency}_${it.to_currency}" }
+    val marketRate = rateMap["${selectedCurrency}_${selectedFiat}"]?.rate
 
     LaunchedEffect(selectedFiat, selectedCurrency) {
         viewModel.loadOffers(currency = selectedCurrency, fiatCurrency = selectedFiat)
@@ -92,7 +97,12 @@ fun MarketScreen(
                     selectedFiat     = selectedFiat,
                     selectedCurrency = selectedCurrency,
                     onFiatChange     = { selectedFiat = it },
-                    onCurrencyChange = { selectedCurrency = it }
+                    onCurrencyChange = { selectedCurrency = it },
+                    onSwap           = {
+                        val tmp = selectedFiat
+                        selectedFiat = selectedCurrency
+                        selectedCurrency = tmp
+                    }
                 )
             }
 
@@ -100,6 +110,8 @@ fun MarketScreen(
             item {
                 ActionRow(
                     isLoading = uiState.isLoading,
+                    marketRate = marketRate,
+                    fiatCurrency = selectedFiat,
                     onMatchingClick = {
                         viewModel.matchOffer(
                             currency      = selectedCurrency,
@@ -182,8 +194,6 @@ fun MarketScreen(
                 }
 
                 else -> {
-                    val rateMap = uiState.exchangeRates.associateBy { "${it.from_currency}_${it.to_currency}" }
-                    val marketRate = rateMap["${selectedCurrency}_${selectedFiat}"]?.rate
                     val isQuickSale: (Offer) -> Boolean = { offer ->
                         marketRate != null && offer.price_per_unit < marketRate
                     }
@@ -284,9 +294,23 @@ private fun MarketTopBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                    .padding(horizontal = 20.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(Color.White),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_launcher_logo),
+                        contentDescription = null,
+                        modifier = Modifier.size(120.dp)
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
                 Text("Peru", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
                 Text("Exchange", color = PrimaryMint, fontWeight = FontWeight.Black, fontSize = 18.sp)
                 Spacer(Modifier.weight(1f))
@@ -323,10 +347,15 @@ private fun MarketTopBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 tickerItems.forEach { (currency, rate) ->
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .clip(CircleShape)
+                                .background(PrimaryMint)
+                        )
                         Text(currency, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 11.sp)
                         Text(rate, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp)
-                        Text("▲", color = PrimaryMint, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -342,18 +371,24 @@ private fun FilterSection(
     selectedFiat: String,
     selectedCurrency: String,
     onFiatChange: (String) -> Unit,
-    onCurrencyChange: (String) -> Unit
+    onCurrencyChange: (String) -> Unit,
+    onSwap: () -> Unit
 ) {
-    Surface(color = SurfaceColor, shadowElevation = 1.dp) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Icon(Icons.Default.FilterList, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
-            Text("Filtrar:", fontSize = 12.sp, color = TextMuted, fontWeight = FontWeight.Medium)
             FilterDropdown(
                 label = "Tengo",
                 selected = selectedFiat,
@@ -361,7 +396,15 @@ private fun FilterSection(
                 onSelect = onFiatChange,
                 modifier = Modifier.weight(1f)
             )
-            Icon(Icons.Default.SwapHoriz, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
+            IconButton(
+                onClick = onSwap,
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(Primary.copy(alpha = 0.1f))
+            ) {
+                Icon(Icons.Default.SwapHoriz, contentDescription = "Intercambiar", tint = Primary, modifier = Modifier.size(18.dp))
+            }
             FilterDropdown(
                 label = "Quiero",
                 selected = selectedCurrency,
@@ -392,16 +435,16 @@ private fun FilterDropdown(
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
-                .clip(RoundedCornerShape(8.dp))
-                .border(1.dp, if (expanded) Primary else BorderColor, RoundedCornerShape(8.dp))
-                .background(BackgroundApp)
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+                .clip(RoundedCornerShape(12.dp))
+                .border(1.5.dp, if (expanded) Primary else Primary.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                .background(Primary.copy(alpha = 0.05f))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text(label, fontSize = 9.sp, color = TextMuted)
-                Text(selected, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextMain)
+                Text(label, fontSize = 10.sp, color = TextMuted, fontWeight = FontWeight.SemiBold)
+                Text(selected, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = TextMain)
             }
             Icon(
                 if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
@@ -410,7 +453,11 @@ private fun FilterDropdown(
                 modifier = Modifier.size(16.dp)
             )
         }
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = SurfaceColor
+        ) {
             options.forEach { opt ->
                 DropdownMenuItem(
                     text = {
@@ -428,29 +475,46 @@ private fun FilterDropdown(
 }
 
 @Composable
-private fun ActionRow(isLoading: Boolean, onMatchingClick: () -> Unit) {
-    Row(
+private fun ActionRow(
+    isLoading: Boolean,
+    marketRate: Double?,
+    fiatCurrency: String,
+    onMatchingClick: () -> Unit
+) {
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        OutlinedButton(
-            onClick = onMatchingClick,
-            enabled = !isLoading,
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = WarningColor),
-            border = androidx.compose.foundation.BorderStroke(1.dp, WarningColor),
-            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(15.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("Matching Automático", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-        }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = null, tint = TextMuted, modifier = Modifier.size(14.dp))
-            Text("Mejor precio", fontSize = 11.sp, color = TextMuted)
+            Column {
+                Text("Tipo de cambio", fontSize = 10.sp, color = TextMuted, fontWeight = FontWeight.Medium)
+                Text(
+                    marketRate?.let { "$fiatCurrency ${String.format("%.3f", it)}" } ?: "—",
+                    fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = TextMain
+                )
+            }
+            OutlinedButton(
+                onClick = onMatchingClick,
+                enabled = !isLoading,
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = WarningColor),
+                border = androidx.compose.foundation.BorderStroke(1.dp, WarningColor),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+            ) {
+                Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(15.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Matching Automático", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }
@@ -530,7 +594,11 @@ fun BankAccountSelector(
                     contentDescription = null, tint = Primary, modifier = Modifier.size(18.dp)
                 )
             }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                containerColor = SurfaceColor
+            ) {
                 bankAccounts.forEach { account ->
                     DropdownMenuItem(
                         text = {
@@ -698,7 +766,7 @@ private fun OfferCard(
                                     .border(1.dp, WarningColor.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
-                                Text("🏆", fontSize = 11.sp)
+                                Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = WarningColor, modifier = Modifier.size(12.dp))
                                 Text("Mejor tasa del mercado", color = WarningColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
                         }
@@ -712,7 +780,7 @@ private fun OfferCard(
                                     .border(1.dp, DangerColor.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
-                                Text("⚡", fontSize = 11.sp)
+                                Icon(Icons.Default.Bolt, contentDescription = null, tint = DangerColor, modifier = Modifier.size(12.dp))
                                 Text("Venta rápida", color = DangerColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
                         }
@@ -745,7 +813,10 @@ private fun OfferCard(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.padding(top = 2.dp)
                         ) {
-                            Text("★ ${offer.vendor?.rating ?: 4.9}", fontSize = 11.sp, color = WarningColor, fontWeight = FontWeight.SemiBold)
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Icon(Icons.Default.Star, contentDescription = null, tint = WarningColor, modifier = Modifier.size(12.dp))
+                                Text("${offer.vendor?.rating ?: 4.9}", fontSize = 11.sp, color = WarningColor, fontWeight = FontWeight.SemiBold)
+                            }
                             Text("${offer.vendor?.total_transactions ?: 0} ops", fontSize = 11.sp, color = TextMuted)
                         }
                     }

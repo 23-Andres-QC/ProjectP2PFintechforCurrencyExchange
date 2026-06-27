@@ -16,12 +16,15 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Pending
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -72,22 +75,10 @@ fun PendingScreen(
         containerColor = BackgroundApp
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = SurfaceColor,
-                contentColor = Primary
-            ) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text("Comprar", fontWeight = FontWeight.SemiBold) }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text("Ventas", fontWeight = FontWeight.SemiBold) }
-                )
-            }
+            PendingTabSelector(
+                selectedTab = selectedTab,
+                onSelectTab = { selectedTab = it }
+            )
 
             when (selectedTab) {
                 0 -> BuyerPendingList(
@@ -104,14 +95,82 @@ fun PendingScreen(
 }
 
 @Composable
+private fun PendingTabSelector(selectedTab: Int, onSelectTab: (Int) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(SurfaceElevated)
+            .border(1.dp, BorderColor, RoundedCornerShape(14.dp))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        PendingTabChip(
+            label = "Comprar",
+            icon = Icons.Default.ShoppingCart,
+            selected = selectedTab == 0,
+            modifier = Modifier.weight(1f),
+            onClick = { onSelectTab(0) }
+        )
+        PendingTabChip(
+            label = "Ventas",
+            icon = Icons.Default.Store,
+            selected = selectedTab == 1,
+            modifier = Modifier.weight(1f),
+            onClick = { onSelectTab(1) }
+        )
+    }
+}
+
+@Composable
+private fun PendingTabChip(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(11.dp))
+            .background(if (selected) Primary else Color.Transparent)
+            .clickable { onClick() }
+            .padding(vertical = 9.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = if (selected) Color.White else TextMuted,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            label,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp,
+            color = if (selected) Color.White else TextMuted
+        )
+    }
+}
+
+@Composable
 private fun BuyerPendingList(
     transactions: List<Transaction>,
     onClick: (String) -> Unit
 ) {
     if (transactions.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.Inbox, contentDescription = null, tint = BorderColor, modifier = Modifier.size(48.dp))
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    modifier = Modifier.size(64.dp).clip(CircleShape)
+                        .background(Primary.copy(alpha = 0.08f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Inbox, contentDescription = null, tint = Primary, modifier = Modifier.size(30.dp))
+                }
                 Text("Sin compras pendientes", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextMain)
                 Text(
                     "Tus compras activas aparecerán aquí.",
@@ -144,80 +203,93 @@ internal fun ActiveTransactionBanner(
     isVendor: Boolean = false,
     onClick: () -> Unit
 ) {
-    val (statusLabel, statusIcon) = if (isVendor) {
+    val (statusLabel, statusIcon, statusColor) = if (isVendor) {
         when (transaction.status) {
-            "pending"          -> "Nueva orden de compra · Acepta o rechaza" to Icons.Default.Store
-            "accepted"         -> "Esperando pago del comprador" to Icons.Default.Schedule
-            "voucher_uploaded" -> "Comprobante recibido · Confirma el pago" to Icons.Default.CheckCircle
-            "completed"        -> "Fondos liberados · Cierra o disputa" to Icons.Default.CheckCircle
-            else               -> "En curso" to Icons.Default.Info
+            "pending"          -> Triple("Nueva orden de compra · Acepta o rechaza", Icons.Default.Store, Primary)
+            "accepted"         -> Triple("Esperando pago del comprador", Icons.Default.Schedule, WarningColor)
+            "voucher_uploaded" -> Triple("Comprobante recibido · Confirma el pago", Icons.Default.CheckCircle, Primary)
+            "completed"        -> Triple("Fondos liberados · Cierra o disputa", Icons.Default.CheckCircle, SuccessColor)
+            else               -> Triple("En curso", Icons.Default.Info, TextMuted)
         }
     } else {
         when (transaction.status) {
-            "pending"          -> "Esperando al vendedor" to Icons.Default.Schedule
-            "accepted"         -> "Vendedor aceptó · Sube tu comprobante" to Icons.Default.CheckCircle
-            "voucher_uploaded" -> "Verificando tu pago" to Icons.Default.Pending
-            "completed"        -> "Fondos liberados · Cierra o disputa" to Icons.Default.CheckCircle
-            else               -> "En curso" to Icons.Default.Info
+            "pending"          -> Triple("Esperando al vendedor", Icons.Default.Schedule, WarningColor)
+            "accepted"         -> Triple("Vendedor aceptó · Sube tu comprobante", Icons.Default.CheckCircle, Primary)
+            "voucher_uploaded" -> Triple("Verificando tu pago", Icons.Default.Pending, WarningColor)
+            "completed"        -> Triple("Fondos liberados · Cierra o disputa", Icons.Default.CheckCircle, SuccessColor)
+            else               -> Triple("En curso", Icons.Default.Info, TextMuted)
         }
     }
 
-    val roleBadgeColor = if (isVendor) WarningColor else Primary
-
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(roleBadgeColor.copy(alpha = 0.07f))
-            .border(1.5.dp, roleBadgeColor.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
-            .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, statusColor.copy(alpha = 0.35f))
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(roleBadgeColor.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(statusIcon, contentDescription = null, tint = roleBadgeColor, modifier = Modifier.size(20.dp))
-        }
-        Column(modifier = Modifier.weight(1f)) {
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(roleBadgeColor.copy(alpha = 0.15f))
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(statusColor.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
             ) {
+                Icon(statusIcon, contentDescription = null, tint = statusColor, modifier = Modifier.size(20.dp))
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(TextMuted.copy(alpha = 0.12f))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = if (isVendor) "VENDEDOR" else "COMPRADOR",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextMuted,
+                        letterSpacing = 0.6.sp
+                    )
+                }
                 Text(
-                    text = if (isVendor) "VENDEDOR" else "COMPRADOR",
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = roleBadgeColor,
-                    letterSpacing = 0.6.sp
+                    text = statusLabel,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextMain,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                Text(
+                    text = "${String.format("%.2f", transaction.amount_from)} USD · S/ ${String.format("%.2f", transaction.amount_to)}",
+                    fontSize = 11.sp,
+                    color = TextMuted,
+                    modifier = Modifier.padding(top = 1.dp)
                 )
             }
-            Text(
-                text = statusLabel,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextMain,
-                modifier = Modifier.padding(top = 2.dp)
-            )
-            Text(
-                text = "${String.format("%.2f", transaction.amount_from)} USD · S/ ${String.format("%.2f", transaction.amount_to)}",
-                fontSize = 11.sp,
-                color = TextMuted
-            )
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(statusColor.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = statusColor,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
         }
-        Icon(
-            Icons.AutoMirrored.Filled.ArrowForward,
-            contentDescription = null,
-            tint = roleBadgeColor,
-            modifier = Modifier.size(18.dp)
-        )
     }
 }

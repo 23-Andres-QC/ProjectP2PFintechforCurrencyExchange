@@ -2,29 +2,29 @@ package com.example.p2p.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Primary      = Color(0xFF0097A7)
-val PrimaryLight = Color(0xFF00BCD4)
-val PrimaryDark  = Color(0xFF006978)
-val PrimaryMint  = Color(0xFF00C897)
+val Primary      = Color(0xFF0B1330)
+val PrimaryLight = Color(0xFF0A3D91)
+val PrimaryDark  = Color(0xFF06142F)
+val PrimaryMint  = Color(0xFFBAE6FD)
 
-val BackgroundApp     = Color(0xFFF0F4F8)
+val BackgroundApp     = Color(0xFFEEF2F7)
 val SurfaceColor      = Color(0xFFFFFFFF)
-val SurfaceElevated   = Color(0xFFF8FAFC)
+val SurfaceElevated   = Color(0xFFF7FAFC)
 val DarkSurface       = Color(0xFF0F172A)
 val DarkSurface2      = Color(0xFF1E293B)
 
-val SuccessColor = Color(0xFF059669)
-val DangerColor  = Color(0xFFDC2626)
-val WarningColor = Color(0xFFD97706)
-val InfoColor    = Color(0xFF3B82F6)
+val SuccessColor = Color(0xFF047857)
+val DangerColor  = Color(0xFFB91C1C)
+val WarningColor = Color(0xFFB45309)
+val InfoColor    = Color(0xFF2563EB)
 
 val TextMain    = Color(0xFF0F172A)
-val TextSecond  = Color(0xFF334155)
-val TextMuted   = Color(0xFF64748B)
-val TextSubtle  = Color(0xFF94A3B8)
+val TextSecond  = Color(0xFF1F2937)
+val TextMuted   = Color(0xFF475569)
+val TextSubtle  = Color(0xFF64748B)
 
-val BorderColor  = Color(0xFFE2E8F0)
-val DividerColor = Color(0xFFF1F5F9)
+val BorderColor  = Color(0xFF94A3B8)
+val DividerColor = Color(0xFFE2E8F0)
 
 val OverlayLight = Color(0x0F000000)
 val OverlayDark  = Color(0x52000000)

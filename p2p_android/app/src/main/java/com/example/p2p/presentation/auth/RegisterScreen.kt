@@ -143,19 +143,17 @@ fun RegisterScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .imePadding()
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { if (currentStep == 1) onNavigateBack() else currentStep-- }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = TextMain)
-                }
-                Spacer(Modifier.width(8.dp))
-                Text("Crear cuenta", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = TextMain)
-            }
+            AuthTopBar(
+                title = "Crear cuenta",
+                onBack = { if (currentStep == 1) onNavigateBack() else currentStep-- },
+                modifier = Modifier.padding(bottom = 20.dp)
+            )
 
             StepIndicator(currentStep = currentStep, totalSteps = 4, stepTitles = stepTitles)
 
@@ -278,32 +276,32 @@ private fun StepPersonalData(
 
             HorizontalDivider(color = BorderColor)
 
-            FieldLabel("NOMBRE COMPLETO")
+            AuthFieldLabel("NOMBRE COMPLETO")
             OutlinedTextField(
                 value = fullName, onValueChange = onFullNameChange,
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-                leadingIcon = { Icon(Icons.Default.Person, null, tint = TextMuted) },
-                placeholder = { Text("Ej: Carlos Mendoza López", color = TextMuted, fontSize = 13.sp) },
+                leadingIcon = { Icon(Icons.Default.Person, null, tint = TextSecond) },
+                placeholder = { Text("Ej: Carlos Mendoza López", color = TextSubtle, fontSize = 13.sp) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
                 colors = peruFieldColors(), singleLine = true
             )
 
-            FieldLabel("CORREO ELECTRÓNICO")
+            AuthFieldLabel("CORREO ELECTRÓNICO")
             OutlinedTextField(
                 value = email, onValueChange = onEmailChange,
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-                leadingIcon = { Icon(Icons.Default.Email, null, tint = TextMuted) },
-                placeholder = { Text("tu@email.com", color = TextMuted, fontSize = 13.sp) },
+                leadingIcon = { Icon(Icons.Default.Email, null, tint = TextSecond) },
+                placeholder = { Text("tu@email.com", color = TextSubtle, fontSize = 13.sp) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                 colors = peruFieldColors(), singleLine = true
             )
 
-            FieldLabel("NÚMERO DE DNI")
+            AuthFieldLabel("NÚMERO DE DNI")
             OutlinedTextField(
                 value = dni, onValueChange = onDniChange,
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-                leadingIcon = { Icon(Icons.Default.Badge, null, tint = TextMuted) },
-                placeholder = { Text("12345678", color = TextMuted, fontSize = 13.sp) },
+                leadingIcon = { Icon(Icons.Default.Badge, null, tint = TextSecond) },
+                placeholder = { Text("12345678", color = TextSubtle, fontSize = 13.sp) },
                 supportingText = { Text("${dni.length}/8 dígitos", fontSize = 11.sp, color = if (dni.length == 8) SuccessColor else TextMuted) },
                 trailingIcon = if (dni.length == 8) { { Icon(Icons.Default.CheckCircle, null, tint = SuccessColor) } } else null,
                 isError = dni.isNotEmpty() && dni.length < 8,
@@ -429,7 +427,7 @@ private fun KycPhotoStep(
                 }
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(icon, null, tint = Primary.copy(alpha = 0.6f), modifier = Modifier.size(36.dp))
+                    Icon(icon, null, tint = PrimaryLight, modifier = Modifier.size(36.dp))
                     Text("Toca para capturar", fontSize = 12.sp, color = TextMuted)
                 }
             }
@@ -483,7 +481,7 @@ private fun StepContract(
                 Text(CONTRACT_TEXT, fontSize = 11.sp, color = TextMuted, lineHeight = 17.sp)
             }
 
-            FieldLabel("FIRMA ELECTRÓNICA")
+            AuthFieldLabel("FIRMA ELECTRÓNICA")
 
             Box(
                 modifier = Modifier.fillMaxWidth().height(130.dp)
@@ -516,7 +514,7 @@ private fun StepContract(
                     }
                 }
                 if (!hasSigned && currentPath.isEmpty()) {
-                    Text("Dibuja tu firma aquí", fontSize = 13.sp, color = Color.LightGray, modifier = Modifier.align(Alignment.Center))
+                    Text("Dibuja tu firma aquí", fontSize = 13.sp, color = TextSubtle, modifier = Modifier.align(Alignment.Center))
                 }
                 if (hasSigned) {
                     TextButton(onClick = onClearSignature, modifier = Modifier.align(Alignment.TopEnd)) {
@@ -593,17 +591,17 @@ private fun StepPassword(
             StepCardHeader(Icons.Default.Lock, Primary, "Crea tu contraseña", "Paso 4 de 4")
             HorizontalDivider(color = BorderColor)
 
-            FieldLabel("CONTRASEÑA")
+            AuthFieldLabel("CONTRASEÑA")
             OutlinedTextField(
                 value = password, onValueChange = onPasswordChange,
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-                leadingIcon = { Icon(Icons.Default.Lock, null, tint = TextMuted) },
+                leadingIcon = { Icon(Icons.Default.Lock, null, tint = TextSecond) },
                 trailingIcon = {
                     IconButton(onClick = { onPasswordVisibleChange(!passwordVisible) }) {
-                        Icon(if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility, null, tint = TextMuted)
+                        Icon(if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility, null, tint = TextSecond)
                     }
                 },
-                placeholder = { Text("Mínimo 8 caracteres", color = TextMuted, fontSize = 13.sp) },
+                placeholder = { Text("Mínimo 8 caracteres", color = TextSubtle, fontSize = 13.sp) },
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
                 isError = password.isNotEmpty() && password.length < 8,
@@ -613,17 +611,17 @@ private fun StepPassword(
                 colors = peruFieldColors(), singleLine = true
             )
 
-            FieldLabel("CONFIRMAR CONTRASEÑA")
+            AuthFieldLabel("CONFIRMAR CONTRASEÑA")
             OutlinedTextField(
                 value = confirmPassword, onValueChange = onConfirmPasswordChange,
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-                leadingIcon = { Icon(Icons.Default.Lock, null, tint = TextMuted) },
+                leadingIcon = { Icon(Icons.Default.Lock, null, tint = TextSecond) },
                 trailingIcon = {
                     IconButton(onClick = { onConfirmPasswordVisibleChange(!confirmPasswordVisible) }) {
-                        Icon(if (confirmPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility, null, tint = TextMuted)
+                        Icon(if (confirmPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility, null, tint = TextSecond)
                     }
                 },
-                placeholder = { Text("Repite tu contraseña", color = TextMuted, fontSize = 13.sp) },
+                placeholder = { Text("Repite tu contraseña", color = TextSubtle, fontSize = 13.sp) },
                 visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 isError = !passwordsMatch,
                 supportingText = if (!passwordsMatch) { { Text("Las contraseñas no coinciden", fontSize = 11.sp, color = DangerColor) } } else null,
@@ -645,10 +643,10 @@ private fun StepPassword(
             }
 
             Button(onClick = onRegister, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryMint, contentColor = Color(0xFF004D40)),
+                colors = ButtonDefaults.buttonColors(containerColor = Primary, contentColor = Color.White),
                 enabled = canRegister && !isLoading) {
                 if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color(0xFF004D40), strokeWidth = 2.dp)
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
                 } else {
                     Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
@@ -692,14 +690,20 @@ private fun StepCardHeader(
 
 @Composable
 private fun FieldLabel(label: String) {
-    Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted, letterSpacing = 0.8.sp)
+    Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextSecond, letterSpacing = 0.8.sp)
 }
 
 @Composable
 private fun peruFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = Primary, unfocusedBorderColor = BorderColor,
     focusedContainerColor = SurfaceColor, unfocusedContainerColor = SurfaceColor,
-    errorBorderColor = DangerColor, errorContainerColor = SurfaceColor
+    focusedTextColor = TextMain, unfocusedTextColor = TextMain,
+    focusedPlaceholderColor = TextSubtle, unfocusedPlaceholderColor = TextSubtle,
+    focusedLeadingIconColor = Primary, unfocusedLeadingIconColor = TextSecond,
+    focusedTrailingIconColor = Primary, unfocusedTrailingIconColor = TextSecond,
+    cursorColor = Primary,
+    errorBorderColor = DangerColor, errorContainerColor = SurfaceColor,
+    errorTextColor = TextMain, errorPlaceholderColor = TextSubtle
 )
 
 private const val CONTRACT_TEXT = """CONTRATO DE USUARIO — P2P EXCHANGE PLATFORM
