@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,6 +29,12 @@ fun DisputeDetailScreen(
 ) {
     val uiState by viewModel?.uiState?.collectAsState()
         ?: remember { mutableStateOf(DisputesUiState()) }
+
+    RefreshOnResume {
+        if (disputeId != null) {
+            viewModel?.loadDisputeDetail(disputeId)
+        }
+    }
 
     LaunchedEffect(disputeId) {
         if (disputeId != null) viewModel?.loadDisputeDetail(disputeId)

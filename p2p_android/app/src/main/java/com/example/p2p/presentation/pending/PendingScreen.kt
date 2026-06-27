@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.Transaction
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.presentation.transaction.TransactionViewModel
 import com.example.p2p.presentation.vendor.VendorInboxScreen
 import com.example.p2p.ui.theme.*
@@ -45,16 +46,22 @@ fun PendingScreen(
     var selectedTab by remember { mutableStateOf(0) }
     val buyerTransactions by viewModel.buyerTransactions.collectAsState()
 
+    RefreshOnResume {
+        viewModel.loadBuyerTransactions(currentUserId)
+        viewModel.loadPendingTransactions(showLoading = false)
+    }
+
     LaunchedEffect(currentUserId) {
         viewModel.loadBuyerTransactions(currentUserId)
         viewModel.loadPendingTransactions()
     }
 
-    LaunchedEffect(currentUserId) {
+    LaunchedEffect(currentUserId, selectedTab) {
         while (true) {
             delay(3000L)
-            viewModel.loadBuyerTransactions(currentUserId)
-            viewModel.loadPendingTransactions(showLoading = false)
+            if (selectedTab == 0) {
+                viewModel.loadBuyerTransactions(currentUserId)
+            }
         }
     }
 

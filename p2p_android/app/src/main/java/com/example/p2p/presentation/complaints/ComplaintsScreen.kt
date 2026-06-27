@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.Complaint
 import com.example.p2p.data.remote.model.ComplaintStatus
 import com.example.p2p.data.remote.model.ComplaintType
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,6 +40,10 @@ fun ComplaintsScreen(
     var description by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf(ComplaintType.PLATFORM_ERROR) }
     var dropdownExpanded by remember { mutableStateOf(false) }
+
+    RefreshOnResume {
+        viewModel.loadMyComplaints()
+    }
 
     Scaffold(
         topBar = {

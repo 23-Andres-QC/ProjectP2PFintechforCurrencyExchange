@@ -26,7 +26,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.*
+import kotlinx.coroutines.delay
 
 private data class Transaction(
     val rawId: String,
@@ -67,8 +69,16 @@ fun HistoryScreen(
     var selectedFilter by remember { mutableStateOf(initialFilter) }
     var searchQuery by remember { mutableStateOf("") }
 
+    RefreshOnResume {
+        viewModel?.loadTransactions(showLoading = false)
+    }
+
     LaunchedEffect(Unit) {
         viewModel?.loadTransactions()
+        while (true) {
+            delay(5000L)
+            viewModel?.loadTransactions(showLoading = false)
+        }
     }
 
     val transactions = uiState.transactions.map { dto ->

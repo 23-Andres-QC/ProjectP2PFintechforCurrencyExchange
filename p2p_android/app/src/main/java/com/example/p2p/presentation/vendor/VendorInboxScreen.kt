@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.p2p.data.remote.model.Transaction
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.presentation.transaction.TransactionViewModel
 import com.example.p2p.ui.theme.*
 import kotlinx.coroutines.delay
@@ -57,6 +58,10 @@ fun VendorInboxScreen(
     var confirmAcceptTxnId by remember { mutableStateOf<String?>(null) }
     var confirmCancelTxnId by remember { mutableStateOf<String?>(null) }
     var confirmingTransaction by remember { mutableStateOf<Transaction?>(null) }
+
+    RefreshOnResume {
+        viewModel.loadPendingTransactions(showLoading = false)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.loadPendingTransactions()

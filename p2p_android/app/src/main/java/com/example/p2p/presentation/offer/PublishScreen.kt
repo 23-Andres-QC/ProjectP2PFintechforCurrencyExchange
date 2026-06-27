@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.data.remote.model.CreateOfferRequest
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.*
 
 private val ALL_CURRENCIES = listOf("PEN", "USD", "EUR", "USDT", "COP", "MXN", "ARS", "GBP", "BRL", "CAD", "AUD", "JPY", "CLP")
@@ -96,6 +97,11 @@ fun PublishScreen(
     val accountsForFiat = uiState.bankAccounts.filter { it.currency == selectedFiatCurrency }
     val selectedAccount = accountsForFiat.find { it.id == selectedAccountId }
         ?: accountsForFiat.firstOrNull()
+
+    RefreshOnResume {
+        viewModel?.loadBankAccounts()
+        viewModel?.loadExchangeRate(selectedCurrency, selectedFiatCurrency)
+    }
 
     LaunchedEffect(selectedFiatCurrency) { selectedAccountId = null }
 

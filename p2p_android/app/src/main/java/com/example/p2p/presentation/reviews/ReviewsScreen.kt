@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.api.ReceivedRating
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +33,10 @@ fun ReviewsScreen(
 ) {
     val uiState by viewModel?.uiState?.collectAsState(initial = ReviewsUiState())
         ?: remember { mutableStateOf(ReviewsUiState()) }
+
+    RefreshOnResume {
+        viewModel?.load()
+    }
 
     Scaffold(
         topBar = {

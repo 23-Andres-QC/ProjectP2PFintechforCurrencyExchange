@@ -37,6 +37,7 @@ import com.example.p2p.ui.theme.SurfaceColor
 import com.example.p2p.ui.theme.TextMain
 import com.example.p2p.ui.theme.TextMuted
 import com.example.p2p.ui.theme.WarningColor
+import com.example.p2p.presentation.common.RefreshOnResume
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,6 +51,10 @@ fun AdminScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Disputas", "Reclamos")
+
+    RefreshOnResume {
+        viewModel.loadData()
+    }
 
     LaunchedEffect(Unit) {
         viewModel.loadData()

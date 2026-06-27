@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -63,6 +64,12 @@ fun TransactionScreen(
     var ratingComment by remember { mutableStateOf("") }
     var isSubmittingRating by remember { mutableStateOf(false) }
     var previousStatus by remember { mutableStateOf("") }
+
+    RefreshOnResume {
+        if (transactionId != null) {
+            viewModel?.loadTransaction(transactionId, showLoading = false)
+        }
+    }
 
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()

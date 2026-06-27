@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.Offer
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.*
 import kotlinx.coroutines.delay
 
@@ -36,6 +37,10 @@ fun MyOffersScreen(
 
     var offerToDelete by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
+
+    RefreshOnResume {
+        viewModel?.loadMyOffers(showLoading = false)
+    }
 
     LaunchedEffect(Unit) {
         viewModel?.loadMyOffers()

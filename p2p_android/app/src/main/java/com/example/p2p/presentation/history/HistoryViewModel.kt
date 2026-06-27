@@ -28,9 +28,11 @@ class HistoryViewModel(
         loadTransactions()
     }
 
-    fun loadTransactions(status: String? = null) {
+    fun loadTransactions(status: String? = null, showLoading: Boolean = true) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            }
             when (val result = transactionRepository.listTransactions(status)) {
                 is NetworkResult.Success -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, transactions = result.data)

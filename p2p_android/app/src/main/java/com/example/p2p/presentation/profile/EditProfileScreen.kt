@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +38,10 @@ fun EditProfileScreen(
 
     var fullNameText by remember { mutableStateOf("") }
     var phoneText by remember { mutableStateOf("") }
+
+    RefreshOnResume {
+        viewModel?.loadProfile()
+    }
 
     LaunchedEffect(uiState.user) {
         uiState.user?.let {

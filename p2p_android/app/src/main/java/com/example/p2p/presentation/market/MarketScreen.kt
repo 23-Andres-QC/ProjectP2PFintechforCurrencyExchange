@@ -35,6 +35,7 @@ import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.data.remote.model.CreateTransactionRequest
 import com.example.p2p.data.remote.model.ExchangeRate
 import com.example.p2p.data.remote.model.Offer
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +59,14 @@ fun MarketScreen(
 
     val rateMap = uiState.exchangeRates.associateBy { "${it.from_currency}_${it.to_currency}" }
     val marketRate = rateMap["${selectedCurrency}_${selectedFiat}"]?.rate
+
+    RefreshOnResume {
+        viewModel.refreshHome(
+            currency = selectedCurrency,
+            fiatCurrency = selectedFiat,
+            showLoading = false
+        )
+    }
 
     LaunchedEffect(selectedFiat, selectedCurrency) {
         viewModel.loadOffers(currency = selectedCurrency, fiatCurrency = selectedFiat)
@@ -288,7 +297,7 @@ private fun MarketTopBar(
         fromApi.ifEmpty { listOf("USD" to "Cargando...", "EUR" to "Cargando...") }
     }
 
-    Surface(color = Primary, shadowElevation = 6.dp) {
+    Surface(color = Primary, shadowElevation = 2.dp) {
         Column {
             Row(
                 modifier = Modifier
@@ -339,7 +348,7 @@ private fun MarketTopBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.15f))
+                    .background(Color.White.copy(alpha = 0.08f))
                     .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 7.dp),
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
@@ -351,10 +360,10 @@ private fun MarketTopBar(
                             modifier = Modifier
                                 .size(5.dp)
                                 .clip(CircleShape)
-                                .background(PrimaryMint)
+                                .background(Color.White.copy(alpha = 0.72f))
                         )
                         Text(currency, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 11.sp)
-                        Text(rate, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp)
+                        Text(rate, color = Color.White.copy(alpha = 0.78f), fontSize = 11.sp)
                     }
                 }
             }

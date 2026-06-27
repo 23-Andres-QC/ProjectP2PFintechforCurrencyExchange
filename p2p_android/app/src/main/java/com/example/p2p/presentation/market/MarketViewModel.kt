@@ -43,10 +43,7 @@ class MarketViewModel(
     val uiState: StateFlow<MarketUiState> = _uiState.asStateFlow()
 
     init {
-        loadExchangeRates()
-        loadBankAccounts()
-        loadUnreadCount()
-        loadActiveTransactions()
+        refreshHome()
     }
 
     fun loadUnreadCount() {
@@ -100,6 +97,14 @@ class MarketViewModel(
                 _uiState.value = _uiState.value.copy(error = "No se pudieron cargar las tasas de cambio")
             }
         }
+    }
+
+    fun refreshHome(currency: String? = null, fiatCurrency: String? = null, showLoading: Boolean = false) {
+        loadExchangeRates()
+        loadBankAccounts()
+        loadUnreadCount()
+        loadActiveTransactions()
+        loadOffers(currency, fiatCurrency, showLoading)
     }
 
     fun loadOffers(currency: String? = null, fiatCurrency: String? = null, showLoading: Boolean = true) {

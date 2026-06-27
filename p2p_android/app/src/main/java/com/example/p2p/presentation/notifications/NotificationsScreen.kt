@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.Notification
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.*
 import kotlinx.coroutines.delay
 
@@ -44,6 +45,10 @@ fun NotificationsScreen(
     }
 
     val grouped = remember(displayed) { groupByDate(displayed) }
+
+    RefreshOnResume {
+        viewModel.loadAndMarkRead(showLoading = false)
+    }
 
     LaunchedEffect(Unit) {
         while (true) {

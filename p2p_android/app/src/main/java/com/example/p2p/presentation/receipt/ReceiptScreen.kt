@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.presentation.transaction.TransactionUiState
 import com.example.p2p.presentation.transaction.TransactionViewModel
 import com.example.p2p.ui.theme.*
@@ -42,6 +43,12 @@ fun ReceiptScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel?.uiState?.collectAsState(initial = TransactionUiState()) ?: remember { mutableStateOf(TransactionUiState()) }
+
+    RefreshOnResume {
+        if (transactionId != null) {
+            viewModel?.loadTransaction(transactionId, showLoading = false)
+        }
+    }
 
     LaunchedEffect(transactionId) {
         if (transactionId != null) {

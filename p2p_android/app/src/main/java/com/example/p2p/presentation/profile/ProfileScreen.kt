@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.navigation.Screen
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.*
 
 @Composable
@@ -35,6 +36,11 @@ fun ProfileScreen(
     val uiState by viewModel?.uiState?.collectAsState(initial = ProfileUiState()) ?: remember { mutableStateOf(ProfileUiState()) }
     val unreadCount = uiState.unreadNotifications
     val user = uiState.user
+
+    RefreshOnResume {
+        viewModel?.loadProfile()
+        viewModel?.loadUnreadCount()
+    }
 
     val fullName = user?.full_name ?: "Usuario"
     val initials = fullName.split(" ").take(2).mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString("")

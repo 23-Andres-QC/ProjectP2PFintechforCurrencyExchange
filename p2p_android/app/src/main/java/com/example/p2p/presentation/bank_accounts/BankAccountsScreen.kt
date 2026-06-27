@@ -61,6 +61,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.BankAccount
+import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.BackgroundApp
 import com.example.p2p.ui.theme.BbvaColor
 import com.example.p2p.ui.theme.BcpColor
@@ -147,6 +148,10 @@ fun BankAccountsScreen(
     val isInternational = selectedBank.lowercase() !in (mobileWalletBanks + strictDigitBanks)
     val accountError   = if (accountTouched) validateAccountNumber(accountNumber, selectedBank) else null
     val canAdd         = validateAccountNumber(accountNumber, selectedBank) == null && accountNumber.isNotBlank()
+
+    RefreshOnResume {
+        viewModel?.loadBankAccounts()
+    }
 
     LaunchedEffect(Unit) { viewModel?.loadBankAccounts() }
 

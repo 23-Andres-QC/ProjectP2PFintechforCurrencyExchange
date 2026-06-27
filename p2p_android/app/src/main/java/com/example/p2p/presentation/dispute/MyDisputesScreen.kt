@@ -57,6 +57,7 @@ import com.example.p2p.ui.theme.SurfaceColor
 import com.example.p2p.ui.theme.TextMain
 import com.example.p2p.ui.theme.TextMuted
 import com.example.p2p.ui.theme.WarningColor
+import com.example.p2p.presentation.common.RefreshOnResume
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -82,6 +83,10 @@ fun MyDisputesScreen(
     val uiState by viewModel?.uiState?.collectAsState(initial = DisputesUiState()) ?: remember { mutableStateOf(DisputesUiState()) }
     var selectedFilter by remember { mutableStateOf(0) }
     val filters = listOf("Todas", "Abiertas", "Resueltas")
+
+    RefreshOnResume {
+        viewModel?.loadMyDisputes()
+    }
 
     val disputes = uiState.disputes.map { dto ->
         val statusName = when (dto.status) {
