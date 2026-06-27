@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     status                 VARCHAR(20) DEFAULT 'pending',
     buyer_payment_account  TEXT,
     vendor_payment_account TEXT,
+    vendor_voucher_url     TEXT,
     created_at             TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
     updated_at             TIMESTAMP   DEFAULT CURRENT_TIMESTAMP
 );

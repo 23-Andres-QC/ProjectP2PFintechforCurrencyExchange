@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
     dni              VARCHAR(20)  UNIQUE,
     phone            VARCHAR(20),
     avatar_url       VARCHAR(500),
+    signature_url    VARCHAR(500),
+    dni_image_url    VARCHAR(500),
     role             VARCHAR(20)  DEFAULT 'buyer',
     kyc_verified     BOOLEAN      DEFAULT FALSE,
     rating           FLOAT        DEFAULT 0.0,
@@ -14,6 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
     is_active        BOOLEAN      DEFAULT TRUE,
     is_banned        BOOLEAN      DEFAULT FALSE,
     ban_reason       TEXT,
+    fcm_token        VARCHAR(500),
     created_at       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );

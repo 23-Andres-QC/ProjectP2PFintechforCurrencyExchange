@@ -53,11 +53,6 @@ def me():
 def logout():
     return {'message': 'Logged out'}, 200
 
-# <-agregué esta línea:
-@auth_bp.route('/logout', methods=['POST'])
-@jwt_required()
-def logout():
-    return {'message': 'Logged out'}, 200
 
 @auth_bp.route('/kyc', methods=['POST'])
 @jwt_required()

@@ -30,3 +30,6 @@ requests==2.31.0
 
 # ── Storage (Supabase) ────────────────────────────────────────────────────────
 supabase>=2.9.0
+
+# ── Firebase Admin SDK (notificaciones push) ──────────────────────────────────
+firebase-admin==6.5.0
