@@ -42,7 +42,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private const val MAX_VOUCHER_FILE_BYTES = 20L * 1024 * 1024
+// La foto original se comprime antes de subirla (ver compressImageFromUri); este límite
+// solo descarta archivos absurdos (videos mal seleccionados), no fotos de cámara normales.
+private const val MAX_VOUCHER_FILE_BYTES = 50L * 1024 * 1024
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

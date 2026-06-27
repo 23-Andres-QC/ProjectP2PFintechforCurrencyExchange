@@ -7,9 +7,8 @@ class Config:
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'dev-secret-key-change-in-prod')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
-    # KYC/vouchers van en base64 dentro del JSON: ~33% de overhead sobre el binario,
-    # 10MB cubre fotos de cámara comprimidas con margen sin permitir payloads gigantes.
-    MAX_CONTENT_LENGTH = 10 * 1024 * 1024
+    # KYC/vouchers van en base64 dentro del JSON: ~33% de overhead sobre el binario.
+    MAX_CONTENT_LENGTH = 30 * 1024 * 1024
 
 class DevelopmentConfig(Config):
     DEBUG = True
