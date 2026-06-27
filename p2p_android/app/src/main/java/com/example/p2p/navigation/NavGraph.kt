@@ -28,6 +28,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.p2p.core.network.ApiClient
+import com.example.p2p.core.network.NetworkResult
 import com.example.p2p.core.security.TokenManager
 import com.example.p2p.data.repository.AdminRepositoryImpl
 import com.example.p2p.data.repository.AuthRepositoryImpl
@@ -88,6 +89,7 @@ import com.example.p2p.ui.theme.BorderColor
 import com.example.p2p.ui.theme.Primary
 import com.example.p2p.ui.theme.SurfaceColor
 import com.example.p2p.ui.theme.TextMuted
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val authRoutes = setOf(
@@ -244,7 +246,12 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 )
                 PublishScreen(
                     viewModel = vm,
-                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateBack = {
+                        navController.navigate(Screen.MyOffers.route) {
+                            popUpTo(Screen.Market.route) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    },
                     onNavigateToBankAccounts = { navController.navigate(Screen.BankAccounts.route) }
                 )
             }
@@ -519,9 +526,40 @@ private fun AppBottomBar(
     onNavigate: (String) -> Unit
 ) {
     var isVendor by remember { mutableStateOf(false) }
+    var pendingCount by remember { mutableStateOf(0) }
     LaunchedEffect(Unit) {
         val role = tokenManager.getUserRole() ?: ""
         isVendor = role != "admin"
+    }
+
+    LaunchedEffect(Unit) {
+        val repo = TransactionRepositoryImpl(ApiClient.transactionApi)
+        val activeStatuses = setOf("pending", "accepted", "voucher_uploaded")
+        while (true) {
+            val userId = tokenManager.getUserId().orEmpty()
+            var count = 0
+
+            if (userId.isNotBlank()) {
+                when (val buyerResult = repo.listTransactions()) {
+                    is NetworkResult.Success -> {
+                        count += buyerResult.data.count { txn ->
+                            txn.buyer_id == userId && txn.status in activeStatuses
+                        }
+                    }
+                    else -> Unit
+                }
+            }
+
+            when (val sellerResult = repo.getPendingTransactions()) {
+                is NetworkResult.Success -> {
+                    count += sellerResult.data.count { txn -> txn.status in activeStatuses }
+                }
+                else -> Unit
+            }
+
+            pendingCount = count
+            delay(4000L)
+        }
     }
 
     Column {
@@ -550,7 +588,23 @@ private fun AppBottomBar(
                 NavigationBarItem(
                     selected = currentRoute == Screen.Pending.route,
                     onClick = { onNavigate(Screen.Pending.route) },
-                    icon = { Icon(Icons.Default.Schedule, contentDescription = "Pendientes") },
+                    icon = {
+                        BadgedBox(
+                            badge = {
+                                if (pendingCount > 0) {
+                                    Badge {
+                                        Text(
+                                            text = if (pendingCount > 99) "99+" else pendingCount.toString(),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.Schedule, contentDescription = "Pendientes")
+                        }
+                    },
                     label = {
                         Text(
                             "Pendientes",

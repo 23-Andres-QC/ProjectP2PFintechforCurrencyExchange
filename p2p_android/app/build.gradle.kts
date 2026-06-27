@@ -22,7 +22,7 @@ android {
     }
 
     val baseUrlDebug: String = project.findProperty("BASE_URL_DEBUG") as? String
-        ?: "http://10.0.2.2:5000/api/v1/"
+        ?: "http://157.137.189.178/api/v1/"
     val baseUrlRelease: String = project.findProperty("BASE_URL_RELEASE") as? String
         ?: "http://157.137.189.178/api/v1/"
 

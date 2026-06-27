@@ -26,8 +26,41 @@ def update_profile():
 @jwt_required()
 def submit_kyc():
     user_id = get_jwt_identity()
-    UserService.submit_kyc(user_id)
-    return {'message': 'KYC aprobado', 'kyc_verified': True}, 200
+    user = UserService.get_by_id(user_id)
+
+    required_files = {
+        'dni_front': request.files.get('dni_front'),
+        'dni_back': request.files.get('dni_back'),
+        'selfie': request.files.get('selfie'),
+    }
+    missing = [name for name, file in required_files.items() if not file]
+    if missing:
+        return {
+            'error': {
+                'code': 'MISSING_KYC_FILE',
+                'message': f'Faltan archivos KYC: {", ".join(missing)}'
+            }
+        }, 400
+
+    from app.core.storage import upload_kyc_document
+
+    document_urls = {
+        'dni_front_url': upload_kyc_document(required_files['dni_front'].read(), user.email, 'dni_front'),
+        'dni_back_url': upload_kyc_document(required_files['dni_back'].read(), user.email, 'dni_back'),
+        'selfie_url': upload_kyc_document(required_files['selfie'].read(), user.email, 'selfie'),
+    }
+
+    signature_file = request.files.get('signature')
+    if signature_file:
+        document_urls['signature_url'] = upload_kyc_document(signature_file.read(), user.email, 'signature')
+
+    updated_user = UserService.submit_kyc(user_id, document_urls)
+    return {
+        'message': 'KYC aprobado',
+        'kyc_verified': True,
+        'documents_saved': True,
+        'has_signature': bool(updated_user.signature_url),
+    }, 200
 
 
 @users_bp.route('/<user_id>', methods=['GET'])

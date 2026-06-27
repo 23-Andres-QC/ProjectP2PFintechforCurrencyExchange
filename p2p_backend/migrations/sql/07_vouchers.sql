@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS vouchers (
     sender_id      VARCHAR(36)  NOT NULL REFERENCES users(id),
     image_url      VARCHAR(500) NOT NULL,
     description    TEXT,
-    status         VARCHAR(20)  DEFAULT 'pending',
+    status         VARCHAR(40)  DEFAULT 'pending',
     created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );

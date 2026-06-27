@@ -12,6 +12,8 @@ class User(BaseModel):
     avatar_url = db.Column(db.String(500), nullable=True)
     signature_url = db.Column(db.String(500), nullable=True)  # ← AGREGÉ
     dni_image_url = db.Column(db.String(500), nullable=True)# ← AGREGÉ
+    dni_back_url = db.Column(db.String(500), nullable=True)
+    selfie_url = db.Column(db.String(500), nullable=True)
     
     role = db.Column(db.String(20), default='buyer')
     kyc_verified = db.Column(db.Boolean, default=False)
@@ -27,6 +29,14 @@ class User(BaseModel):
     def check_password(self, password: str) -> bool:
         return verify_password(self.password_hash, password)
 
+    def completed_transactions_count(self) -> int:
+        from app.models import Transaction
+
+        return Transaction.query.filter(
+            db.or_(Transaction.buyer_id == self.id, Transaction.vendor_id == self.id),
+            Transaction.status.in_(('completed', 'closed')),
+        ).count()
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -36,7 +46,7 @@ class User(BaseModel):
             'role': self.role,
             'kyc_verified': self.kyc_verified,
             'rating': self.rating,
-            'total_transactions': self.total_transactions,
+            'total_transactions': self.completed_transactions_count(),
             'avatar_url': self.avatar_url,
             'is_active': self.is_active,
         }

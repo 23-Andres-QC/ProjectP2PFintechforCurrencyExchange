@@ -60,15 +60,10 @@ def submit_kyc():
     user_id = get_jwt_identity()
     data = request.get_json() or {}
 
-    user = UserService.get_by_id(user_id)
-    
-    if data.get('signature_url'):
-        user.signature_url = data.get('signature_url')
-    if data.get('dni_image_url'):
-        user.dni_image_url = data.get('dni_image_url')
-
-    from app.core.database import db
-    db.session.commit()
-
-    updated_user = UserService.submit_kyc(user_id)
+    updated_user = UserService.submit_kyc(user_id, {
+        'signature_url': data.get('signature_url'),
+        'dni_front_url': data.get('dni_image_url') or data.get('dni_front_url'),
+        'dni_back_url': data.get('dni_back_url'),
+        'selfie_url': data.get('selfie_url'),
+    })
     return updated_user.to_dict(), 200

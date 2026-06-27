@@ -7,10 +7,11 @@ CREATE TABLE IF NOT EXISTS transactions (
     amount_from            FLOAT       NOT NULL,
     amount_to              FLOAT       NOT NULL,
     exchange_rate          FLOAT       NOT NULL,
-    status                 VARCHAR(20) DEFAULT 'pending',
+    status                 VARCHAR(40) DEFAULT 'pending',
     buyer_payment_account  TEXT,
     vendor_payment_account TEXT,
     vendor_voucher_url     TEXT,
+    receipt_pdf_url        TEXT,
     created_at             TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
     updated_at             TIMESTAMP   DEFAULT CURRENT_TIMESTAMP
 );

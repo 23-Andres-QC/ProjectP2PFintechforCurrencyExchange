@@ -87,10 +87,20 @@ class UserService:
         return user
 
     @staticmethod
-    def submit_kyc(user_id: str) -> User:
+    def submit_kyc(user_id: str, document_urls: dict | None = None) -> User:
         user = UserRepository.get_by_id(user_id)
         if not user:
             raise NotFoundError('User not found')
+
+        document_urls = document_urls or {}
+        if document_urls.get('dni_front_url'):
+            user.dni_image_url = document_urls['dni_front_url']
+        if document_urls.get('dni_back_url'):
+            user.dni_back_url = document_urls['dni_back_url']
+        if document_urls.get('selfie_url'):
+            user.selfie_url = document_urls['selfie_url']
+        if document_urls.get('signature_url'):
+            user.signature_url = document_urls['signature_url']
 
         user.kyc_verified = True
         notify(
@@ -112,7 +122,7 @@ class UserService:
             'full_name': user.full_name,
             'avatar_url': user.avatar_url,
             'rating': user.rating,
-            'total_transactions': user.total_transactions,
+            'total_transactions': user.completed_transactions_count(),
             'role': user.role,
             'kyc_verified': user.kyc_verified,
         }

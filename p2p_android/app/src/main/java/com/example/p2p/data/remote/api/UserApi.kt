@@ -17,6 +17,7 @@ interface UserApi {
     suspend fun submitKyc(
         @Part dniFront: MultipartBody.Part,
         @Part dniBack: MultipartBody.Part,
-        @Part selfie: MultipartBody.Part
+        @Part selfie: MultipartBody.Part,
+        @Part signature: MultipartBody.Part? = null
     ): Response<Unit>
 }

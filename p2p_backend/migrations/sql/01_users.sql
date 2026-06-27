@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_url       VARCHAR(500),
     signature_url    VARCHAR(500),
     dni_image_url    VARCHAR(500),
+    dni_back_url     VARCHAR(500),
+    selfie_url       VARCHAR(500),
     role             VARCHAR(20)  DEFAULT 'buyer',
     kyc_verified     BOOLEAN      DEFAULT FALSE,
     rating           FLOAT        DEFAULT 0.0,

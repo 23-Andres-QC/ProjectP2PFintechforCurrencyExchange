@@ -53,6 +53,9 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    val loginPrimary = Color(0xFF0B1330)
+    val loginPrimaryDark = Color(0xFF06142F)
+    val loginPrimaryLight = Color(0xFF0A3D91)
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) onLoginSuccess()
@@ -76,7 +79,7 @@ fun LoginScreen(
                     .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Primary, PrimaryDark, PrimaryLight)
+                            colors = listOf(loginPrimary, loginPrimaryDark, loginPrimaryLight)
                         )
                     )
                     .statusBarsPadding()
@@ -176,7 +179,7 @@ fun LoginScreen(
                         shape = RoundedCornerShape(14.dp),
                         leadingIcon = {
                             Icon(Icons.Default.Email, contentDescription = null,
-                                tint = Primary, modifier = Modifier.size(20.dp))
+                                tint = loginPrimary, modifier = Modifier.size(20.dp))
                         },
                         placeholder = { Text("tu@email.com", color = TextSubtle, fontSize = 14.sp) },
                         keyboardOptions = KeyboardOptions(
@@ -201,7 +204,7 @@ fun LoginScreen(
                         shape = RoundedCornerShape(14.dp),
                         leadingIcon = {
                             Icon(Icons.Default.Lock, contentDescription = null,
-                                tint = Primary, modifier = Modifier.size(20.dp))
+                                tint = loginPrimary, modifier = Modifier.size(20.dp))
                         },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -232,7 +235,7 @@ fun LoginScreen(
                     Text(
                         text = "¿Olvidaste tu contraseña?",
                         fontSize = 13.sp,
-                        color = Primary,
+                        color = loginPrimary,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
                             .align(Alignment.End)
@@ -246,7 +249,7 @@ fun LoginScreen(
                         onClick = { focusManager.clearFocus(); viewModel.login() },
                         modifier = Modifier.fillMaxWidth().height(54.dp),
                         shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                        colors = ButtonDefaults.buttonColors(containerColor = loginPrimary),
                         enabled = !uiState.isLoading,
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                     ) {
@@ -269,7 +272,7 @@ fun LoginScreen(
                     withStyle(SpanStyle(color = TextMuted, fontSize = 13.sp)) {
                         append("¿No tienes cuenta? ")
                     }
-                    withStyle(SpanStyle(color = Primary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)) {
+                    withStyle(SpanStyle(color = loginPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)) {
                         append("Regístrate")
                     }
                 },
