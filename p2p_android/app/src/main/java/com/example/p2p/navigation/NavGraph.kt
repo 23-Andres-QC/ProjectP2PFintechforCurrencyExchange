@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -67,6 +68,7 @@ import com.example.p2p.presentation.offer.MyOffersScreen
 import com.example.p2p.presentation.offer.MyOffersViewModel
 import com.example.p2p.presentation.offer.PublishScreen
 import com.example.p2p.presentation.offer.PublishViewModel
+import com.example.p2p.presentation.pending.PendingScreen
 import com.example.p2p.presentation.profile.EditProfileScreen
 import com.example.p2p.presentation.profile.EditProfileViewModel
 import com.example.p2p.presentation.profile.ProfileScreen
@@ -79,7 +81,6 @@ import com.example.p2p.presentation.reviews.ReviewsViewModel
 import com.example.p2p.presentation.transaction.TransactionDetailScreen
 import com.example.p2p.presentation.transaction.TransactionScreen
 import com.example.p2p.presentation.transaction.TransactionViewModel
-import com.example.p2p.presentation.vendor.VendorInboxScreen
 import com.example.p2p.ui.theme.BackgroundApp
 import com.example.p2p.ui.theme.Primary
 import com.example.p2p.ui.theme.SurfaceColor
@@ -214,8 +215,20 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                         navController.navigate(Screen.Notifications.route)
                     },
                     onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) },
-                    onNavigateToPending = { navController.navigate(Screen.Vendor.route) },
+                    onNavigateToPending = { navController.navigate(Screen.Pending.route) },
                     onNavigateToAddBankAccount = { navController.navigate(Screen.BankAccounts.route) }
+                )
+            }
+
+            composable(Screen.Pending.route) {
+                val txnRepo = TransactionRepositoryImpl(ApiClient.transactionApi)
+                val vm: TransactionViewModel = viewModel(factory = TransactionViewModel.Factory(txnRepo))
+                var pendingUserId by remember { mutableStateOf("") }
+                LaunchedEffect(Unit) { pendingUserId = tokenManager.getUserId() ?: "" }
+                PendingScreen(
+                    viewModel = vm,
+                    currentUserId = pendingUserId,
+                    onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) }
                 )
             }
 
@@ -250,7 +263,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                     onBack = { navController.popBackStack() },
                     onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) },
                     onNavigateToTransactionDetail = { txnId -> navController.navigate(Screen.TransactionDetail.createRoute(txnId)) },
-                    onNavigateToPending = { navController.navigate(Screen.Vendor.route) }
+                    onNavigateToPending = { navController.navigate(Screen.Pending.route) }
                 )
             }
 
@@ -465,15 +478,6 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 )
             }
 
-            composable(Screen.Vendor.route) {
-                val txnRepo = TransactionRepositoryImpl(ApiClient.transactionApi)
-                val vm: TransactionViewModel = viewModel(factory = TransactionViewModel.Factory(txnRepo))
-                VendorInboxScreen(
-                    viewModel = vm,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-
             composable(Screen.Terms.route) {
                 TermsScreen(onBack = { navController.popBackStack() })
             }
@@ -518,6 +522,17 @@ private fun AppBottomBar(
             )
         )
         if (isVendor) {
+            NavigationBarItem(
+                selected = currentRoute == Screen.Pending.route,
+                onClick = { onNavigate(Screen.Pending.route) },
+                icon = { Icon(Icons.Default.Schedule, contentDescription = "Pendientes") },
+                label = { Text("Pendientes", fontSize = 11.sp) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Primary,
+                    selectedTextColor = Primary,
+                    indicatorColor = Primary.copy(alpha = 0.12f)
+                )
+            )
             NavigationBarItem(
                 selected = currentRoute == Screen.Publish.route,
                 onClick = { onNavigate(Screen.Publish.route) },

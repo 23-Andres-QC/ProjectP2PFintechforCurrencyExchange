@@ -48,16 +48,8 @@ services:
     container_name: p2p_backend
     ports:
       - "5000:5000"
-    environment:
-      FLASK_APP: wsgi.py
-      APP_ENV: development
-      DATABASE_URL: postgresql://p2p_user:p2p_password@p2p_postgres:5432/p2p_exchange_dev
-      REDIS_URL: redis://p2p_redis:6379/0
-      SECRET_KEY: p2p-secret-key-change-in-prod
-      JWT_SECRET_KEY: p2p-jwt-secret-key-change-in-prod
-      SUPABASE_URL: ${SUPABASE_URL}
-      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY}
-      FIREBASE_CREDENTIALS_PATH: /app/firebase-credentials.json
+    env_file:
+      - ../.env
     volumes:
       - ./firebase-credentials.json:/app/firebase-credentials.json:ro
     depends_on:

@@ -142,7 +142,7 @@ fun ProfileScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Button(
-                    onClick = { onNavigate(Screen.Vendor.route) },
+                    onClick = { onNavigate(Screen.Pending.route) },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = WarningColor),
@@ -193,7 +193,7 @@ fun ProfileScreen(
                 MenuItem(
                     icon = Icons.Default.Store, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
                     label = "Modo Vendedor (Inbox)",
-                    onClick = { onNavigate(Screen.Vendor.route) }
+                    onClick = { onNavigate(Screen.Pending.route) }
                 )
                 MenuItem(
                     icon = Icons.Default.HeadsetMic, iconBg = Primary.copy(.12f), iconTint = Primary,

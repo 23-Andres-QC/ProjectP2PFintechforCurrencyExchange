@@ -29,7 +29,7 @@ sealed class Screen(val route: String) {
     object Privacy       : Screen("privacy")
     object About         : Screen("about")
     object Help          : Screen("help")
-    object Vendor        : Screen("vendor")
+    object Pending       : Screen("pending")
 
     object Transaction : Screen("transaction/{transactionId}") {
         fun createRoute(id: String) = "transaction/$id"

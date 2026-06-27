@@ -46,7 +46,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun VendorInboxScreen(
     viewModel: TransactionViewModel,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    showTopBar: Boolean = true
 ) {
     val context = LocalContext.current
     val pendingTransactions by viewModel.pendingTransactions.collectAsState()
@@ -140,30 +141,9 @@ fun VendorInboxScreen(
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Pendientes", fontWeight = FontWeight.Bold, color = TextMain) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = TextMain)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.loadPendingTransactions() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refrescar", tint = Primary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor)
-            )
-        },
-        containerColor = BackgroundApp
-    ) { innerPadding ->
+    val bodyContent: @Composable (Modifier) -> Unit = { modifier ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Box(
@@ -211,12 +191,41 @@ fun VendorInboxScreen(
                             transaction = txn,
                             onAccept = { confirmAcceptTxnId = txn.id },
                             onConfirm = { confirmingTransaction = txn },
-                            onCancel = { confirmCancelTxnId = txn.id }
+                            onCancel = { confirmCancelTxnId = txn.id },
+                            onUploadVendorVoucher = { base64, onSuccess, onError ->
+                                viewModel.uploadVendorVoucherFromBase64(txn.id, base64, onSuccess, onError)
+                            }
                         )
                     }
                 }
             }
         }
+    }
+
+    if (showTopBar) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Pendientes", fontWeight = FontWeight.Bold, color = TextMain) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = TextMain)
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.loadPendingTransactions() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refrescar", tint = Primary)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor)
+                )
+            },
+            containerColor = BackgroundApp
+        ) { innerPadding ->
+            bodyContent(Modifier.fillMaxSize().padding(innerPadding))
+        }
+    } else {
+        bodyContent(Modifier.fillMaxSize())
     }
 }
 
@@ -553,19 +562,6 @@ private fun VendorConfirmScreen(
                                 else -> WarningColor.copy(alpha = 0.35f)
                             },
                             shape = RoundedCornerShape(14.dp)
-
-                            onCancel = { confirmCancelTxnId = txn.id },
-                            onUploadVendorVoucher = { base64: String, onSuccess: () -> Unit, onError: (String) -> Unit ->
-                                viewModel.uploadVendorVoucherFromBase64(txn.id, base64, onSuccess, onError)
-                            },
-                            onConfirm = { vendorVoucherReady: Boolean ->
-                                if (vendorVoucherReady) {
-                                    viewModel.confirmTransaction(txn.id,
-                                        onSuccess = { Toast.makeText(context, "¡Fondos liberados con éxito!", Toast.LENGTH_SHORT).show() },
-                                        onError = { err -> Toast.makeText(context, "Error al confirmar: $err", Toast.LENGTH_LONG).show() }
-                                    )
-                                }
-                            }
                         )
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)

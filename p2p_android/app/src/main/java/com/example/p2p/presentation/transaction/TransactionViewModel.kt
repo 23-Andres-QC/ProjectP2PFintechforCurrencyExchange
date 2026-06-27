@@ -27,6 +27,23 @@ class TransactionViewModel(
     private val _pendingTransactions = MutableStateFlow<List<Transaction>>(emptyList())
     val pendingTransactions: StateFlow<List<Transaction>> = _pendingTransactions.asStateFlow()
 
+    private val _buyerTransactions = MutableStateFlow<List<Transaction>>(emptyList())
+    val buyerTransactions: StateFlow<List<Transaction>> = _buyerTransactions.asStateFlow()
+
+    fun loadBuyerTransactions(currentUserId: String) {
+        viewModelScope.launch {
+            when (val result = transactionRepository.listTransactions()) {
+                is NetworkResult.Success -> {
+                    _buyerTransactions.value = result.data.filter { txn ->
+                        txn.buyer_id == currentUserId &&
+                            txn.status in listOf("pending", "accepted", "voucher_uploaded", "completed")
+                    }
+                }
+                else -> Unit
+            }
+        }
+    }
+
     fun loadPendingTransactions() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)

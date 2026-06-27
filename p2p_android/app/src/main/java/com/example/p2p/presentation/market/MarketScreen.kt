@@ -33,7 +33,6 @@ import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.data.remote.model.CreateTransactionRequest
 import com.example.p2p.data.remote.model.ExchangeRate
 import com.example.p2p.data.remote.model.Offer
-import com.example.p2p.data.remote.model.Transaction
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -643,96 +642,6 @@ private fun MatchingDialog(
             TextButton(onClick = onDismiss) { Text("Cancelar") }
         }
     )
-}
-
-@Composable
-private fun ActiveTransactionBanner(
-    transaction: Transaction,
-    isVendor: Boolean = false,
-    onClick: () -> Unit
-) {
-    val (statusLabel, statusColor, statusIcon) = if (isVendor) {
-        when (transaction.status) {
-            "pending"          -> Triple("Nueva orden de compra · Acepta o rechaza", WarningColor, Icons.Default.Store)
-            "accepted"         -> Triple("Esperando pago del comprador", Primary, Icons.Default.Schedule)
-            "voucher_uploaded" -> Triple("Comprobante recibido · Confirma el pago", SuccessColor, Icons.Default.CheckCircle)
-            "completed"        -> Triple("Fondos liberados · Cierra o disputa", SuccessColor, Icons.Default.CheckCircle)
-            else               -> Triple("En curso", TextMuted, Icons.Default.Info)
-        }
-    } else {
-        when (transaction.status) {
-            "pending"          -> Triple("Esperando al vendedor", WarningColor, Icons.Default.Schedule)
-            "accepted"         -> Triple("Vendedor aceptó · Sube tu comprobante", SuccessColor, Icons.Default.CheckCircle)
-            "voucher_uploaded" -> Triple("Verificando tu pago", Primary, Icons.Default.Pending)
-            "completed"        -> Triple("Fondos liberados · Cierra o disputa", SuccessColor, Icons.Default.CheckCircle)
-            else               -> Triple("En curso", TextMuted, Icons.Default.Info)
-        }
-    }
-
-    val roleLabel = if (isVendor) "Estás vendiendo · Libera fondos" else "Estás comprando"
-    val roleBadgeColor = if (isVendor) WarningColor else Primary
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(roleBadgeColor.copy(alpha = 0.07f))
-            .border(1.5.dp, roleBadgeColor.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
-            .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(roleBadgeColor.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(statusIcon, contentDescription = null, tint = roleBadgeColor, modifier = Modifier.size(20.dp))
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(roleBadgeColor.copy(alpha = 0.15f))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = if (isVendor) "VENDEDOR" else "COMPRADOR",
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = roleBadgeColor,
-                        letterSpacing = 0.6.sp
-                    )
-                }
-            }
-            Text(
-                text = statusLabel,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextMain,
-                modifier = Modifier.padding(top = 2.dp)
-            )
-            Text(
-                text = "${String.format("%.2f", transaction.amount_from)} USD · S/ ${String.format("%.2f", transaction.amount_to)}",
-                fontSize = 11.sp,
-                color = TextMuted
-            )
-        }
-        Icon(
-            Icons.AutoMirrored.Filled.ArrowForward,
-            contentDescription = null,
-            tint = roleBadgeColor,
-            modifier = Modifier.size(18.dp)
-        )
-    }
 }
 
 @Composable
