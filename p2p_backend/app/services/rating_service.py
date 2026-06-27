@@ -11,9 +11,13 @@ class RatingService:
     @staticmethod
     def get_received(user_id: str) -> dict:
         ratings = RatingRepository.get_by_ratee(user_id)
+        raters = {
+            u.id: u for u in
+            UserRepository.get_by_ids([r.rater_id for r in ratings])
+        }
         result = []
         for r in ratings:
-            rater = UserRepository.get_by_id(r.rater_id)
+            rater = raters.get(r.rater_id)
             result.append({
                 'id': str(r.id),
                 'score': r.score,

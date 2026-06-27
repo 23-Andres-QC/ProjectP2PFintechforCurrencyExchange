@@ -14,8 +14,9 @@ class TransactionRepositoryImpl(
     override suspend fun listTransactions(status: String?): NetworkResult<List<Transaction>> {
         return try {
             val response = api.listTransactions(status)
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!.transactions)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body.transactions)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }
@@ -27,8 +28,9 @@ class TransactionRepositoryImpl(
     override suspend fun getPendingTransactions(): NetworkResult<List<Transaction>> {
         return try {
             val response = api.pendingTransactions()
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!.transactions)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body.transactions)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }
@@ -40,8 +42,9 @@ class TransactionRepositoryImpl(
     override suspend fun getTransaction(id: String): NetworkResult<Transaction> {
         return try {
             val response = api.getTransaction(id)
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }
@@ -53,8 +56,9 @@ class TransactionRepositoryImpl(
     override suspend fun createTransaction(request: CreateTransactionRequest): NetworkResult<Transaction> {
         return try {
             val response = api.createTransaction(request)
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body)
             } else {
                 val errorMsg = parseBackendError(response.errorBody()?.string(), response.code())
                 NetworkResult.Error(response.code(), errorMsg)
@@ -121,8 +125,9 @@ class TransactionRepositoryImpl(
     override suspend fun updateStatus(id: String, newStatus: String): NetworkResult<Transaction> {
         return try {
             val response = api.updateStatus(id, mapOf("status" to newStatus))
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }

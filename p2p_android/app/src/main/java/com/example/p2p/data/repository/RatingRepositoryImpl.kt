@@ -14,8 +14,9 @@ class RatingRepositoryImpl(
     override suspend fun createRating(transactionId: String, score: Int, comment: String?): NetworkResult<RatingResponse> {
         return try {
             val response = api.createRating(CreateRatingRequest(transactionId, score, comment))
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body)
             } else {
                 val msg = parseBackendError(response.errorBody()?.string(), response.code())
                 NetworkResult.Error(response.code(), msg)

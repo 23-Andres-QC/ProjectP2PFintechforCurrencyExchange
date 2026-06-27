@@ -16,7 +16,14 @@ class OfferService:
             currency=currency, fiat=fiat,
             offer_type=offer_type, exclude_vendor=current_user_id,
         )
-        return [OfferService._to_dict(o, with_vendor=True) for o in offers]
+        vendors = {
+            u.id: u for u in
+            UserRepository.get_by_ids([o.vendor_id for o in offers])
+        }
+        return [
+            OfferService._to_dict(o, with_vendor=True, vendor=vendors.get(o.vendor_id))
+            for o in offers
+        ]
 
     @staticmethod
     def get_by_id(offer_id: str) -> dict:
@@ -31,12 +38,19 @@ class OfferService:
         if not user:
             raise AuthorizationError('User not found')
 
+        amount = data.get('amount', 0)
+        price_per_unit = data.get('price_per_unit', 0)
+        if not amount or amount <= 0:
+            raise AppException('INVALID_AMOUNT', 'El monto debe ser mayor a 0', 400)
+        if not price_per_unit or price_per_unit <= 0:
+            raise AppException('INVALID_PRICE', 'El precio debe ser mayor a 0', 400)
+
         offer = OfferRepository.create(
             vendor_id=user_id,
             from_currency=data.get('currency', 'USD'),
             to_currency=data.get('fiat_currency', 'PEN'),
-            amount=data.get('amount', 0),
-            price_per_unit=data.get('price_per_unit', 0),
+            amount=amount,
+            price_per_unit=price_per_unit,
             offer_type=data.get('offer_type', 'sell'),
             min_transaction=data.get('min_transaction', 0),
             max_transaction=data.get('max_transaction'),
@@ -94,7 +108,7 @@ class OfferService:
         return {'message': 'Offer cancelled'}
 
     @staticmethod
-    def _to_dict(o: Offer, with_vendor: bool = False) -> dict:
+    def _to_dict(o: Offer, with_vendor: bool = False, vendor=None) -> dict:
         d = {
             'id': o.id,
             'vendor_id': o.vendor_id,
@@ -111,6 +125,6 @@ class OfferService:
             'created_at': o.created_at.isoformat(),
         }
         if with_vendor:
-            vendor = UserRepository.get_by_id(o.vendor_id)
+            vendor = vendor if vendor is not None else UserRepository.get_by_id(o.vendor_id)
             d['vendor'] = vendor.to_dict() if vendor else None
         return d

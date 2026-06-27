@@ -161,7 +161,7 @@ fun MyOffersScreen(
                         }
                     }
                 }
-                else -> items(uiState.filteredOffers) { offer ->
+                else -> items(uiState.filteredOffers, key = { it.id }) { offer ->
                     OfferCard(
                         offer = offer,
                         onPauseResume = {

@@ -11,3 +11,4 @@ CREATE TABLE IF NOT EXISTS ratings (
 );
 
 CREATE INDEX IF NOT EXISTS idx_ratings_rater_id ON ratings(rater_id);
+CREATE INDEX IF NOT EXISTS idx_ratings_ratee_id ON ratings(ratee_id);

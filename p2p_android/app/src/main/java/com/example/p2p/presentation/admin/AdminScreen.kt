@@ -165,7 +165,7 @@ fun AdminScreen(
                             }
                         }
                     } else {
-                        items(uiState.disputes) { dispute ->
+                        items(uiState.disputes, key = { it.id }) { dispute ->
                             DisputeCard(
                                 dispute = dispute,
                                 onViewDetail = { disputeId ->
@@ -231,7 +231,7 @@ fun AdminScreen(
                             }
                         }
                     } else {
-                        items(uiState.complaints) { complaint ->
+                        items(uiState.complaints, key = { it.id }) { complaint ->
                             ComplaintAdminCard(
                                 complaint = complaint,
                                 onResolve = { adminNote ->

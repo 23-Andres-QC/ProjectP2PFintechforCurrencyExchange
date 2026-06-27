@@ -7,12 +7,14 @@ def create_app(config_name='development'):
     from app.core.config import config
     from app.core.database import db
     from app.core.security import jwt
+    from app.core.rate_limit import limiter
 
     app = Flask(__name__)
     app.config.from_object(config[config_name])
 
     db.init_app(app)
     jwt.init_app(app)
+    limiter.init_app(app)
     Migrate(app, db)
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 

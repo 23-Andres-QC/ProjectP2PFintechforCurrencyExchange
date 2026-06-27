@@ -18,4 +18,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
 # Run seed then start gunicorn
-CMD python migrations/sql/00_seed.seed; gunicorn --bind 0.0.0.0:5000 --workers 2 --timeout 120 wsgi:app
+CMD python migrations/sql/00_seed.seed; gunicorn --bind 0.0.0.0:5000 --workers 2 --timeout 60 --max-requests 500 --max-requests-jitter 100 wsgi:app

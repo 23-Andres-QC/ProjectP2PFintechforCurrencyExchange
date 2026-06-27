@@ -36,6 +36,7 @@ class ConflictError(AppException):
 def register_error_handlers(app, db):
     @app.errorhandler(AppException)
     def handle_app_exception(error):
+        db.session.rollback()
         return {'error': {'code': error.code, 'message': error.message}}, error.status_code
 
     @app.errorhandler(400)
@@ -53,6 +54,14 @@ def register_error_handlers(app, db):
     @app.errorhandler(404)
     def not_found(e):
         return {'error': {'code': 'NOT_FOUND', 'message': str(e)}}, 404
+
+    @app.errorhandler(413)
+    def payload_too_large(e):
+        return {'error': {'code': 'PAYLOAD_TOO_LARGE', 'message': 'El archivo enviado supera el tamaño máximo permitido'}}, 413
+
+    @app.errorhandler(429)
+    def rate_limited(e):
+        return {'error': {'code': 'RATE_LIMITED', 'message': 'Demasiados intentos, espera un momento e intenta de nuevo'}}, 429
 
     @app.errorhandler(500)
     def internal_error(e):

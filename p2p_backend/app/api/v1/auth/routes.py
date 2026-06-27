@@ -4,12 +4,14 @@ from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
 )
+from app.core.rate_limit import limiter
 from app.services.user_service import UserService
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 @auth_bp.route('/register', methods=['POST'])
+@limiter.limit('10 per hour')
 def register():
     data = request.get_json() or {}
     user = UserService.register(
@@ -24,6 +26,7 @@ def register():
 
 
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit('10 per minute')
 def login():
     data = request.get_json() or {}
     user = UserService.login(

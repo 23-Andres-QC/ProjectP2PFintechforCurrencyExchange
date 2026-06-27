@@ -4,8 +4,12 @@ import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 private val Context.dataStore by preferencesDataStore(name = "p2p_prefs")
 
@@ -28,6 +32,20 @@ class TokenManager(private val context: Context) {
             }
     }
 
+    // Cache en memoria para que el interceptor HTTP pueda leer el token sin bloquear
+    // en cada request. Se precarga una vez en background al construir el singleton
+    // (sin runBlocking: bloquear el hilo principal en onCreate causaba ANR en frío).
+    @Volatile
+    private var cachedAccessToken: String? = null
+
+    init {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            cachedAccessToken = getAccessToken()
+        }
+    }
+
+    fun peekAccessToken(): String? = cachedAccessToken
+
     suspend fun saveSession(
         accessToken: String,
         refreshToken: String,
@@ -44,6 +62,7 @@ class TokenManager(private val context: Context) {
             prefs[USER_NAME] = name
             prefs[USER_EMAIL] = email
         }
+        cachedAccessToken = accessToken
     }
 
     suspend fun getAccessToken(): String? =
@@ -68,5 +87,6 @@ class TokenManager(private val context: Context) {
 
     suspend fun clearSession() {
         context.dataStore.edit { it.clear() }
+        cachedAccessToken = null
     }
 }

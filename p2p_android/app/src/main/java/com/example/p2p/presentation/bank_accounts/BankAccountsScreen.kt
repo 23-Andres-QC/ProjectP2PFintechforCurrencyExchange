@@ -400,7 +400,7 @@ fun BankAccountsScreen(
                     }
                 }
             } else {
-                items(uiState.accounts) { account ->
+                items(uiState.accounts, key = { it.id }) { account ->
                     BankAccountCard(account = account, onDelete = { viewModel?.deleteBankAccount(account.id) })
                 }
             }

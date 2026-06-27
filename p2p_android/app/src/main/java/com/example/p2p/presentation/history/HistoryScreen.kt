@@ -283,7 +283,7 @@ fun HistoryScreen(
                             }
                         }
                     }
-                    items(filteredList) { tx ->
+                    items(filteredList, key = { it.id }) { tx ->
                         TransactionCard(tx, onNavigateToTransaction, onNavigateToTransactionDetail)
                     }
                 }

@@ -20,8 +20,8 @@ class AuthRepositoryImpl(
     override suspend fun login(email: String, password: String): NetworkResult<LoginResponse> {
         return try {
             val response = api.login(LoginRequest(email, password))
-            if (response.isSuccessful) {
-                val body = response.body()!!
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
                 tokenManager.saveSession(
                     accessToken = body.accessToken,
                     refreshToken = body.refreshToken,
@@ -43,8 +43,8 @@ class AuthRepositoryImpl(
     override suspend fun register(email: String, password: String, fullName: String, dni: String?): NetworkResult<LoginResponse> {
         return try {
             val response = api.register(RegisterRequest(email, password, fullName, dni = dni?.ifBlank { null }))
-            if (response.isSuccessful) {
-                val body = response.body()!!
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
                 tokenManager.saveSession(
                     accessToken = body.accessToken,
                     refreshToken = body.refreshToken,

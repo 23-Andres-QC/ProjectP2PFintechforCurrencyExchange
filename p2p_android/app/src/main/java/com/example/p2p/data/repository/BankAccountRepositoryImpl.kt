@@ -13,8 +13,9 @@ class BankAccountRepositoryImpl(
     override suspend fun listAccounts(): NetworkResult<List<BankAccount>> {
         return try {
             val response = api.listAccounts()
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!.bank_accounts)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body.bank_accounts)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }
@@ -26,8 +27,9 @@ class BankAccountRepositoryImpl(
     override suspend fun createAccount(request: CreateBankAccountRequest): NetworkResult<BankAccount> {
         return try {
             val response = api.createAccount(request)
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }

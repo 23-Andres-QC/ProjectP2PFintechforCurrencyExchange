@@ -60,8 +60,9 @@ class AdminRepositoryImpl(
     ): NetworkResult<List<AdminUser>> =
         try {
             val response = api.getUsers(page, perPage, role)
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!.users)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body.users)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }
@@ -99,8 +100,9 @@ class AdminRepositoryImpl(
     private suspend fun <T> safeCall(call: suspend () -> retrofit2.Response<T>): NetworkResult<T> =
         try {
             val response = call()
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }

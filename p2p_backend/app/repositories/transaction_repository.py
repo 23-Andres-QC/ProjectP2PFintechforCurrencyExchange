@@ -9,6 +9,12 @@ class TransactionRepository:
         return db.session.get(Transaction, txn_id)
 
     @staticmethod
+    def get_by_ids(txn_ids: list[str]):
+        if not txn_ids:
+            return []
+        return Transaction.query.filter(Transaction.id.in_(txn_ids)).all()
+
+    @staticmethod
     def get_by_user(user_id: str, status: str | None = None):
         query = Transaction.query.filter(
             (Transaction.buyer_id == user_id) | (Transaction.vendor_id == user_id)

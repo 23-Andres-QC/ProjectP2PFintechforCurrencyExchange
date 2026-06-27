@@ -14,7 +14,6 @@ import com.example.p2p.data.remote.api.OfferApi
 import com.example.p2p.data.remote.api.RatingApi
 import com.example.p2p.data.remote.api.TransactionApi
 import com.example.p2p.data.remote.api.UserApi
-import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -33,7 +32,7 @@ object ApiClient {
     }
 
     private val authInterceptor = Interceptor { chain ->
-        val token = runBlocking { tokenManager?.getAccessToken() }
+        val token = tokenManager?.peekAccessToken()
         val request = if (token != null) {
             chain.request().newBuilder()
                 .addHeader("Authorization", "Bearer $token")

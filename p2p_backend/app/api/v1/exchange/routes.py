@@ -1,12 +1,12 @@
-import time
 import requests as http
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 
+from app.core.redis_client import cache_get, cache_set
+
 exchange_bp = Blueprint('exchange', __name__, url_prefix='/exchange')
 
-_CACHE: dict[str, dict] = {}
-_CACHE_TTL = 600
+CACHE_TTL = 600
 
 EXTERNAL_URL = "https://api.exchangerate-api.com/v4/latest/{base}"
 
@@ -14,9 +14,9 @@ MAIN_CURRENCIES = ["USD", "PEN", "EUR", "GBP", "BRL", "CLP", "COP", "ARS", "MXN"
 
 
 def _fetch_rates(base: str) -> dict:
-    now = time.time()
-    cached = _CACHE.get(base)
-    if cached and (now - cached['fetched_at']) < _CACHE_TTL:
+    cache_key = f'exchange_rates:{base}'
+    cached = cache_get(cache_key)
+    if cached:
         return cached
 
     resp = http.get(EXTERNAL_URL.format(base=base), timeout=10)
@@ -26,11 +26,10 @@ def _fetch_rates(base: str) -> dict:
     result = {
         'base': data['base'],
         'rates': data['rates'],
-        'fetched_at': now,
         'source': 'ExchangeRate-API (api.exchangerate-api.com)',
         'next_update': data.get('time_next_update_utc', ''),
     }
-    _CACHE[base] = result
+    cache_set(cache_key, result, CACHE_TTL)
     return result
 
 

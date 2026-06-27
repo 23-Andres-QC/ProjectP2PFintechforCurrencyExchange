@@ -10,8 +10,14 @@ class OfferRepository:
         return db.session.get(Offer, offer_id)
 
     @staticmethod
+    def get_by_id_for_update(offer_id: str) -> Offer | None:
+        """Bloquea la fila (SELECT ... FOR UPDATE) para evitar oversell por compras concurrentes."""
+        return db.session.get(Offer, offer_id, with_for_update=True)
+
+    @staticmethod
     def get_active(currency: str | None = None, fiat: str | None = None,
-                   offer_type: str | None = None, exclude_vendor: str | None = None):
+                   offer_type: str | None = None, exclude_vendor: str | None = None,
+                   limit: int = 200):
         query = Offer.query.filter_by(status='active')
         if currency:
             query = query.filter_by(from_currency=currency)
@@ -21,7 +27,7 @@ class OfferRepository:
             query = query.filter_by(offer_type=offer_type)
         if exclude_vendor:
             query = query.filter(Offer.vendor_id != exclude_vendor)
-        return query.order_by(Offer.price_per_unit).all()
+        return query.order_by(Offer.price_per_unit).limit(limit).all()
 
     @staticmethod
     def get_by_vendor(vendor_id: str):

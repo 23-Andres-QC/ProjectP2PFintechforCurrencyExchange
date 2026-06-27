@@ -9,11 +9,11 @@ class NotificationRepository:
         return db.session.get(Notification, notif_id)
 
     @staticmethod
-    def get_by_user(user_id: str, only_unread: bool = False):
+    def get_by_user(user_id: str, only_unread: bool = False, limit: int = 200):
         query = Notification.query.filter_by(user_id=user_id)
         if only_unread:
             query = query.filter_by(is_read=False)
-        return query.order_by(Notification.created_at.desc()).all()
+        return query.order_by(Notification.created_at.desc()).limit(limit).all()
 
     @staticmethod
     def count_unread(user_id: str) -> int:

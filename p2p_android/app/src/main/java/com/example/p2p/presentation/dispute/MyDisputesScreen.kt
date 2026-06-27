@@ -192,7 +192,7 @@ fun MyDisputesScreen(
                 }
             }
 
-            items(filteredList.size) { index ->
+            items(filteredList.size, key = { filteredList[it].id }) { index ->
                 DisputeCard(
                     dispute = filteredList[index],
                     onViewDetail = { disputeId ->

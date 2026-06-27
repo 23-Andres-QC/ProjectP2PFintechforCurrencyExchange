@@ -20,8 +20,9 @@ class ComplaintsRepositoryImpl(
     private suspend fun <T> safeCall(call: suspend () -> retrofit2.Response<T>): NetworkResult<T> =
         try {
             val response = call()
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }

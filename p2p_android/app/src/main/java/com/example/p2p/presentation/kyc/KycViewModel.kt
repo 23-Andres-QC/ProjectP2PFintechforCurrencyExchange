@@ -6,11 +6,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.p2p.core.network.NetworkResult
+import com.example.p2p.core.util.compressImageFromUri
 import com.example.p2p.domain.repository.UserRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class KycState(
     val currentStep: Int = 1,
@@ -72,9 +75,13 @@ class KycViewModel(
             _state.value = currentState.copy(isLoading = true, error = null)
 
             try {
-                val dniFrontBytes = context.contentResolver.openInputStream(currentState.dniFrontUri)?.readBytes()
-                val dniBackBytes = context.contentResolver.openInputStream(currentState.dniBackUri)?.readBytes()
-                val selfieBytes = context.contentResolver.openInputStream(currentState.selfieUri)?.readBytes()
+                val (dniFrontBytes, dniBackBytes, selfieBytes) = withContext(Dispatchers.IO) {
+                    Triple(
+                        compressImageFromUri(context, currentState.dniFrontUri),
+                        compressImageFromUri(context, currentState.dniBackUri),
+                        compressImageFromUri(context, currentState.selfieUri),
+                    )
+                }
 
                 if (dniFrontBytes == null || dniBackBytes == null || selfieBytes == null) {
                     _state.value = _state.value.copy(isLoading = false, error = "Error al leer las imágenes")

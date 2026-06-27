@@ -94,7 +94,8 @@ class MarketViewModel(
                     _uiState.value = _uiState.value.copy(exchangeRates = combined)
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = "No se pudieron cargar las tasas de cambio")
+                // Falla silenciosa: el ticker de tasas es secundario y no debe bloquear
+                // la lista de ofertas con la pantalla de error de conexión.
             }
         }
     }
@@ -113,7 +114,7 @@ class MarketViewModel(
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             }
             when (val result = offerRepository.listOffers(currency, fiatCurrency)) {
-                is NetworkResult.Success -> _uiState.value = _uiState.value.copy(isLoading = false, offers = result.data)
+                is NetworkResult.Success -> _uiState.value = _uiState.value.copy(isLoading = false, error = null, offers = result.data)
                 is NetworkResult.Error   -> _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
                 NetworkResult.Loading    -> Unit
             }

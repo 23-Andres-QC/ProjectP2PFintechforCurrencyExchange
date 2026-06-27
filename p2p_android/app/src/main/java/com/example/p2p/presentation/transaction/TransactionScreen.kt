@@ -34,10 +34,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.p2p.core.util.compressImageFromUri
 import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.theme.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+private const val MAX_VOUCHER_FILE_BYTES = 20L * 1024 * 1024
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,36 +81,45 @@ fun TransactionScreen(
     ) { uri: Uri? ->
         if (uri != null && transactionId != null) {
             selectedImageUri = uri
+            var fileSize = 0L
             context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                 val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (nameIndex != -1 && cursor.moveToFirst()) {
-                    selectedFileName = cursor.getString(nameIndex)
+                val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                if (cursor.moveToFirst()) {
+                    if (nameIndex != -1) selectedFileName = cursor.getString(nameIndex)
+                    if (sizeIndex != -1) fileSize = cursor.getLong(sizeIndex)
                 }
             }
-            scope.launch {
-                isUploadingVoucher = true
-                try {
-                    val bytes = context.contentResolver.openInputStream(uri)?.readBytes()
-                    if (bytes != null) {
-                        selectedBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                        val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
-                        val result = viewModel?.uploadVoucherFromBase64Async(transactionId, base64)
-                        if (result == true) {
-                            Toast.makeText(context, "Voucher subido. Esperando confirmación del vendedor.", Toast.LENGTH_LONG).show()
+            if (fileSize > MAX_VOUCHER_FILE_BYTES) {
+                Toast.makeText(context, "El archivo es demasiado grande (máx. 20 MB)", Toast.LENGTH_LONG).show()
+            } else {
+                scope.launch {
+                    isUploadingVoucher = true
+                    try {
+                        val bytes = withContext(Dispatchers.IO) { compressImageFromUri(context, uri) }
+                        if (bytes != null) {
+                            selectedBitmap?.recycle()
+                            selectedBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
+                            val result = viewModel?.uploadVoucherFromBase64Async(transactionId, base64)
+                            if (result == true) {
+                                Toast.makeText(context, "Voucher subido. Esperando confirmación del vendedor.", Toast.LENGTH_LONG).show()
+                            } else {
+                                selectedBitmap?.recycle()
+                                selectedBitmap = null
+                                selectedFileName = ""
+                                Toast.makeText(context, "Error al subir el comprobante. Intenta de nuevo.", Toast.LENGTH_LONG).show()
+                            }
                         } else {
-                            selectedBitmap = null
-                            selectedFileName = ""
-                            Toast.makeText(context, "Error al subir el comprobante. Intenta de nuevo.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "No se pudo leer la imagen.", Toast.LENGTH_SHORT).show()
                         }
-                    } else {
-                        Toast.makeText(context, "No se pudo leer la imagen.", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        selectedBitmap = null
+                        selectedFileName = ""
+                        Toast.makeText(context, "Error al procesar imagen: ${e.message}", Toast.LENGTH_SHORT).show()
+                    } finally {
+                        isUploadingVoucher = false
                     }
-                } catch (e: Exception) {
-                    selectedBitmap = null
-                    selectedFileName = ""
-                    Toast.makeText(context, "Error al procesar imagen: ${e.message}", Toast.LENGTH_SHORT).show()
-                } finally {
-                    isUploadingVoucher = false
                 }
             }
         }
@@ -120,7 +134,8 @@ fun TransactionScreen(
     LaunchedEffect(transactionId) {
         while (true) {
             delay(2500L)
-            if (transactionId != null) {
+            if (uiState.transaction?.status in listOf("completed", "cancelled", "disputed")) break
+            if (transactionId != null && !isUploadingVoucher) {
                 viewModel?.loadTransaction(transactionId, showLoading = false)
             }
         }
@@ -135,6 +150,10 @@ fun TransactionScreen(
 
     LaunchedEffect(uiState.transaction?.status) {
         previousStatus = uiState.transaction?.status ?: ""
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { selectedBitmap?.recycle() }
     }
 
     val txn = uiState.transaction

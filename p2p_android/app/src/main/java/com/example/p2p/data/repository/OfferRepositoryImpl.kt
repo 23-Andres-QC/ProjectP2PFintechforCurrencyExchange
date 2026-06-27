@@ -18,8 +18,9 @@ class OfferRepositoryImpl(
     ): NetworkResult<List<Offer>> {
         return try {
             val response = api.listOffers(currency, fiatCurrency, offerType)
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!.offers)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body.offers)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }
@@ -31,8 +32,9 @@ class OfferRepositoryImpl(
     override suspend fun createOffer(request: CreateOfferRequest): NetworkResult<Offer> {
         return try {
             val response = api.createOffer(request)
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body)
             } else {
                 val errorMsg = parseBackendError(response.errorBody()?.string(), response.code())
                 NetworkResult.Error(response.code(), errorMsg)
@@ -72,8 +74,9 @@ class OfferRepositoryImpl(
         repeat(2) { attempt ->
             try {
                 val response = api.myOffers()
-                return if (response.isSuccessful && response.body() != null) {
-                    NetworkResult.Success(response.body()!!.offers)
+                val body = response.body()
+                return if (response.isSuccessful && body != null) {
+                    NetworkResult.Success(body.offers)
                 } else {
                     NetworkResult.Error(response.code(), response.message())
                 }
@@ -91,8 +94,9 @@ class OfferRepositoryImpl(
     override suspend fun matchOffer(currency: String, fiatCurrency: String): NetworkResult<Offer> {
         return try {
             val response = api.matchOffer(mapOf("currency" to currency, "fiat_currency" to fiatCurrency))
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }
@@ -104,8 +108,9 @@ class OfferRepositoryImpl(
     override suspend fun pauseOffer(offerId: String): NetworkResult<Offer> {
         return try {
             val response = api.updateOffer(offerId, mapOf("status" to "paused"))
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }
@@ -117,8 +122,9 @@ class OfferRepositoryImpl(
     override suspend fun resumeOffer(offerId: String): NetworkResult<Offer> {
         return try {
             val response = api.updateOffer(offerId, mapOf("status" to "active"))
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                NetworkResult.Success(body)
             } else {
                 NetworkResult.Error(response.code(), response.message())
             }

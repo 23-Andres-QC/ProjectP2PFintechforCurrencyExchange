@@ -38,12 +38,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
+import com.example.p2p.core.util.compressImageFromUri
 import com.example.p2p.data.remote.model.Transaction
 import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.presentation.transaction.TransactionViewModel
 import com.example.p2p.ui.theme.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+private const val MAX_VOUCHER_FILE_BYTES = 20L * 1024 * 1024
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -173,7 +178,7 @@ fun VendorInboxScreen(
                 }
             } else {
                 LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(pendingTransactions) { txn ->
+                    items(pendingTransactions, key = { it.id }) { txn ->
                         VendorTransactionCard(
                             transaction = txn,
                             onAccept = { confirmAcceptTxnId = txn.id },
@@ -256,44 +261,57 @@ private fun VendorConfirmScreen(
     var isUploadingVoucher by remember { mutableStateOf(false) }
     var isConfirming by remember { mutableStateOf(false) }
 
+    DisposableEffect(Unit) {
+        onDispose { selectedBitmap?.recycle() }
+    }
+
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
+            var fileSize = 0L
             context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                 val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (nameIndex != -1 && cursor.moveToFirst()) {
-                    selectedFileName = cursor.getString(nameIndex)
+                val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                if (cursor.moveToFirst()) {
+                    if (nameIndex != -1) selectedFileName = cursor.getString(nameIndex)
+                    if (sizeIndex != -1) fileSize = cursor.getLong(sizeIndex)
                 }
             }
-            scope.launch {
-                isUploadingVoucher = true
-                try {
-                    val bytes = context.contentResolver.openInputStream(uri)?.readBytes()
-                    if (bytes != null) {
-                        selectedBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                        val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
-                        viewModel.uploadVendorVoucherFromBase64(
-                            transaction.id,
-                            base64,
-                            onSuccess = {
-                                Toast.makeText(context, "Boleta subida correctamente.", Toast.LENGTH_LONG).show()
-                            },
-                            onError = {
-                                selectedBitmap = null
-                                selectedFileName = ""
-                                Toast.makeText(context, "Error al subir la boleta. Intenta de nuevo.", Toast.LENGTH_LONG).show()
-                            }
-                        )
-                    } else {
-                        Toast.makeText(context, "No se pudo leer la imagen.", Toast.LENGTH_SHORT).show()
+            if (fileSize > MAX_VOUCHER_FILE_BYTES) {
+                Toast.makeText(context, "El archivo es demasiado grande (máx. 20 MB)", Toast.LENGTH_LONG).show()
+            } else {
+                scope.launch {
+                    isUploadingVoucher = true
+                    try {
+                        val bytes = withContext(Dispatchers.IO) { compressImageFromUri(context, uri) }
+                        if (bytes != null) {
+                            selectedBitmap?.recycle()
+                            selectedBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
+                            viewModel.uploadVendorVoucherFromBase64(
+                                transaction.id,
+                                base64,
+                                onSuccess = {
+                                    Toast.makeText(context, "Boleta subida correctamente.", Toast.LENGTH_LONG).show()
+                                },
+                                onError = {
+                                    selectedBitmap?.recycle()
+                                    selectedBitmap = null
+                                    selectedFileName = ""
+                                    Toast.makeText(context, "Error al subir la boleta. Intenta de nuevo.", Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        } else {
+                            Toast.makeText(context, "No se pudo leer la imagen.", Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        selectedBitmap = null
+                        selectedFileName = ""
+                        Toast.makeText(context, "Error al procesar imagen: ${e.message}", Toast.LENGTH_SHORT).show()
+                    } finally {
+                        isUploadingVoucher = false
                     }
-                } catch (e: Exception) {
-                    selectedBitmap = null
-                    selectedFileName = ""
-                    Toast.makeText(context, "Error al procesar imagen: ${e.message}", Toast.LENGTH_SHORT).show()
-                } finally {
-                    isUploadingVoucher = false
                 }
             }
         }
@@ -862,35 +880,50 @@ private fun VendorTransactionCard(
     var isUploadingVendorVoucher by remember { mutableStateOf(false) }
     var previewVoucherUrl by remember { mutableStateOf<String?>(null) }
 
+    DisposableEffect(Unit) {
+        onDispose { vendorBitmap?.recycle() }
+    }
+
     val vendorImagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
-            scope.launch {
-                isUploadingVendorVoucher = true
-                try {
-                    val bytes = context.contentResolver.openInputStream(uri)?.readBytes()
-                    if (bytes != null) {
-                        vendorBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                        val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
-                        onUploadVendorVoucher(
-                            base64,
-                            {
-                                vendorVoucherReady = true
-                                isUploadingVendorVoucher = false
-                                Toast.makeText(context, "Comprobante subido. Ya puedes liberar.", Toast.LENGTH_LONG).show()
-                            },
-                            { err ->
-                                isUploadingVendorVoucher = false
-                                vendorBitmap = null
-                                Toast.makeText(context, "Error: $err", Toast.LENGTH_LONG).show()
-                            }
-                        )
-                    } else {
+            var fileSize = 0L
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                if (sizeIndex != -1 && cursor.moveToFirst()) fileSize = cursor.getLong(sizeIndex)
+            }
+            if (fileSize > MAX_VOUCHER_FILE_BYTES) {
+                Toast.makeText(context, "El archivo es demasiado grande (máx. 20 MB)", Toast.LENGTH_LONG).show()
+            } else {
+                scope.launch {
+                    isUploadingVendorVoucher = true
+                    try {
+                        val bytes = withContext(Dispatchers.IO) { compressImageFromUri(context, uri) }
+                        if (bytes != null) {
+                            vendorBitmap?.recycle()
+                            vendorBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
+                            onUploadVendorVoucher(
+                                base64,
+                                {
+                                    vendorVoucherReady = true
+                                    isUploadingVendorVoucher = false
+                                    Toast.makeText(context, "Comprobante subido. Ya puedes liberar.", Toast.LENGTH_LONG).show()
+                                },
+                                { err ->
+                                    isUploadingVendorVoucher = false
+                                    vendorBitmap?.recycle()
+                                    vendorBitmap = null
+                                    Toast.makeText(context, "Error: $err", Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        } else {
+                            isUploadingVendorVoucher = false
+                            Toast.makeText(context, "No se pudo leer la imagen.", Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
                         isUploadingVendorVoucher = false
-                        Toast.makeText(context, "No se pudo leer la imagen.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
-                } catch (e: Exception) {
-                    isUploadingVendorVoucher = false
-                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }

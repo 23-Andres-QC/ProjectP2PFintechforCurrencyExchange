@@ -12,7 +12,8 @@ class NotificationRepositoryImpl(
 
     override suspend fun getNotifications(): NetworkResult<NotificationsResponse> = try {
         val r = api.getNotifications()
-        if (r.isSuccessful && r.body() != null) NetworkResult.Success(r.body()!!)
+        val body = r.body()
+        if (r.isSuccessful && body != null) NetworkResult.Success(body)
         else NetworkResult.Error(r.code(), r.message())
     } catch (e: Exception) {
         NetworkResult.Error(-1, e.message ?: "Error")
@@ -20,7 +21,8 @@ class NotificationRepositoryImpl(
 
     override suspend fun getUnreadCount(): NetworkResult<Int> = try {
         val r = api.getUnreadCount()
-        if (r.isSuccessful && r.body() != null) NetworkResult.Success(r.body()!!.unread_count)
+        val body = r.body()
+        if (r.isSuccessful && body != null) NetworkResult.Success(body.unread_count)
         else NetworkResult.Error(r.code(), r.message())
     } catch (e: Exception) {
         NetworkResult.Error(-1, e.message ?: "Error")
@@ -28,7 +30,8 @@ class NotificationRepositoryImpl(
 
     override suspend fun markAllRead(): NetworkResult<Int> = try {
         val r = api.markAllRead()
-        if (r.isSuccessful && r.body() != null) NetworkResult.Success(r.body()!!.marked_read)
+        val body = r.body()
+        if (r.isSuccessful && body != null) NetworkResult.Success(body.marked_read)
         else NetworkResult.Error(r.code(), r.message())
     } catch (e: Exception) {
         NetworkResult.Error(-1, e.message ?: "Error")
@@ -36,7 +39,8 @@ class NotificationRepositoryImpl(
 
     override suspend fun markRead(id: String): NetworkResult<Notification> = try {
         val r = api.markRead(id)
-        if (r.isSuccessful && r.body() != null) NetworkResult.Success(r.body()!!)
+        val body = r.body()
+        if (r.isSuccessful && body != null) NetworkResult.Success(body)
         else NetworkResult.Error(r.code(), r.message())
     } catch (e: Exception) {
         NetworkResult.Error(-1, e.message ?: "Error")

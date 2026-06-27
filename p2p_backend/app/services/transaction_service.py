@@ -34,7 +34,7 @@ class TransactionService:
 
     @staticmethod
     def create(user_id: str, data: dict) -> dict:
-        offer = OfferRepository.get_by_id(data.get('offer_id'))
+        offer = OfferRepository.get_by_id_for_update(data.get('offer_id'))
         if not offer or offer.status != 'active':
             raise AppException('OFFER_UNAVAILABLE', 'Offer not available', 400)
         if offer.vendor_id == user_id:
@@ -154,10 +154,18 @@ class TransactionService:
     @staticmethod
     def list_vouchers(user_id: str) -> list[dict]:
         vouchers = TransactionRepository.get_vouchers_by_user(user_id)
+        txns = {
+            t.id: t for t in
+            TransactionRepository.get_by_ids([v.transaction_id for v in vouchers])
+        }
+        senders = {
+            u.id: u for u in
+            UserRepository.get_by_ids([v.sender_id for v in vouchers])
+        }
         result = []
         for v in vouchers:
-            txn = TransactionRepository.get_by_id(v.transaction_id)
-            sender = UserRepository.get_by_id(v.sender_id)
+            txn = txns.get(v.transaction_id)
+            sender = senders.get(v.sender_id)
             result.append({
                 'id': v.id,
                 'transaction_id': v.transaction_id,

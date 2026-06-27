@@ -1,5 +1,6 @@
 package com.example.p2p.presentation.auth
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -86,7 +87,9 @@ class LoginViewModel(
         try {
             val token = FirebaseMessaging.getInstance().token.await()
             ApiClient.notificationApi.registerFcmToken(mapOf("fcm_token" to token))
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w("LoginViewModel", "No se pudo registrar el token FCM", e)
+        }
     }
 
     fun clearError() {

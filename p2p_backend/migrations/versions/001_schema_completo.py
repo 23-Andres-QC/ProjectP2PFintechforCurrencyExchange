@@ -110,8 +110,20 @@ def upgrade():
         )
         batch_op.create_index('idx_disputes_status', ['status'])
 
+    with op.batch_alter_table('audit_logs', schema=None) as batch_op:
+        batch_op.create_index('idx_audit_logs_user_id', ['user_id'])
+
+    with op.batch_alter_table('ratings', schema=None) as batch_op:
+        batch_op.create_index('idx_ratings_ratee_id', ['ratee_id'])
+
 
 def downgrade():
+    with op.batch_alter_table('ratings', schema=None) as batch_op:
+        batch_op.drop_index('idx_ratings_ratee_id')
+
+    with op.batch_alter_table('audit_logs', schema=None) as batch_op:
+        batch_op.drop_index('idx_audit_logs_user_id')
+
     with op.batch_alter_table('disputes') as batch_op:
         batch_op.drop_index('idx_disputes_status')
         batch_op.drop_column('resolved_at')
