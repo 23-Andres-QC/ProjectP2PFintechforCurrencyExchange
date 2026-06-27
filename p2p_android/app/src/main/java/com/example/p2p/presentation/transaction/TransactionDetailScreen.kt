@@ -81,7 +81,7 @@ fun TransactionDetailScreen(
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-
+            // Transaction ID + status badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -102,6 +102,7 @@ fun TransactionDetailScreen(
                 }
             }
 
+            // Detail card
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceColor),
@@ -117,7 +118,7 @@ fun TransactionDetailScreen(
                     DetailRow("Tasa:", "S/ ${txn?.exchange_rate ?: "--"}", showDivider = true)
                     DetailRow("Método de pago:", txn?.vendor_payment_account ?: "--", showDivider = true)
                     DetailRow("Fecha:", txn?.created_at?.take(10) ?: "--", showDivider = true)
-
+                    // OCR row
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -129,6 +130,7 @@ fun TransactionDetailScreen(
                 }
             }
 
+            // Download PDF button
             Button(
                 onClick = {},
                 modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -139,6 +141,8 @@ fun TransactionDetailScreen(
                 Spacer(Modifier.width(8.dp))
                 Text("Descargar PDF", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             }
+            // Dispute button — solo si la transacción no está completada ni cancelada
+
 
             if (txn?.status !in listOf("completed", "cancelled", "disputed")) {
                 OutlinedButton(
@@ -153,7 +157,7 @@ fun TransactionDetailScreen(
                     Text("Abrir Disputa", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
-
+            // Back to history
             OutlinedButton(
                 onClick = onBack,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -170,6 +174,7 @@ fun TransactionDetailScreen(
         }
     }
 }
+
 
 @Composable
 private fun DetailRow(
@@ -190,3 +195,5 @@ private fun DetailRow(
         if (showDivider) HorizontalDivider(color = BorderColor, thickness = 0.5.dp)
     }
 }
+
+

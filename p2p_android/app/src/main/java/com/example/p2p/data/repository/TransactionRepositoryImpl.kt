@@ -150,4 +150,19 @@ class TransactionRepositoryImpl(
             NetworkResult.Error(-1, e.message ?: "An error occurred")
         }
     }
+
+    override suspend fun uploadVendorVoucherWithBase64(id: String, base64: String): NetworkResult<Unit> {
+        return try {
+            val uploadResponse = api.uploadImage(mapOf("image_base64" to base64))
+            if (!uploadResponse.isSuccessful || uploadResponse.body() == null) {
+                return NetworkResult.Error(uploadResponse.code(), "Error al subir imagen")
+            }
+            val imageUrl = uploadResponse.body()!!["url"] ?: ""
+            val response = api.uploadVendorVoucher(id, mapOf("image_url" to imageUrl))
+            if (response.isSuccessful) NetworkResult.Success(Unit)
+            else NetworkResult.Error(response.code(), response.message())
+        } catch (e: Exception) {
+            NetworkResult.Error(-1, e.message ?: "Error al subir comprobante del vendedor")
+        }
+    }
 }

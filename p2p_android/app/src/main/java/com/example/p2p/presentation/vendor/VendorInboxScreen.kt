@@ -1,8 +1,17 @@
 package com.example.p2p.presentation.vendor
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.provider.OpenableColumns
+import android.util.Base64
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,6 +37,7 @@ import com.example.p2p.data.remote.model.Transaction
 import com.example.p2p.presentation.transaction.TransactionViewModel
 import com.example.p2p.ui.theme.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,20 +65,8 @@ fun VendorInboxScreen(
     confirmAcceptTxnId?.let { txnId ->
         AlertDialog(
             onDismissRequest = { confirmAcceptTxnId = null },
-            title = {
-                Text(
-                    "¿Estás seguro?",
-                    fontWeight = FontWeight.Bold,
-                    color = TextMain
-                )
-            },
-            text = {
-                Text(
-                    "¿Deseas aceptar esta orden de compra? El comprador será notificado para realizar el pago.",
-                    color = TextMuted,
-                    fontSize = 14.sp
-                )
-            },
+            title = { Text("¿Estás seguro?", fontWeight = FontWeight.Bold, color = TextMain) },
+            text = { Text("¿Deseas aceptar esta orden de compra? El comprador será notificado para realizar el pago.", color = TextMuted, fontSize = 14.sp) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -78,14 +78,10 @@ fun VendorInboxScreen(
                         )
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
-                ) {
-                    Text("Sí, aceptar", color = Color.White, fontWeight = FontWeight.Bold)
-                }
+                ) { Text("Sí, aceptar", color = Color.White, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmAcceptTxnId = null }) {
-                    Text("No", color = TextMuted)
-                }
+                TextButton(onClick = { confirmAcceptTxnId = null }) { Text("No", color = TextMuted) }
             },
             containerColor = SurfaceColor
         )
@@ -94,20 +90,8 @@ fun VendorInboxScreen(
     confirmCancelTxnId?.let { txnId ->
         AlertDialog(
             onDismissRequest = { confirmCancelTxnId = null },
-            title = {
-                Text(
-                    "¿Estás seguro?",
-                    fontWeight = FontWeight.Bold,
-                    color = TextMain
-                )
-            },
-            text = {
-                Text(
-                    "¿Deseas rechazar esta orden de compra? La operación será cancelada.",
-                    color = TextMuted,
-                    fontSize = 14.sp
-                )
-            },
+            title = { Text("¿Estás seguro?", fontWeight = FontWeight.Bold, color = TextMain) },
+            text = { Text("¿Deseas rechazar esta orden de compra? La operación será cancelada.", color = TextMuted, fontSize = 14.sp) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -119,14 +103,10 @@ fun VendorInboxScreen(
                         )
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = DangerColor)
-                ) {
-                    Text("Sí, rechazar", color = Color.White, fontWeight = FontWeight.Bold)
-                }
+                ) { Text("Sí, rechazar", color = Color.White, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmCancelTxnId = null }) {
-                    Text("No", color = TextMuted)
-                }
+                TextButton(onClick = { confirmCancelTxnId = null }) { Text("No", color = TextMuted) }
             },
             containerColor = SurfaceColor
         )
@@ -135,13 +115,7 @@ fun VendorInboxScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        "Pendientes",
-                        fontWeight = FontWeight.Bold,
-                        color = TextMain
-                    )
-                },
+                title = { Text("Pendientes", fontWeight = FontWeight.Bold, color = TextMain) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = TextMain)
@@ -164,16 +138,11 @@ fun VendorInboxScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(18.dp))
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(Color(0xFF1E293B), Color(0xFF0F172A))
-                        )
-                    )
+                    .background(Brush.linearGradient(colors = listOf(Color(0xFF1E293B), Color(0xFF0F172A))))
                     .padding(16.dp)
             ) {
                 Row(
@@ -182,32 +151,12 @@ fun VendorInboxScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text(
-                            text = "ÓRDENES ACTIVAS",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = WarningColor,
-                            letterSpacing = 1.sp
-                        )
-                        Text(
-                            text = "Órdenes Pendientes",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                        Text(
-                            text = "Acepta, cancela o confirma los pagos activos",
-                            fontSize = 11.sp,
-                            color = Color.White.copy(alpha = 0.6f),
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
+                        Text("ÓRDENES ACTIVAS", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = WarningColor, letterSpacing = 1.sp)
+                        Text("Órdenes Pendientes", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 4.dp))
+                        Text("Acepta, cancela o confirma los pagos activos", fontSize = 11.sp, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.padding(top = 2.dp))
                     }
                     Box(
-                        modifier = Modifier
-                            .size(46.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(WarningColor.copy(alpha = 0.2f)),
+                        modifier = Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(WarningColor.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Default.Store, contentDescription = null, tint = WarningColor)
@@ -220,52 +169,31 @@ fun VendorInboxScreen(
                     CircularProgressIndicator(color = Primary)
                 }
             } else if (pendingTransactions.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Inbox,
-                            contentDescription = null,
-                            tint = BorderColor,
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Text(
-                            text = "Sin órdenes activas",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = TextMain
-                        )
-                        Text(
-                            text = "Las órdenes pendientes de acción aparecerán aquí. El historial completo está en tu perfil.",
-                            fontSize = 12.sp,
-                            color = TextMuted,
-                            textAlign = TextAlign.Center
-                        )
+                Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(imageVector = Icons.Default.Inbox, contentDescription = null, tint = BorderColor, modifier = Modifier.size(48.dp))
+                        Text("Sin órdenes activas", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextMain)
+                        Text("Las órdenes pendientes de acción aparecerán aquí. El historial completo está en tu perfil.", fontSize = 12.sp, color = TextMuted, textAlign = TextAlign.Center)
                     }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
+                LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(pendingTransactions) { txn ->
                         VendorTransactionCard(
                             transaction = txn,
                             onAccept = { confirmAcceptTxnId = txn.id },
-                            onConfirm = {
-                                viewModel.confirmTransaction(txn.id,
-                                    onSuccess = { Toast.makeText(context, "Operación liberada con éxito", Toast.LENGTH_SHORT).show() },
-                                    onError = { err -> Toast.makeText(context, "Error al confirmar: $err", Toast.LENGTH_LONG).show() }
-                                )
+                            onCancel = { confirmCancelTxnId = txn.id },
+                            onUploadVendorVoucher = { base64: String, onSuccess: () -> Unit, onError: (String) -> Unit ->
+                                viewModel.uploadVendorVoucherFromBase64(txn.id, base64, onSuccess, onError)
                             },
-                            onCancel = { confirmCancelTxnId = txn.id }
+                            onConfirm = { vendorVoucherReady: Boolean ->
+                                if (vendorVoucherReady) {
+                                    viewModel.confirmTransaction(txn.id,
+                                        onSuccess = { Toast.makeText(context, "¡Fondos liberados con éxito!", Toast.LENGTH_SHORT).show() },
+                                        onError = { err -> Toast.makeText(context, "Error al confirmar: $err", Toast.LENGTH_LONG).show() }
+                                    )
+                                }
+                            }
                         )
                     }
                 }
@@ -278,18 +206,59 @@ fun VendorInboxScreen(
 private fun VendorTransactionCard(
     transaction: Transaction,
     onAccept: () -> Unit,
-    onConfirm: () -> Unit,
-    onCancel: () -> Unit = {}
+    onCancel: () -> Unit = {},
+    onUploadVendorVoucher: (String, () -> Unit, (String) -> Unit) -> Unit,
+    onConfirm: (Boolean) -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val isNewOrder = transaction.status == "pending"
-    val isVoucherUploaded = transaction.status == "voucher_uploaded"
     val isAccepted = transaction.status == "accepted"
+    val isVoucherUploaded = transaction.status == "voucher_uploaded"
     val isCompleted = transaction.status == "completed"
+
+    var vendorBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var vendorVoucherReady by remember { mutableStateOf(false) }
+    var isUploadingVendorVoucher by remember { mutableStateOf(false) }
+
+    val vendorImagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch {
+                isUploadingVendorVoucher = true
+                try {
+                    val bytes = context.contentResolver.openInputStream(uri)?.readBytes()
+                    if (bytes != null) {
+                        vendorBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
+                        onUploadVendorVoucher(
+                            base64,
+                            {
+                                vendorVoucherReady = true
+                                isUploadingVendorVoucher = false
+                                Toast.makeText(context, "Comprobante subido. Ya puedes liberar.", Toast.LENGTH_LONG).show()
+                            },
+                            { err ->
+                                isUploadingVendorVoucher = false
+                                vendorBitmap = null
+                                Toast.makeText(context, "Error: $err", Toast.LENGTH_LONG).show()
+                            }
+                        )
+                    } else {
+                        isUploadingVendorVoucher = false
+                        Toast.makeText(context, "No se pudo leer la imagen.", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    isUploadingVendorVoucher = false
+                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     val statusLabel = when (transaction.status) {
         "pending"          -> "NUEVA ORDEN DE COMPRA"
         "accepted"         -> "ORDEN ACEPTADA · ESPERANDO PAGO"
-        "voucher_uploaded" -> "PAGO RECIBIDO · CONFIRMAR"
+        "voucher_uploaded" -> "PAGO RECIBIDO · SUBE TU COMPROBANTE"
         "completed"        -> "FONDOS LIBERADOS · CERRAR"
         else               -> transaction.status.uppercase()
     }
@@ -316,49 +285,26 @@ private fun VendorTransactionCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = statusLabel,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = statusColor,
-                        letterSpacing = 0.8.sp
-                    )
-                    Text(
-                        text = transaction.id.take(8).uppercase(),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextMain,
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
-                }
 
+            // Header
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column {
+                    Text(statusLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = statusColor, letterSpacing = 0.8.sp)
+                    Text(transaction.id.take(8).uppercase(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextMain, modifier = Modifier.padding(top = 2.dp))
+                }
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50.dp))
-                        .background(statusColor.copy(alpha = 0.12f))
+                    modifier = Modifier.clip(RoundedCornerShape(50.dp)).background(statusColor.copy(alpha = 0.12f))
                         .border(1.dp, statusColor.copy(alpha = 0.3f), RoundedCornerShape(50.dp))
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
-                    Text(
-                        text = transaction.status.uppercase(),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = statusColor
-                    )
+                    Text(transaction.status.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = statusColor)
                 }
             }
 
+            // Banner nueva orden
             if (isNewOrder) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
                         .background(Primary.copy(alpha = 0.07f))
                         .border(1.dp, Primary.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
                         .padding(10.dp),
@@ -366,66 +312,34 @@ private fun VendorTransactionCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(Icons.Default.ShoppingCart, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
-                    Text(
-                        text = "Un comprador quiere comprarte divisas. Acepta para confirmar la operación.",
-                        fontSize = 11.sp,
-                        color = Primary,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Text("Un comprador quiere comprarte divisas. Acepta para confirmar la operación.", fontSize = 11.sp, color = Primary, fontWeight = FontWeight.Medium)
                 }
             }
 
+            // Info comprador y monto
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(BackgroundApp)
-                    .padding(12.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(BackgroundApp).padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Comprador", fontSize = 12.sp, color = TextMuted)
-                    Text(
-                        transaction.buyer_name ?: transaction.buyer_id.take(8).uppercase(),
-                        fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMain
-                    )
+                    Text(transaction.buyer_name ?: transaction.buyer_id.take(8).uppercase(), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMain)
                 }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Monto", fontSize = 12.sp, color = TextMuted)
-                    Text(
-                        "S/ ${String.format("%.2f", transaction.amount_to)} · tasa ${transaction.exchange_rate}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextMain
-                    )
+                    Text("S/ ${String.format("%.2f", transaction.amount_to)} · tasa ${transaction.exchange_rate}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMain)
                 }
             }
 
+            // PENDING: aceptar / rechazar
             if (isNewOrder) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = onAccept,
-                        colors = ButtonDefaults.buttonColors(containerColor = Primary),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    Button(onClick = onAccept, colors = ButtonDefaults.buttonColors(containerColor = Primary), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White)
                         Spacer(Modifier.width(6.dp))
                         Text("Aceptar orden de compra", color = Color.White, fontWeight = FontWeight.Bold)
                     }
-                    OutlinedButton(
-                        onClick = onCancel,
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerColor),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, DangerColor),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    OutlinedButton(onClick = onCancel, colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerColor), border = androidx.compose.foundation.BorderStroke(1.dp, DangerColor), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Default.Close, contentDescription = null, tint = DangerColor, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
                         Text("Rechazar orden", fontWeight = FontWeight.SemiBold)
@@ -433,12 +347,11 @@ private fun VendorTransactionCard(
                 }
             }
 
+            // ACCEPTED: esperando pago
             if (isAccepted) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
                             .background(SuccessColor.copy(alpha = 0.07f))
                             .border(1.dp, SuccessColor.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
                             .padding(10.dp),
@@ -446,20 +359,9 @@ private fun VendorTransactionCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(Icons.Default.Schedule, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(16.dp))
-                        Text(
-                            text = "Orden aceptada. Esperando que el comprador realice el pago y suba su comprobante.",
-                            fontSize = 11.sp,
-                            color = SuccessColor,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Text("Orden aceptada. Esperando que el comprador realice el pago y suba su comprobante.", fontSize = 11.sp, color = SuccessColor, fontWeight = FontWeight.Medium)
                     }
-                    OutlinedButton(
-                        onClick = onCancel,
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerColor),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, DangerColor),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    OutlinedButton(onClick = onCancel, colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerColor), border = androidx.compose.foundation.BorderStroke(1.dp, DangerColor), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Default.Cancel, contentDescription = null, tint = DangerColor, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
                         Text("Cancelar operación", fontWeight = FontWeight.SemiBold)
@@ -467,24 +369,129 @@ private fun VendorTransactionCard(
                 }
             }
 
+            // VOUCHER_UPLOADED: vendedor sube su comprobante antes de liberar
             if (isVoucherUploaded) {
-                Button(
-                    onClick = onConfirm,
-                    colors = ButtonDefaults.buttonColors(containerColor = SuccessColor),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
-                    Spacer(Modifier.width(6.dp))
-                    Text("Confirmar Pago y Liberar", color = Color.White, fontWeight = FontWeight.Bold)
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                            .background(WarningColor.copy(alpha = 0.08f))
+                            .border(1.dp, WarningColor.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
+                            .padding(10.dp),
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.Notifications, contentDescription = null, tint = WarningColor, modifier = Modifier.size(16.dp))
+                        Column {
+                            Text("El comprador ya realizó el pago.", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMain)
+                            Text("Verifica tu cuenta y sube tu comprobante de transferencia de USD antes de liberar.", fontSize = 11.sp, color = TextMuted)
+                        }
+                    }
+
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = BorderColor)
+                        Text("TU COMPROBANTE", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = TextMuted)
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = BorderColor)
+                    }
+
+                    // Upload zone
+                    Column(
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SurfaceColor)
+                            .border(
+                                1.5.dp,
+                                when {
+                                    isUploadingVendorVoucher -> WarningColor
+                                    vendorVoucherReady -> SuccessColor
+                                    else -> BorderColor
+                                },
+                                RoundedCornerShape(12.dp)
+                            )
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        if (isUploadingVendorVoucher) {
+                            Box(modifier = Modifier.fillMaxWidth().height(70.dp), contentAlignment = Alignment.Center) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    CircularProgressIndicator(modifier = Modifier.size(26.dp), color = WarningColor, strokeWidth = 3.dp)
+                                    Text("Subiendo comprobante...", fontSize = 12.sp, color = TextMain)
+                                }
+                            }
+                        } else {
+                            if (vendorBitmap != null) {
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    Image(
+                                        bitmap = vendorBitmap!!.asImageBitmap(),
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(10.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    if (vendorVoucherReady) {
+                                        Box(
+                                            modifier = Modifier.align(Alignment.TopEnd).padding(6.dp)
+                                                .clip(RoundedCornerShape(50.dp)).background(SuccessColor)
+                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        ) {
+                                            Text("✓ Subido", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+
+                            Box(
+                                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                                    .background(if (vendorVoucherReady) SuccessColor.copy(alpha = 0.06f) else WarningColor.copy(alpha = 0.06f))
+                                    .border(1.dp, if (vendorVoucherReady) SuccessColor.copy(alpha = 0.3f) else WarningColor.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    .clickable { vendorImagePicker.launch("image/*") }
+                                    .padding(14.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Icon(
+                                        imageVector = if (vendorVoucherReady) Icons.Filled.PhotoLibrary else Icons.Filled.CloudUpload,
+                                        contentDescription = null,
+                                        tint = if (vendorVoucherReady) SuccessColor else WarningColor,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = if (vendorVoucherReady) "Cambiar comprobante" else "Subir mi comprobante de transferencia",
+                                            fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                                            color = if (vendorVoucherReady) SuccessColor else TextMain
+                                        )
+                                        Text(
+                                            text = if (vendorVoucherReady) "Listo · ya puedes liberar" else "Foto de tu transferencia de USD al comprador",
+                                            fontSize = 10.sp, color = TextMuted
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Button(
+                        onClick = { onConfirm(vendorVoucherReady) },
+                        enabled = vendorVoucherReady,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SuccessColor,
+                            disabledContainerColor = SuccessColor.copy(alpha = 0.35f)
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = if (vendorVoucherReady) "Confirmar y Liberar Fondos" else "Sube tu comprobante para liberar",
+                            color = Color.White, fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
+            // COMPLETED
             if (isCompleted) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
                         .background(SuccessColor.copy(alpha = 0.07f))
                         .border(1.dp, SuccessColor.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
                         .padding(10.dp),
@@ -492,12 +499,7 @@ private fun VendorTransactionCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(Icons.Default.CheckCircle, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(16.dp))
-                    Text(
-                        text = "Fondos liberados. El comprador está cerrando la operación.",
-                        fontSize = 11.sp,
-                        color = SuccessColor,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Text("Fondos liberados. El comprador está cerrando la operación.", fontSize = 11.sp, color = SuccessColor, fontWeight = FontWeight.Medium)
                 }
             }
         }

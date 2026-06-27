@@ -27,6 +27,11 @@ interface TransactionApi {
         @Body request: Map<String, String>
     ): Response<Map<String, String>>
 
+    @POST("transactions/{id}/vendor-voucher")
+    suspend fun uploadVendorVoucher(
+        @Path("id") id: String,
+        @Body request: Map<String, String>
+    ): Response<Map<String, String>>
     @PATCH("transactions/{id}/status")
     suspend fun updateStatus(
         @Path("id") id: String,

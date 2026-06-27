@@ -97,6 +97,27 @@ class TransactionViewModel(
             }
         }
     }
+    fun uploadVendorVoucherFromBase64(
+        id: String,
+        base64: String,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            when (val result = transactionRepository.uploadVendorVoucherWithBase64(id, base64)) {
+                is NetworkResult.Success -> {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    onSuccess()
+                }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
+                    onError(result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
 
     fun confirmTransaction(id: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
         viewModelScope.launch {

@@ -14,8 +14,10 @@ data class Transaction(
     val buyer_payment_account: String?,
     val vendor_payment_account: String?,
     val created_at: String,
-    val updated_at: String?
+    val updated_at: String?,
+    val vendor_voucher_url: String? = null  // ← AGREGAR
 )
+
 
 data class TransactionsResponse(
     val transactions: List<Transaction>

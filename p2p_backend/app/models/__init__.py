@@ -53,6 +53,7 @@ class Transaction(BaseModel):
     status         = db.Column(db.String(20), default='pending', index=True)
     buyer_payment_account  = db.Column(db.Text)
     vendor_payment_account = db.Column(db.Text)
+    vendor_voucher_url     = db.Column(db.Text, nullable=True)
 
 
 class Voucher(BaseModel):
