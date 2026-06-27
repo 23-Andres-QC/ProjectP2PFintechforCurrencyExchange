@@ -1,3 +1,4 @@
+import base64
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.transaction_service import TransactionService
@@ -21,6 +22,13 @@ def pending_transactions():
     return {'transactions': TransactionService.pending_for_vendor(user_id)}, 200
 
 
+@transactions_bp.route('/vouchers', methods=['GET'])
+@jwt_required()
+def list_vouchers():
+    user_id = get_jwt_identity()
+    return {'vouchers': TransactionService.list_vouchers(user_id)}, 200
+
+
 @transactions_bp.route('/<txn_id>', methods=['GET'])
 @jwt_required()
 def get_transaction(txn_id):
@@ -40,9 +48,23 @@ def create_transaction():
 @transactions_bp.route('/<txn_id>/voucher', methods=['POST'])
 @jwt_required()
 def upload_voucher(txn_id):
+    from app.core.storage import upload_voucher as supabase_upload
     user_id = get_jwt_identity()
     data = request.get_json() or {}
-    return TransactionService.upload_voucher(user_id, txn_id, data), 201
+
+    image_b64 = data.get('image_base64', '')
+    if not image_b64:
+        return {'error': {'code': 'NO_IMAGE', 'message': 'Se requiere image_base64'}}, 400
+
+    if ',' in image_b64:
+        image_b64 = image_b64.split(',', 1)[1]
+
+    try:
+        image_bytes = base64.b64decode(image_b64)
+    except Exception:
+        return {'error': {'code': 'INVALID_IMAGE', 'message': 'Imagen base64 inválida'}}, 400
+
+    return TransactionService.upload_voucher(user_id, txn_id, data, image_bytes, supabase_upload), 201
 
 @transactions_bp.route('/<txn_id>/vendor-voucher', methods=['POST'])
 @jwt_required()

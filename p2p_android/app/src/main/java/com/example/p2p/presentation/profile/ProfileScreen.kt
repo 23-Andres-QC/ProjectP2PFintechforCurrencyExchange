@@ -174,7 +174,7 @@ fun ProfileScreen(
                 MenuItem(
                     icon = Icons.Default.History, iconBg = PrimaryLight.copy(.15f), iconTint = PrimaryLight,
                     label = "Historial de Operaciones",
-                    onClick = { onNavigate(Screen.History.route) }
+                    onClick = { onNavigate(Screen.History.createRoute()) }
                 )
                 MenuItem(
                     icon = Icons.Default.Star, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,

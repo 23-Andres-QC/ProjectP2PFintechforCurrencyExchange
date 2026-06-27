@@ -97,20 +97,6 @@ fun MarketScreen(
                 )
             }
 
-            if (uiState.activeTransactions.isNotEmpty()) {
-                items(uiState.activeTransactions, key = { it.id }) { txn ->
-                    val isVendor = txn.vendor_id == currentUserId
-                    if (txn.status == "completed" && isVendor) return@items
-                    ActiveTransactionBanner(
-                        transaction = txn,
-                        isVendor = isVendor,
-                        onClick = {
-                            if (isVendor) onNavigateToPending()
-                            else onNavigateToTransaction(txn.id)
-                        }
-                    )
-                }
-            }
 
             item {
                 ActionRow(
@@ -763,6 +749,7 @@ private fun OfferCard(
     val isPartial = offer.offer_type == "partial"
     var isExpanded by remember { mutableStateOf(false) }
     var buyAmountText by remember { mutableStateOf("") }
+    var showBuyAllDialog by remember { mutableStateOf(false) }
     val buyAmount = buyAmountText.toDoubleOrNull() ?: 0.0
 
     val isAmountValid = if (isPartial) {
@@ -938,18 +925,99 @@ private fun OfferCard(
                         }
                     } else {
                         Button(
-                            onClick = {
-                                val account = selectedAccount?.let { "${it.bank_name} · ${it.account_number}" } ?: "Mi cuenta"
-                                onConfirmBuy(offer.available_amount, account)
-                            },
+                            onClick = { showBuyAllDialog = true },
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = SuccessColor),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             elevation = ButtonDefaults.buttonElevation(0.dp)
                         ) {
+                            Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(Modifier.width(4.dp))
                             Text("Comprar todo", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
+                }
+
+                if (showBuyAllDialog && !isPartial) {
+                    AlertDialog(
+                        onDismissRequest = { showBuyAllDialog = false },
+                        title = {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Icon(Icons.Default.ShoppingCart, contentDescription = null, tint = SuccessColor)
+                                Text("Confirmar compra")
+                            }
+                        },
+                        text = {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text(
+                                    "Vendedor: ${offer.vendor?.full_name ?: "Vendedor"}",
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp
+                                )
+                                Text(
+                                    "Tasa: ${offer.fiat_currency} ${String.format("%.3f", offer.price_per_unit)}",
+                                    fontSize = 13.sp
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(SuccessColor.copy(alpha = 0.08f))
+                                        .padding(12.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text("Recibirás:", fontSize = 12.sp, color = TextMuted)
+                                            Text(
+                                                "${String.format("%.2f", offer.available_amount)} ${offer.currency}",
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = TextMain
+                                            )
+                                        }
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text("Pagarás:", fontSize = 12.sp, color = TextMuted)
+                                            Text(
+                                                "${offer.fiat_currency} ${String.format("%.2f", offer.available_amount * offer.price_per_unit)}",
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = SuccessColor
+                                            )
+                                        }
+                                    }
+                                }
+                                BankAccountSelector(
+                                    bankAccounts = bankAccounts,
+                                    selectedId = selectedBankAccountId,
+                                    onSelect = onSelectBankAccount,
+                                    onNavigateToAddBankAccount = onNavigateToAddBankAccount
+                                )
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    showBuyAllDialog = false
+                                    val account = selectedAccount?.let { "${it.bank_name} · ${it.account_number}" } ?: "Mi cuenta"
+                                    onConfirmBuy(offer.available_amount, account)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = SuccessColor)
+                            ) {
+                                Text("Confirmar compra", fontWeight = FontWeight.Bold)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showBuyAllDialog = false }) {
+                                Text("Cancelar")
+                            }
+                        }
+                    )
                 }
 
                 if (isExpanded && isPartial) {

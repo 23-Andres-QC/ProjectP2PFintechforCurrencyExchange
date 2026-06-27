@@ -57,13 +57,14 @@ private val filterChips = listOf("Todos", "Completados", "Pendientes", "Disputas
 fun HistoryScreen(
     viewModel: HistoryViewModel? = null,
     currentUserId: String = "",
+    initialFilter: Int = 0,
     onBack: () -> Unit = {},
     onNavigateToTransaction: (String) -> Unit = {},
     onNavigateToTransactionDetail: (String) -> Unit = {},
     onNavigateToPending: () -> Unit = {}
 ) {
     val uiState by viewModel?.uiState?.collectAsState(initial = HistoryUiState()) ?: remember { mutableStateOf(HistoryUiState()) }
-    var selectedFilter by remember { mutableStateOf(0) }
+    var selectedFilter by remember { mutableStateOf(initialFilter) }
     var searchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -115,7 +116,7 @@ fun HistoryScreen(
             icon = icon,
             isBuyerActive = currentUserId.isNotBlank() &&
                 currentUserId == dto.buyer_id &&
-                dto.status in listOf("pending", "accepted", "voucher_uploaded")
+                dto.status in listOf("pending", "accepted", "voucher_uploaded", "completed")
         )
     }
 
@@ -328,7 +329,11 @@ private fun TransactionCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(tx.id, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextMain)
                     if (tx.isBuyerActive) {
-                        Text("Toca para continuar →", fontSize = 10.sp, color = WarningColor, fontWeight = FontWeight.SemiBold)
+                        val (label, labelColor) = if (tx.status == "Completado")
+                            "Toca para calificar →" to SuccessColor
+                        else
+                            "Toca para continuar →" to WarningColor
+                        Text(label, fontSize = 10.sp, color = labelColor, fontWeight = FontWeight.SemiBold)
                     }
                 }
                 StatusBadge(tx.status, tx.statusColor)

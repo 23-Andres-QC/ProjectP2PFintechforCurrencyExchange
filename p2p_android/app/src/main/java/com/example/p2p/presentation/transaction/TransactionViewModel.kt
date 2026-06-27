@@ -119,6 +119,15 @@ class TransactionViewModel(
         }
     }
 
+    suspend fun uploadVoucherFromBase64Async(id: String, base64: String): Boolean {
+        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+        return when (val result = transactionRepository.uploadVoucherWithBase64(id, base64)) {
+            is NetworkResult.Success -> { loadTransaction(id); true }
+            is NetworkResult.Error -> { _uiState.value = _uiState.value.copy(isLoading = false, error = result.message); false }
+            NetworkResult.Loading -> false
+        }
+    }
+
     fun confirmTransaction(id: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)

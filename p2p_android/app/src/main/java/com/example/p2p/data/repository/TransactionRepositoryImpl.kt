@@ -107,14 +107,7 @@ class TransactionRepositoryImpl(
 
     override suspend fun uploadVoucherWithBase64(id: String, base64: String): NetworkResult<Unit> {
         return try {
-
-            val uploadResponse = api.uploadImage(mapOf("image_base64" to base64))
-            if (!uploadResponse.isSuccessful || uploadResponse.body() == null) {
-                return NetworkResult.Error(uploadResponse.code(), "Error al subir la imagen")
-            }
-            val imageUrl = uploadResponse.body()!!["url"] ?: ""
-
-            val voucherResponse = api.uploadVoucher(id, mapOf("image_url" to imageUrl))
+            val voucherResponse = api.uploadVoucher(id, mapOf("image_base64" to base64))
             if (voucherResponse.isSuccessful) {
                 NetworkResult.Success(Unit)
             } else {

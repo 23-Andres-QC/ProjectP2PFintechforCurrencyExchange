@@ -112,9 +112,8 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                     tokenManager = tokenManager
                 ) { route ->
                     navController.navigate(route) {
+                        popUpTo(Screen.Market.route) { inclusive = false }
                         launchSingleTop = true
-                        popUpTo(Screen.Market.route) { saveState = true }
-                        restoreState = true
                     }
                 }
             }
@@ -233,7 +232,13 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 )
             }
 
-            composable(Screen.History.route) {
+            composable(
+                route = Screen.History.route,
+                arguments = listOf(
+                    navArgument("filter") { type = NavType.IntType; defaultValue = 0 }
+                )
+            ) { backStack ->
+                val initialFilter = backStack.arguments?.getInt("filter") ?: 0
                 val txnRepo = TransactionRepositoryImpl(ApiClient.transactionApi)
                 val vm: HistoryViewModel = viewModel(factory = HistoryViewModel.Factory(txnRepo))
                 var historyUserId by remember { mutableStateOf("") }
@@ -241,6 +246,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 HistoryScreen(
                     viewModel = vm,
                     currentUserId = historyUserId,
+                    initialFilter = initialFilter,
                     onBack = { navController.popBackStack() },
                     onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) },
                     onNavigateToTransactionDetail = { txnId -> navController.navigate(Screen.TransactionDetail.createRoute(txnId)) },
@@ -293,7 +299,16 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                     onNavigateToDispute = { txnId -> navController.navigate(Screen.RegisterDispute.createRoute(txnId)) },
                     onNavigateToReceipt = { txnId -> navController.navigate(Screen.Receipt.createRoute(txnId)) },
                     onNavigateToRating = { txnId, score -> navController.navigate(Screen.Rating.createRoute(txnId, score)) },
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = {
+                        val currentStatus = vm.uiState.value.transaction?.status
+                        if (currentStatus in listOf("pending", "accepted", "voucher_uploaded")) {
+                            navController.navigate(Screen.History.createRoute(2)) {
+                                popUpTo(Screen.Market.route) { inclusive = false }
+                            }
+                        } else {
+                            navController.popBackStack()
+                        }
+                    }
                 )
             }
 

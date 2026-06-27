@@ -7,7 +7,9 @@ sealed class Screen(val route: String) {
     object Kyc           : Screen("kyc")
     object Market        : Screen("market")
     object Publish       : Screen("publish")
-    object History       : Screen("history")
+    object History : Screen("history?filter={filter}") {
+        fun createRoute(filter: Int = 0) = "history?filter=$filter"
+    }
     object Profile       : Screen("profile")
     object EditProfile   : Screen("edit_profile")
     object BankAccounts  : Screen("bank_accounts")

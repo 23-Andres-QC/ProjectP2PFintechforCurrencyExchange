@@ -43,8 +43,4 @@ interface TransactionApi {
         @Path("id") id: String
     ): Response<Map<String, String>>
 
-    @POST("uploads")
-    suspend fun uploadImage(
-        @Body body: Map<String, String>
-    ): Response<Map<String, String>>
 }

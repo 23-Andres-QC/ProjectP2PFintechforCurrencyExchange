@@ -5,6 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c8e2ce9f-0af8-4705-9132-4cb53dc75f10" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+
       <change beforePath="$PROJECT_DIR$/p2p_android/app/src/main/java/com/example/p2p/data/remote/model/Transaction.kt" beforeDir="false" afterPath="$PROJECT_DIR$/p2p_android/app/src/main/java/com/example/p2p/data/remote/model/Transaction.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/p2p_android/app/src/main/java/com/example/p2p/presentation/transaction/TransactionDetailScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/p2p_android/app/src/main/java/com/example/p2p/presentation/transaction/TransactionDetailScreen.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/p2p_android/gradle/libs.versions.toml" beforeDir="false" afterPath="$PROJECT_DIR$/p2p_android/gradle/libs.versions.toml" afterDir="false" />
@@ -26,6 +28,12 @@
     &quot;assignee&quot;: &quot;XMateoAndrade2601X&quot;
   }
 }</component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/23-Andres-QC/ProjectP2PFintechforCurrencyExchange.git",
+    "accountId": "7b74a288-098d-4df6-a6f3-f4e03cc74b2a"
+  }
+}]]></component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/23-Andres-QC/ProjectP2PFintechforCurrencyExchange.git&quot;,
@@ -43,11 +51,14 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "fix/Vaucherfeature",
+    "kotlin-language-version-configured": "true"
     "git-widget-placeholder": "fix/admin",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/home/AndroidStudioProjects/ProjectP2PFintechforCurrencyExchange"

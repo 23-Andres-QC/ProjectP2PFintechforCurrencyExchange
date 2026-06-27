@@ -10,6 +10,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    PROPAGATE_EXCEPTIONS = False
     SQLALCHEMY_ECHO = True
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DATABASE_URL',
