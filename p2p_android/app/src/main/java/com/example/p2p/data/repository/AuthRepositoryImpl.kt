@@ -71,11 +71,11 @@ class AuthRepositoryImpl(
     override suspend fun isLoggedIn(): Boolean = tokenManager.isLoggedIn()
 
     private fun parseError(body: String?): String {
-        if (body == null) return "Unknown error"
+        if (body == null) return "No se pudo conectar con el servidor"
         return try {
             gson.fromJson(body, ErrorBody::class.java).error.message
         } catch (_: Exception) {
-            body
+            "No se pudo conectar con el servidor. Intenta de nuevo más tarde."
         }
     }
 }
