@@ -23,7 +23,10 @@ fun compressImageFromUri(
     val resolver = context.contentResolver
 
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) } ?: return null
+    val boundsStream = resolver.openInputStream(uri) ?: return null
+    // decodeStream con inJustDecodeBounds=true SIEMPRE devuelve null por diseño
+    // (solo rellena bounds.outWidth/outHeight); no es una señal de error.
+    boundsStream.use { BitmapFactory.decodeStream(it, null, bounds) }
 
     var sampleSize = 1
     while (bounds.outWidth / sampleSize > maxDimension || bounds.outHeight / sampleSize > maxDimension) {
