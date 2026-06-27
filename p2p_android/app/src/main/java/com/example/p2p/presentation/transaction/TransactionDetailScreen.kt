@@ -38,7 +38,7 @@ fun TransactionDetailScreen(
     val txn = uiState.transaction
 
     val statusLabel = when (txn?.status) {
-        "completed"       -> "COMPLETADO"
+        "completed", "closed" -> "COMPLETADO"
         "pending"         -> "PENDIENTE"
         "voucher_uploaded"-> "EN PROCESO"
         "cancelled"       -> "CANCELADO"
@@ -46,7 +46,7 @@ fun TransactionDetailScreen(
         else              -> txn?.status?.uppercase() ?: "CARGANDO..."
     }
     val statusColor = when (txn?.status) {
-        "completed"       -> SuccessColor
+        "completed", "closed" -> SuccessColor
         "pending", "voucher_uploaded" -> WarningColor
         "cancelled", "disputed"       -> DangerColor
         else              -> TextMuted
@@ -144,7 +144,7 @@ fun TransactionDetailScreen(
             // Dispute button — solo si la transacción no está completada ni cancelada
 
 
-            if (txn?.status !in listOf("completed", "cancelled", "disputed")) {
+            if (txn?.status !in listOf("completed", "closed", "cancelled", "disputed")) {
                 OutlinedButton(
                     onClick = { transactionId?.let { onNavigateToDispute(it) } },
                     modifier = Modifier.fillMaxWidth().height(52.dp),

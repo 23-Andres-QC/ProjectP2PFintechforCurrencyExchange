@@ -29,9 +29,11 @@ class NotificationsViewModel(
         loadAndMarkRead()
     }
 
-    fun loadAndMarkRead() {
+    fun loadAndMarkRead(showLoading: Boolean = true) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            }
             when (val result = repo.getNotifications()) {
                 is NetworkResult.Success -> {
                     val data = result.data

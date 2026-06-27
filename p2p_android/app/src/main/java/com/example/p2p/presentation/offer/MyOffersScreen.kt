@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.Offer
 import com.example.p2p.ui.theme.*
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +37,13 @@ fun MyOffersScreen(
     var offerToDelete by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(Unit) { viewModel?.loadMyOffers() }
+    LaunchedEffect(Unit) {
+        viewModel?.loadMyOffers()
+        while (true) {
+            delay(4000L)
+            viewModel?.loadMyOffers(showLoading = false)
+        }
+    }
 
     LaunchedEffect(uiState.error) {
         val err = uiState.error

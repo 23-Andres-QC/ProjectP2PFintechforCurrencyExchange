@@ -52,8 +52,9 @@ fun PendingScreen(
 
     LaunchedEffect(currentUserId) {
         while (true) {
-            delay(8000L)
+            delay(3000L)
             viewModel.loadBuyerTransactions(currentUserId)
+            viewModel.loadPendingTransactions(showLoading = false)
         }
     }
 

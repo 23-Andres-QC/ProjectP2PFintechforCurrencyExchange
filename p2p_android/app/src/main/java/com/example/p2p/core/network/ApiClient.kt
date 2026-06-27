@@ -37,9 +37,14 @@ object ApiClient {
         val request = if (token != null) {
             chain.request().newBuilder()
                 .addHeader("Authorization", "Bearer $token")
+                .addHeader("Accept", "application/json")
+                .addHeader("Connection", "close")
                 .build()
         } else {
-            chain.request()
+            chain.request().newBuilder()
+                .addHeader("Accept", "application/json")
+                .addHeader("Connection", "close")
+                .build()
         }
         chain.proceed(request)
     }

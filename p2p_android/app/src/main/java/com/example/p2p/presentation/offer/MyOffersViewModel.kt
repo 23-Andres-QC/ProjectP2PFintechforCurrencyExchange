@@ -28,9 +28,11 @@ class MyOffersViewModel(
     private val _uiState = MutableStateFlow(MyOffersUiState())
     val uiState: StateFlow<MyOffersUiState> = _uiState.asStateFlow()
 
-    fun loadMyOffers() {
+    fun loadMyOffers(showLoading: Boolean = true) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            }
             when (val result = offerRepository.getMyOffers()) {
                 is NetworkResult.Success -> {
                     val offers = result.data.filter { it.status != "closed" }

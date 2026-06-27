@@ -1,6 +1,9 @@
 from app.core.database import db
+from app.core.email import send_voucher_email
 from app.core.exceptions import NotFoundError, AuthorizationError, AppException
 from app.core.notifications import notify
+from app.core.receipt_pdf import build_receipt_pdf
+from app.core.storage import upload_receipt_pdf
 from app.models import Transaction
 from app.repositories.transaction_repository import TransactionRepository
 from app.repositories.offer_repository import OfferRepository
@@ -13,12 +16,12 @@ class TransactionService:
     @staticmethod
     def list_for_user(user_id: str, status: str | None = None) -> list[dict]:
         txns = TransactionRepository.get_by_user(user_id, status)
-        return [TransactionService._to_dict(t) for t in txns]
+        return TransactionService._to_dict_many(txns)
 
     @staticmethod
     def pending_for_vendor(user_id: str) -> list[dict]:
         txns = TransactionRepository.get_pending_for_vendor(user_id)
-        return [TransactionService._to_dict(t) for t in txns]
+        return TransactionService._to_dict_many(txns)
 
     @staticmethod
     def get(user_id: str, txn_id: str) -> dict:
@@ -110,7 +113,7 @@ class TransactionService:
 
         user = UserRepository.get_by_id(user_id)
         user_email = user.email if user else user_id
-        image_url = uploader(image_bytes, user_email, txn.id)
+        image_url = uploader(image_bytes, user_email, txn.id, role)
 
         voucher = TransactionRepository.add_voucher(
             transaction_id=txn.id,
@@ -131,6 +134,7 @@ class TransactionService:
         else:
             # Vendedor sube boleta: imagen guardada en Supabase y registrada.
             # El status permanece en voucher_uploaded para poder confirmar luego.
+            txn.vendor_voucher_url = image_url
             notify(
                 user_id=txn.buyer_id,
                 type='voucher',
@@ -177,8 +181,15 @@ class TransactionService:
             raise NotFoundError('Transaction not found')
         if txn.vendor_id != user_id:
             raise AuthorizationError('Only vendor can confirm')
-        if txn.status not in ('voucher_uploaded', 'pending', 'seller_voucher_uploaded'):
+        if txn.status != 'voucher_uploaded':
             raise AppException('INVALID_STATE', f'Cannot confirm from {txn.status}', 400)
+
+        buyer_voucher = TransactionRepository.get_latest_voucher(txn.id, txn.buyer_id)
+        seller_voucher = TransactionRepository.get_latest_voucher(txn.id, txn.vendor_id)
+        if not buyer_voucher:
+            raise AppException('MISSING_BUYER_VOUCHER', 'Buyer voucher is required before confirmation', 400)
+        if not (seller_voucher or txn.vendor_voucher_url):
+            raise AppException('MISSING_SELLER_VOUCHER', 'Seller voucher is required before confirmation', 400)
 
         txn.status = 'completed'
         vendor = UserRepository.get_by_id(txn.vendor_id)
@@ -196,8 +207,25 @@ class TransactionService:
             resource_id=txn.id,
         )
 
+        receipt_payload = TransactionService._to_dict(txn)
+        receipt_payload['status'] = 'completed'
+        pdf_bytes = build_receipt_pdf(receipt_payload)
+        if buyer:
+            txn.receipt_pdf_url = upload_receipt_pdf(pdf_bytes, buyer.email, txn.id)
+            send_voucher_email(
+                to_email=buyer.email,
+                buyer_name=buyer.full_name,
+                transaction_id=txn.id,
+                pdf_url=txn.receipt_pdf_url,
+                pdf_bytes=pdf_bytes,
+            )
+
         db.session.commit()
-        return {'message': 'Transaction completed', 'status': 'completed'}
+        return {
+            'message': 'Transaction completed',
+            'status': 'completed',
+            'receipt_pdf_url': txn.receipt_pdf_url or '',
+        }
 
     @staticmethod
     def open_dispute(user_id: str, txn_id: str, data: dict) -> dict:
@@ -229,10 +257,11 @@ class TransactionService:
             raise AuthorizationError('Not your transaction')
 
         if new_status == 'closed':
-            if txn.status != 'completed':
+            if txn.status not in ('completed', 'closed'):
                 raise AppException('INVALID_STATE', 'Can only close completed transactions', 400)
             if txn.buyer_id != user_id:
                 raise AuthorizationError('Only buyer can close the transaction')
+            new_status = 'completed'
         elif new_status not in ('cancelled', 'paused'):
             raise AppException('INVALID_STATUS', 'Status must be cancelled or paused', 400)
 
@@ -257,7 +286,7 @@ class TransactionService:
         ]
     
     @staticmethod
-    def upload_vendor_voucher(user_id: str, txn_id: str, data: dict) -> dict:
+    def upload_vendor_voucher(user_id: str, txn_id: str, data: dict, image_bytes: bytes | None = None, uploader=None) -> dict:
         txn = TransactionRepository.get_by_id(txn_id)
         if not txn:
             raise NotFoundError('Transaction not found')
@@ -267,6 +296,16 @@ class TransactionService:
             raise AppException('INVALID_STATE', f'Cannot upload from status: {txn.status}', 400)
 
         image_url = data.get('image_url', '')
+        if not image_url and image_bytes is not None and uploader is not None:
+            user = UserRepository.get_by_id(user_id)
+            user_email = user.email if user else user_id
+            image_url = uploader(image_bytes, user_email, txn.id, 'seller')
+            TransactionRepository.add_voucher(
+                transaction_id=txn.id,
+                sender_id=user_id,
+                image_url=image_url,
+                description=data.get('description') or 'Comprobante del vendedor',
+            )
         if not image_url:
             raise AppException('MISSING_FIELD', 'image_url is required', 400)
 
@@ -278,6 +317,32 @@ class TransactionService:
     def _to_dict(t: Transaction) -> dict:
         buyer = UserRepository.get_by_id(t.buyer_id)
         vendor = UserRepository.get_by_id(t.vendor_id)
+        buyer_voucher = TransactionRepository.get_latest_voucher(t.id, t.buyer_id)
+        seller_voucher = TransactionRepository.get_latest_voucher(t.id, t.vendor_id)
+        return TransactionService._transaction_dict(t, buyer, vendor, buyer_voucher, seller_voucher)
+
+    @staticmethod
+    def _to_dict_many(transactions: list[Transaction]) -> list[dict]:
+        if not transactions:
+            return []
+
+        user_ids = {t.buyer_id for t in transactions} | {t.vendor_id for t in transactions}
+        users = {u.id: u for u in UserRepository.get_by_ids(list(user_ids))}
+        vouchers = TransactionRepository.get_latest_vouchers_for_transactions([t.id for t in transactions])
+
+        return [
+            TransactionService._transaction_dict(
+                t,
+                users.get(t.buyer_id),
+                users.get(t.vendor_id),
+                vouchers.get((t.id, t.buyer_id)),
+                vouchers.get((t.id, t.vendor_id)),
+            )
+            for t in transactions
+        ]
+
+    @staticmethod
+    def _transaction_dict(t: Transaction, buyer, vendor, buyer_voucher, seller_voucher) -> dict:
         return {
             'id': t.id,
             'offer_id': t.offer_id,
@@ -293,6 +358,9 @@ class TransactionService:
             'vendor_payment_account': t.vendor_payment_account,
             'created_at': t.created_at.isoformat() if t.created_at else None,
             'updated_at': t.updated_at.isoformat() if t.updated_at else None,
-            'vendor_voucher_url': t.vendor_voucher_url, 
+            'buyer_voucher_url': buyer_voucher.image_url if buyer_voucher else None,
+            'seller_voucher_url': seller_voucher.image_url if seller_voucher else t.vendor_voucher_url,
+            'vendor_voucher_url': t.vendor_voucher_url,
+            'receipt_pdf_url': t.receipt_pdf_url,
         }
     

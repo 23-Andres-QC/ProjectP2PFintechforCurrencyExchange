@@ -11,7 +11,7 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     PROPAGATE_EXCEPTIONS = False
-    SQLALCHEMY_ECHO = True
+    SQLALCHEMY_ECHO = os.getenv('SQLALCHEMY_ECHO', 'false').lower() == 'true'
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DATABASE_URL',
         'postgresql://p2p_user:p2p_password@localhost:5432/p2p_exchange_dev'

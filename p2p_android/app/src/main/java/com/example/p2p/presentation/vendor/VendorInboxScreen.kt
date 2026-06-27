@@ -36,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import coil.compose.AsyncImage
 import com.example.p2p.data.remote.model.Transaction
 import com.example.p2p.presentation.transaction.TransactionViewModel
 import com.example.p2p.ui.theme.*
@@ -62,8 +64,8 @@ fun VendorInboxScreen(
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(5000L)
-            viewModel.loadPendingTransactions()
+            delay(2500L)
+            viewModel.loadPendingTransactions(showLoading = false)
         }
     }
 
@@ -170,10 +172,33 @@ fun VendorInboxScreen(
                         VendorTransactionCard(
                             transaction = txn,
                             onAccept = { confirmAcceptTxnId = txn.id },
-                            onConfirm = { confirmingTransaction = txn },
+                            onConfirm = { hasSellerVoucher ->
+                                if (hasSellerVoucher) {
+                                    viewModel.confirmTransaction(
+                                        txn.id,
+                                        onSuccess = {
+                                            Toast.makeText(context, "Fondos liberados con exito", Toast.LENGTH_SHORT).show()
+                                            viewModel.loadPendingTransactions()
+                                        },
+                                        onError = { err ->
+                                            Toast.makeText(context, "Error al confirmar: $err", Toast.LENGTH_LONG).show()
+                                        }
+                                    )
+                                } else {
+                                    confirmingTransaction = txn
+                                }
+                            },
                             onCancel = { confirmCancelTxnId = txn.id },
                             onUploadVendorVoucher = { base64, onSuccess, onError ->
-                                viewModel.uploadVendorVoucherFromBase64(txn.id, base64, onSuccess, onError)
+                                viewModel.uploadVendorVoucherFromBase64(
+                                    txn.id,
+                                    base64,
+                                    onSuccess = {
+                                        viewModel.loadPendingTransactions()
+                                        onSuccess()
+                                    },
+                                    onError = onError
+                                )
                             }
                         )
                     }
@@ -222,6 +247,7 @@ private fun VendorConfirmScreen(
     var timeLeft by remember { mutableStateOf(15 * 60) }
     var selectedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var selectedFileName by remember { mutableStateOf("") }
+    var previewVoucherUrl by remember { mutableStateOf<String?>(null) }
     var isUploadingVoucher by remember { mutableStateOf(false) }
     var isConfirming by remember { mutableStateOf(false) }
 
@@ -242,14 +268,18 @@ private fun VendorConfirmScreen(
                     if (bytes != null) {
                         selectedBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                         val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
-                        val success = viewModel.uploadVoucherFromBase64Async(transaction.id, base64)
-                        if (success) {
-                            Toast.makeText(context, "Boleta subida correctamente.", Toast.LENGTH_LONG).show()
-                        } else {
-                            selectedBitmap = null
-                            selectedFileName = ""
-                            Toast.makeText(context, "Error al subir la boleta. Intenta de nuevo.", Toast.LENGTH_LONG).show()
-                        }
+                        viewModel.uploadVendorVoucherFromBase64(
+                            transaction.id,
+                            base64,
+                            onSuccess = {
+                                Toast.makeText(context, "Boleta subida correctamente.", Toast.LENGTH_LONG).show()
+                            },
+                            onError = {
+                                selectedBitmap = null
+                                selectedFileName = ""
+                                Toast.makeText(context, "Error al subir la boleta. Intenta de nuevo.", Toast.LENGTH_LONG).show()
+                            }
+                        )
                     } else {
                         Toast.makeText(context, "No se pudo leer la imagen.", Toast.LENGTH_SHORT).show()
                     }
@@ -273,7 +303,8 @@ private fun VendorConfirmScreen(
 
     val minutes = timeLeft / 60
     val seconds = timeLeft % 60
-    val boletaReady = selectedBitmap != null
+    val sellerVoucherUrl = transaction.seller_voucher_url ?: transaction.vendor_voucher_url
+    val boletaReady = selectedBitmap != null || !sellerVoucherUrl.isNullOrBlank()
     val currentStep = if (boletaReady) 3 else 2
     val steps = listOf("Inicio", "Pagar", "Boleta", "Confirmar", "Liberado")
 
@@ -489,6 +520,47 @@ private fun VendorConfirmScreen(
             }
 
             // ── Sección de subir boleta del vendedor ─────────────────────────────
+            transaction.buyer_voucher_url?.let { voucherUrl ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(SurfaceColor)
+                        .border(1.dp, SuccessColor.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Filled.ReceiptLong, contentDescription = null, tint = SuccessColor)
+                        Text("Voucher del comprador", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextMain)
+                    }
+                    AsyncImage(
+                        model = voucherUrl,
+                        contentDescription = "Voucher del comprador",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(1.dp, BorderColor, RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                    OutlinedButton(
+                        onClick = { previewVoucherUrl = voucherUrl },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Primary),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Primary)
+                    ) {
+                        Icon(Icons.Filled.Visibility, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Ver voucher completo", fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -571,15 +643,27 @@ private fun VendorConfirmScreen(
                     } else {
                         if (boletaReady) {
                             Box(modifier = Modifier.fillMaxWidth()) {
-                                Image(
-                                    bitmap = selectedBitmap!!.asImageBitmap(),
-                                    contentDescription = "Boleta de transferencia",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp)
-                                        .clip(RoundedCornerShape(10.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
+                                if (selectedBitmap != null) {
+                                    Image(
+                                        bitmap = selectedBitmap!!.asImageBitmap(),
+                                        contentDescription = "Boleta de transferencia",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(200.dp)
+                                            .clip(RoundedCornerShape(10.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    AsyncImage(
+                                        model = sellerVoucherUrl,
+                                        contentDescription = "Boleta de transferencia",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(200.dp)
+                                            .clip(RoundedCornerShape(10.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
@@ -740,6 +824,14 @@ private fun VendorConfirmScreen(
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
+
+    previewVoucherUrl?.let { url ->
+        VoucherImageDialog(
+            imageUrl = url,
+            title = "Voucher del comprador",
+            onDismiss = { previewVoucherUrl = null }
+        )
+    }
 }
 
 @Composable
@@ -758,8 +850,12 @@ private fun VendorTransactionCard(
     val isCompleted = transaction.status == "completed"
 
     var vendorBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var vendorVoucherReady by remember { mutableStateOf(false) }
+    val existingSellerVoucherUrl = transaction.seller_voucher_url ?: transaction.vendor_voucher_url
+    var vendorVoucherReady by remember(transaction.id, existingSellerVoucherUrl) {
+        mutableStateOf(!existingSellerVoucherUrl.isNullOrBlank())
+    }
     var isUploadingVendorVoucher by remember { mutableStateOf(false) }
+    var previewVoucherUrl by remember { mutableStateOf<String?>(null) }
 
     val vendorImagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
@@ -928,6 +1024,52 @@ private fun VendorTransactionCard(
                         }
                     }
 
+                    val buyerVoucherUrl = transaction.buyer_voucher_url
+                    if (!buyerVoucherUrl.isNullOrBlank()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(SuccessColor.copy(alpha = 0.07f))
+                                .border(1.dp, SuccessColor.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Filled.ReceiptLong, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(16.dp))
+                                Text("Voucher del comprador", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMain)
+                            }
+                            OutlinedButton(
+                                onClick = { previewVoucherUrl = buyerVoucherUrl },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = SuccessColor),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, SuccessColor)
+                            ) {
+                                Icon(Icons.Filled.Visibility, contentDescription = null, modifier = Modifier.size(15.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Ver voucher de pago", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                            }
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(DangerColor.copy(alpha = 0.07f))
+                                .border(1.dp, DangerColor.copy(alpha = 0.22f), RoundedCornerShape(10.dp))
+                                .padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.Info, contentDescription = null, tint = DangerColor, modifier = Modifier.size(16.dp))
+                            Text("El pago figura recibido, pero falta la URL del voucher. Refresca la pantalla.", fontSize = 11.sp, color = TextMuted)
+                        }
+                    }
+
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         HorizontalDivider(modifier = Modifier.weight(1f), color = BorderColor)
                         Text("TU COMPROBANTE", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = TextMuted)
@@ -957,14 +1099,23 @@ private fun VendorTransactionCard(
                                 }
                             }
                         } else {
-                            if (vendorBitmap != null) {
+                            if (vendorBitmap != null || !existingSellerVoucherUrl.isNullOrBlank()) {
                                 Box(modifier = Modifier.fillMaxWidth()) {
-                                    Image(
-                                        bitmap = vendorBitmap!!.asImageBitmap(),
-                                        contentDescription = null,
-                                        modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(10.dp)),
-                                        contentScale = ContentScale.Crop
-                                    )
+                                    if (vendorBitmap != null) {
+                                        Image(
+                                            bitmap = vendorBitmap!!.asImageBitmap(),
+                                            contentDescription = null,
+                                            modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(10.dp)),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    } else {
+                                        AsyncImage(
+                                            model = existingSellerVoucherUrl,
+                                            contentDescription = null,
+                                            modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(10.dp)),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
                                     if (vendorVoucherReady) {
                                         Box(
                                             modifier = Modifier.align(Alignment.TopEnd).padding(6.dp)
@@ -1042,6 +1193,53 @@ private fun VendorTransactionCard(
                     Text("Fondos liberados. El comprador está cerrando la operación.", fontSize = 11.sp, color = SuccessColor, fontWeight = FontWeight.Medium)
                 }
             }
+        }
+    }
+
+    previewVoucherUrl?.let { url ->
+        VoucherImageDialog(
+            imageUrl = url,
+            title = "Voucher del comprador",
+            onDismiss = { previewVoucherUrl = null }
+        )
+    }
+}
+
+@Composable
+private fun VoucherImageDialog(
+    imageUrl: String,
+    title: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(SurfaceColor)
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextMain)
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = TextMain)
+                }
+            }
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 360.dp, max = 560.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(1.dp, BorderColor, RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Fit
+            )
         }
     }
 }

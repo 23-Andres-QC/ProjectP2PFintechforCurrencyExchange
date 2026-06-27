@@ -307,6 +307,8 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
             ) { backStack ->
                 val txnRepo = TransactionRepositoryImpl(ApiClient.transactionApi)
                 val vm: TransactionViewModel = viewModel(factory = TransactionViewModel.Factory(txnRepo))
+                val ratingRepo = RatingRepositoryImpl(ApiClient.ratingApi)
+                val ratingVm: RatingViewModel = viewModel(factory = RatingViewModel.Factory(ratingRepo, txnRepo))
                 val id = backStack.arguments?.getString("transactionId") ?: ""
                 var txnCurrentUserId by remember { mutableStateOf("") }
                 LaunchedEffect(Unit) { txnCurrentUserId = tokenManager.getUserId() ?: "" }
@@ -317,6 +319,15 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                     onNavigateToDispute = { txnId -> navController.navigate(Screen.RegisterDispute.createRoute(txnId)) },
                     onNavigateToReceipt = { txnId -> navController.navigate(Screen.Receipt.createRoute(txnId)) },
                     onNavigateToRating = { txnId, score -> navController.navigate(Screen.Rating.createRoute(txnId, score)) },
+                    onSubmitRating = { score, comment, onSuccess, onError ->
+                        ratingVm.submitRating(
+                            transactionId = id,
+                            score = score,
+                            comment = comment,
+                            onSuccess = onSuccess,
+                            onError = onError
+                        )
+                    },
                     onNavigateBack = {
                         val currentStatus = vm.uiState.value.transaction?.status
                         if (currentStatus in listOf("pending", "accepted", "voucher_uploaded")) {

@@ -1,5 +1,9 @@
 package com.example.p2p.presentation.receipt
 
+import android.app.DownloadManager
+import android.content.Context
+import android.net.Uri
+import android.os.Environment
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -50,6 +54,7 @@ fun ReceiptScreen(
     val vendorName = txn?.vendor_name ?: "Vendedor"
     val rate       = txn?.exchange_rate ?: 3.780
     val amountFiat = txn?.amount_to ?: 0.0
+    val receiptPdfUrl = txn?.receipt_pdf_url
 
     Column(
         modifier = Modifier
@@ -204,7 +209,21 @@ fun ReceiptScreen(
 
         Button(
             onClick = {
-                Toast.makeText(context, "Comprobante PDF descargado.", Toast.LENGTH_SHORT).show()
+                if (receiptPdfUrl.isNullOrBlank()) {
+                    Toast.makeText(context, "El PDF aun no esta disponible.", Toast.LENGTH_SHORT).show()
+                } else {
+                    val request = DownloadManager.Request(Uri.parse(receiptPdfUrl))
+                        .setTitle("voucher-${transactionId?.take(8) ?: "peruexchange"}.pdf")
+                        .setDescription("Voucher de compra PeruExchange")
+                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        .setDestinationInExternalPublicDir(
+                            Environment.DIRECTORY_DOWNLOADS,
+                            "voucher-${transactionId?.take(8) ?: "peruexchange"}.pdf"
+                        )
+                    val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                    manager.enqueue(request)
+                    Toast.makeText(context, "Descargando PDF...", Toast.LENGTH_SHORT).show()
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -220,32 +239,6 @@ fun ReceiptScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Descargar Comprobante",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        OutlinedButton(
-            onClick = {
-                onNavigateToRating(transactionId ?: "")
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = WarningColor),
-            border = androidx.compose.foundation.BorderStroke(1.5.dp, WarningColor)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Star,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Calificar Vendedor",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold
             )

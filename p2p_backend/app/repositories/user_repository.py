@@ -9,6 +9,12 @@ class UserRepository:
         return db.session.get(User, user_id)
 
     @staticmethod
+    def get_by_ids(user_ids: list[str]):
+        if not user_ids:
+            return []
+        return User.query.filter(User.id.in_(user_ids)).all()
+
+    @staticmethod
     def get_by_email(email: str) -> User | None:
         return User.query.filter_by(email=email).first()
 

@@ -44,9 +44,11 @@ class TransactionViewModel(
         }
     }
 
-    fun loadPendingTransactions() {
+    fun loadPendingTransactions(showLoading: Boolean = true) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            }
             when (val result = transactionRepository.getPendingTransactions()) {
                 is NetworkResult.Success -> {
                     val activeTxns = result.data.filter { txn ->
@@ -63,9 +65,11 @@ class TransactionViewModel(
         }
     }
 
-    fun loadTransaction(id: String) {
+    fun loadTransaction(id: String, showLoading: Boolean = true) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            }
             when (val result = transactionRepository.getTransaction(id)) {
                 is NetworkResult.Success -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, transaction = result.data)

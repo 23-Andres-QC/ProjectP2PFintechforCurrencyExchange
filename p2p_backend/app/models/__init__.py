@@ -50,10 +50,11 @@ class Transaction(BaseModel):
     amount_from    = db.Column(db.Float, nullable=False)
     amount_to      = db.Column(db.Float, nullable=False)
     exchange_rate  = db.Column(db.Float, nullable=False)
-    status         = db.Column(db.String(20), default='pending', index=True)
+    status         = db.Column(db.String(40), default='pending', index=True)
     buyer_payment_account  = db.Column(db.Text)
     vendor_payment_account = db.Column(db.Text)
     vendor_voucher_url     = db.Column(db.Text, nullable=True)
+    receipt_pdf_url        = db.Column(db.Text, nullable=True)
 
 
 class Voucher(BaseModel):
@@ -62,7 +63,7 @@ class Voucher(BaseModel):
     sender_id      = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
     image_url      = db.Column(db.String(500), nullable=False)
     description    = db.Column(db.Text)
-    status         = db.Column(db.String(20), default='pending')
+    status         = db.Column(db.String(40), default='pending')
 
 
 class Rating(BaseModel):

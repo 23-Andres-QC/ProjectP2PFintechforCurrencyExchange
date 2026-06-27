@@ -17,18 +17,31 @@ def _get_client():
     return _client
 
 
-def upload_voucher(image_bytes: bytes, user_email: str, transaction_id: str) -> str:
-    """
-    Sube voucher al bucket 'vouchers' en Supabase.
-    Estructura: {email_sanitizado}/{transaction_id}/{uuid}.jpg
-    Retorna la URL pública de la imagen.
-    """
+def _safe_name(value: str) -> str:
+    return value.replace('@', '_').replace('.', '_').replace('+', '_').replace('/', '_')
+
+
+def upload_file(file_bytes: bytes, path: str, content_type: str) -> str:
     client = _get_client()
-    safe_name = user_email.replace('@', '_').replace('.', '_').replace('+', '_')
-    path = f"{safe_name}/{transaction_id}/{uuid.uuid4()}.jpg"
     client.storage.from_(BUCKET).upload(
         path=path,
-        file=image_bytes,
-        file_options={"content-type": "image/jpeg"}
+        file=file_bytes,
+        file_options={"content-type": content_type, "upsert": "true"},
     )
     return client.storage.from_(BUCKET).get_public_url(path)
+
+
+def upload_voucher(image_bytes: bytes, user_email: str, transaction_id: str, role: str = 'buyer') -> str:
+    """
+    Sube voucher al bucket 'vouchers' en Supabase.
+    Estructura: buyer|seller/{email_sanitizado}/{transaction_id}/{uuid}.jpg
+    Retorna la URL publica de la imagen.
+    """
+    safe_role = role if role in ('buyer', 'seller') else 'buyer'
+    path = f"{safe_role}/{_safe_name(user_email)}/{transaction_id}/{uuid.uuid4()}.jpg"
+    return upload_file(image_bytes, path, "image/jpeg")
+
+
+def upload_receipt_pdf(pdf_bytes: bytes, user_email: str, transaction_id: str) -> str:
+    path = f"receipts/{_safe_name(user_email)}/{transaction_id}/voucher-compra.pdf"
+    return upload_file(pdf_bytes, path, "application/pdf")

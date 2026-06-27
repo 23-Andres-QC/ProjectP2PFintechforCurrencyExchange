@@ -90,6 +90,33 @@ class TransactionRepository:
         )
 
     @staticmethod
+    def get_latest_voucher(transaction_id: str, sender_id: str):
+        return (
+            Voucher.query
+            .filter_by(transaction_id=transaction_id, sender_id=sender_id)
+            .order_by(Voucher.created_at.desc())
+            .first()
+        )
+
+    @staticmethod
+    def get_latest_vouchers_for_transactions(transaction_ids: list[str]):
+        if not transaction_ids:
+            return {}
+
+        latest = {}
+        vouchers = (
+            Voucher.query
+            .filter(Voucher.transaction_id.in_(transaction_ids))
+            .order_by(Voucher.created_at.desc())
+            .all()
+        )
+        for voucher in vouchers:
+            key = (voucher.transaction_id, voucher.sender_id)
+            if key not in latest:
+                latest[key] = voucher
+        return latest
+
+    @staticmethod
     def set_status(txn: Transaction, status: str) -> Transaction:
         txn.status = status
         return txn

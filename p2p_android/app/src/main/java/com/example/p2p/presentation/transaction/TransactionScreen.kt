@@ -47,6 +47,7 @@ fun TransactionScreen(
     onNavigateToDispute: (String) -> Unit = {},
     onNavigateToReceipt: (String) -> Unit = {},
     onNavigateToRating: (String, Int) -> Unit = { _, _ -> },
+    onSubmitRating: (Int, String?, () -> Unit, (String) -> Unit) -> Unit = { _, _, _, _ -> },
     onNavigateBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -59,6 +60,8 @@ fun TransactionScreen(
     var selectedFileName by remember { mutableStateOf("") }
     var showRatingDialog by remember { mutableStateOf(false) }
     var selectedStars by remember { mutableStateOf(0) }
+    var ratingComment by remember { mutableStateOf("") }
+    var isSubmittingRating by remember { mutableStateOf(false) }
     var previousStatus by remember { mutableStateOf("") }
 
     val imagePicker = rememberLauncherForActivityResult(
@@ -109,9 +112,9 @@ fun TransactionScreen(
 
     LaunchedEffect(transactionId) {
         while (true) {
-            delay(5000L)
+            delay(2500L)
             if (transactionId != null) {
-                viewModel?.loadTransaction(transactionId)
+                viewModel?.loadTransaction(transactionId, showLoading = false)
             }
         }
     }
@@ -137,7 +140,7 @@ fun TransactionScreen(
         "pending" -> "ORDEN P2P EN CURSO"
         "accepted" -> "VENDEDOR ACEPTÓ TU ORDEN"
         "voucher_uploaded" -> "VERIFICANDO PAGO"
-        "completed" -> "COMPLETADA"
+        "completed", "closed" -> "COMPLETADA"
         "cancelled" -> "CANCELADA"
         "disputed" -> "EN DISPUTA"
         else -> "ORDEN P2P EN CURSO"
@@ -222,7 +225,7 @@ fun TransactionScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    if (txn?.status == "voucher_uploaded" || txn?.status == "completed") {
+                    if (txn?.status == "voucher_uploaded" || txn?.status == "completed" || txn?.status == "closed") {
                         Text(
                             text = "VOUCHER SUBIDO",
                             fontSize = 28.sp,
@@ -257,7 +260,7 @@ fun TransactionScreen(
                 "pending"          -> if (isUploadingVoucher) 2 else 1
                 "accepted"         -> 1
                 "voucher_uploaded" -> 2
-                "completed"        -> 4
+                "completed", "closed" -> 4
                 "disputed"         -> 3
                 else               -> 0
             }
@@ -644,7 +647,7 @@ fun TransactionScreen(
                 }
             }
 
-            if (txn?.status == "completed") {
+            if (txn?.status == "completed" || txn?.status == "closed") {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = SuccessColor.copy(alpha = 0.1f)),
                     border = androidx.compose.foundation.BorderStroke(1.dp, SuccessColor.copy(alpha = 0.3f)),
@@ -677,6 +680,16 @@ fun TransactionScreen(
                             textAlign = TextAlign.Center
                         )
                     }
+                }
+                Button(
+                    onClick = { onNavigateToReceipt(transactionId ?: "") },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                ) {
+                    Icon(Icons.Filled.Download, contentDescription = null, tint = Color.White)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Ver y descargar voucher PDF", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
                 Button(
                     onClick = { showRatingDialog = true },
@@ -844,27 +857,63 @@ fun TransactionScreen(
                             textAlign = TextAlign.Center
                         )
                     }
+                    OutlinedTextField(
+                        value = ratingComment,
+                        onValueChange = { ratingComment = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 4,
+                        placeholder = { Text("Agrega un comentario opcional") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Primary,
+                            unfocusedBorderColor = BorderColor,
+                            focusedTextColor = TextMain,
+                            unfocusedTextColor = TextMain,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            cursorColor = Primary
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        showRatingDialog = false
-                        onNavigateToRating(transactionId ?: "", selectedStars.coerceAtLeast(1))
+                        isSubmittingRating = true
+                        onSubmitRating(
+                            selectedStars.coerceAtLeast(1),
+                            ratingComment.trim().takeIf { it.isNotBlank() },
+                            {
+                                isSubmittingRating = false
+                                showRatingDialog = false
+                                Toast.makeText(context, "Calificacion enviada", Toast.LENGTH_SHORT).show()
+                                onNavigateBack()
+                            },
+                            { err ->
+                                isSubmittingRating = false
+                                Toast.makeText(context, err, Toast.LENGTH_LONG).show()
+                            }
+                        )
                     },
-                    enabled = selectedStars > 0,
+                    enabled = selectedStars > 0 && !isSubmittingRating,
                     colors = ButtonDefaults.buttonColors(containerColor = Primary),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Enviar calificación", fontWeight = FontWeight.SemiBold)
+                    if (isSubmittingRating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Enviar calificacion", fontWeight = FontWeight.SemiBold)
+                    }
                 }
             },
             dismissButton = {
                 TextButton(onClick = {
                     showRatingDialog = false
-                    if (transactionId != null) {
-                        viewModel?.updateStatus(transactionId, "closed")
-                    }
                     onNavigateBack()
                 }) {
                     Text("Omitir por ahora", color = TextMuted)

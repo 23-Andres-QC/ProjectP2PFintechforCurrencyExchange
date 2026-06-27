@@ -205,12 +205,13 @@ CREATE TABLE public.transactions (
     amount_from double precision NOT NULL,
     amount_to double precision NOT NULL,
     exchange_rate double precision NOT NULL,
-    status character varying(20) DEFAULT 'pending'::character varying,
+    status character varying(40) DEFAULT 'pending'::character varying,
     buyer_payment_account text,
     vendor_payment_account text,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    vendor_voucher_url text
+    vendor_voucher_url text,
+    receipt_pdf_url text
 );
 
 
@@ -253,7 +254,7 @@ CREATE TABLE public.vouchers (
     sender_id character varying(36) NOT NULL,
     image_url character varying(500) NOT NULL,
     description text,
-    status character varying(20) DEFAULT 'pending'::character varying,
+    status character varying(40) DEFAULT 'pending'::character varying,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );

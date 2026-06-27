@@ -61,12 +61,11 @@ fun MarketScreen(
 
     LaunchedEffect(selectedFiat, selectedCurrency) {
         viewModel.loadOffers(currency = selectedCurrency, fiatCurrency = selectedFiat)
-    }
-
-    LaunchedEffect(Unit) {
         while (true) {
+            kotlinx.coroutines.delay(4000L)
+            viewModel.loadOffers(currency = selectedCurrency, fiatCurrency = selectedFiat, showLoading = false)
             viewModel.loadActiveTransactions()
-            kotlinx.coroutines.delay(8000L)
+            viewModel.loadUnreadCount()
         }
     }
 

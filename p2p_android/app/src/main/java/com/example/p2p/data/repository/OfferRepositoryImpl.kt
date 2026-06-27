@@ -69,16 +69,23 @@ class OfferRepositoryImpl(
     }
 
     override suspend fun getMyOffers(): NetworkResult<List<Offer>> {
-        return try {
-            val response = api.myOffers()
-            if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!.offers)
-            } else {
-                NetworkResult.Error(response.code(), response.message())
+        repeat(2) { attempt ->
+            try {
+                val response = api.myOffers()
+                return if (response.isSuccessful && response.body() != null) {
+                    NetworkResult.Success(response.body()!!.offers)
+                } else {
+                    NetworkResult.Error(response.code(), response.message())
+                }
+            } catch (e: Exception) {
+                val message = e.message ?: "An error occurred"
+                if (attempt == 0 && message.contains("unexpected end of stream", ignoreCase = true)) {
+                    return@repeat
+                }
+                return NetworkResult.Error(-1, message)
             }
-        } catch (e: Exception) {
-            NetworkResult.Error(-1, e.message ?: "An error occurred")
         }
+        return NetworkResult.Error(-1, "No se pudo cargar tus ofertas. Intenta nuevamente.")
     }
 
     override suspend fun matchOffer(currency: String, fiatCurrency: String): NetworkResult<Offer> {

@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.Notification
 import com.example.p2p.ui.theme.*
+import kotlinx.coroutines.delay
 
 private enum class NotifFilter { ALL, UNREAD }
 
@@ -43,6 +44,13 @@ fun NotificationsScreen(
     }
 
     val grouped = remember(displayed) { groupByDate(displayed) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(5000L)
+            viewModel.loadAndMarkRead(showLoading = false)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().background(BackgroundApp)) {
 

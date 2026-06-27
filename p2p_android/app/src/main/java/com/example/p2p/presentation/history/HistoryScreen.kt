@@ -73,7 +73,7 @@ fun HistoryScreen(
 
     val transactions = uiState.transactions.map { dto ->
         val statusName = when (dto.status) {
-            "completed" -> "Completado"
+            "completed", "closed" -> "Completado"
             "pending" -> "Pendiente"
             "accepted" -> "Aceptado"
             "voucher_uploaded" -> "En Proceso"
@@ -82,13 +82,13 @@ fun HistoryScreen(
             else -> dto.status
         }
         val sColor = when (dto.status) {
-            "completed" -> SuccessColor
+            "completed", "closed" -> SuccessColor
             "pending", "accepted", "voucher_uploaded" -> WarningColor
             "cancelled", "disputed" -> DangerColor
             else -> TextMuted
         }
         val icon = when (dto.status) {
-            "completed" -> Icons.Default.SwapHoriz
+            "completed", "closed" -> Icons.Default.SwapHoriz
             "pending", "accepted", "voucher_uploaded" -> Icons.Default.Schedule
             "cancelled" -> Icons.Default.Cancel
             "disputed" -> Icons.Default.Gavel

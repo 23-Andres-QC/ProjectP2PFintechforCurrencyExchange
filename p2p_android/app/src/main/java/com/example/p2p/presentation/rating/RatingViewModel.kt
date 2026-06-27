@@ -45,7 +45,6 @@ class RatingViewModel(
 
     fun closeTransaction(transactionId: String, onDone: () -> Unit) {
         viewModelScope.launch {
-            transactionRepository?.updateStatus(transactionId, "closed")
             onDone()
         }
     }

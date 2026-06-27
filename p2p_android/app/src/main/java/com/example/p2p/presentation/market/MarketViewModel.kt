@@ -102,9 +102,11 @@ class MarketViewModel(
         }
     }
 
-    fun loadOffers(currency: String? = null, fiatCurrency: String? = null) {
+    fun loadOffers(currency: String? = null, fiatCurrency: String? = null, showLoading: Boolean = true) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            }
             when (val result = offerRepository.listOffers(currency, fiatCurrency)) {
                 is NetworkResult.Success -> _uiState.value = _uiState.value.copy(isLoading = false, offers = result.data)
                 is NetworkResult.Error   -> _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
