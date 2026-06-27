@@ -66,6 +66,12 @@ def upload_voucher(txn_id):
 
     return TransactionService.upload_voucher(user_id, txn_id, data, image_bytes, supabase_upload), 201
 
+@transactions_bp.route('/<txn_id>/vendor-voucher', methods=['POST'])
+@jwt_required()
+def upload_vendor_voucher(txn_id):
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+    return TransactionService.upload_vendor_voucher(user_id, txn_id, data), 200
 
 @transactions_bp.route('/<txn_id>/confirm', methods=['POST'])
 @jwt_required()

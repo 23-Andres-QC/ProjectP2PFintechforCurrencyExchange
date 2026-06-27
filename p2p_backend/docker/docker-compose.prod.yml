@@ -1,0 +1,4 @@
+services:
+  p2p_backend:
+    environment:
+      DATABASE_URL: postgresql://postgres.vrllsmgbryarqpdlzxor:p2pmoviles2601@aws-1-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require

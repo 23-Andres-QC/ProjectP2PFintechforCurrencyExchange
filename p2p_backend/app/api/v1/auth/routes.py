@@ -52,3 +52,28 @@ def me():
 @jwt_required()
 def logout():
     return {'message': 'Logged out'}, 200
+
+# <-agregué esta línea:
+@auth_bp.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    return {'message': 'Logged out'}, 200
+
+@auth_bp.route('/kyc', methods=['POST'])
+@jwt_required()
+def submit_kyc():
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+
+    user = UserService.get_by_id(user_id)
+    
+    if data.get('signature_url'):
+        user.signature_url = data.get('signature_url')
+    if data.get('dni_image_url'):
+        user.dni_image_url = data.get('dni_image_url')
+
+    from app.core.database import db
+    db.session.commit()
+
+    updated_user = UserService.submit_kyc(user_id)
+    return updated_user.to_dict(), 200

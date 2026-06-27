@@ -255,7 +255,25 @@ class TransactionService:
             }
             for d in disputes
         ]
+    
+    @staticmethod
+    def upload_vendor_voucher(user_id: str, txn_id: str, data: dict) -> dict:
+        txn = TransactionRepository.get_by_id(txn_id)
+        if not txn:
+            raise NotFoundError('Transaction not found')
+        if txn.vendor_id != user_id:
+            raise AuthorizationError('Only vendor can upload vendor voucher')
+        if txn.status != 'voucher_uploaded':
+            raise AppException('INVALID_STATE', f'Cannot upload from status: {txn.status}', 400)
 
+        image_url = data.get('image_url', '')
+        if not image_url:
+            raise AppException('MISSING_FIELD', 'image_url is required', 400)
+
+        txn.vendor_voucher_url = image_url
+        db.session.commit()
+        return {'message': 'Vendor voucher saved', 'url': image_url}
+    
     @staticmethod
     def _to_dict(t: Transaction) -> dict:
         buyer = UserRepository.get_by_id(t.buyer_id)
@@ -275,4 +293,6 @@ class TransactionService:
             'vendor_payment_account': t.vendor_payment_account,
             'created_at': t.created_at.isoformat() if t.created_at else None,
             'updated_at': t.updated_at.isoformat() if t.updated_at else None,
+            'vendor_voucher_url': t.vendor_voucher_url, 
         }
+    
