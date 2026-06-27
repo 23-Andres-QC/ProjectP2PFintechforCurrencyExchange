@@ -50,11 +50,12 @@ fun TransactionDetailScreen(
         "voucher_uploaded"-> "EN PROCESO"
         "cancelled"       -> "CANCELADO"
         "disputed"        -> "EN DISPUTA"
+        "paused"          -> "EN PAUSA"
         else              -> txn?.status?.uppercase() ?: "CARGANDO..."
     }
     val statusColor = when (txn?.status) {
         "completed", "closed" -> SuccessColor
-        "pending", "voucher_uploaded" -> WarningColor
+        "pending", "voucher_uploaded", "paused" -> WarningColor
         "cancelled", "disputed"       -> DangerColor
         else              -> TextMuted
     }

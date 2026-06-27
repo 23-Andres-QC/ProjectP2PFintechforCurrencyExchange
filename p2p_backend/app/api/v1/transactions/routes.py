@@ -81,7 +81,7 @@ def upload_vendor_voucher(txn_id):
         try:
             image_bytes = base64.b64decode(image_b64)
         except Exception:
-            return {'error': {'code': 'INVALID_IMAGE', 'message': 'Imagen base64 invÃ¡lida'}}, 400
+            return {'error': {'code': 'INVALID_IMAGE', 'message': 'Imagen base64 inválida'}}, 400
 
     return TransactionService.upload_vendor_voucher(
         user_id,

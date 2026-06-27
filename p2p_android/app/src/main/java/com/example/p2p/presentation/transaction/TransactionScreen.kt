@@ -171,6 +171,7 @@ fun TransactionScreen(
         "completed", "closed" -> "COMPLETADA"
         "cancelled" -> "CANCELADA"
         "disputed" -> "EN DISPUTA"
+        "paused" -> "ORDEN EN PAUSA"
         else -> "ORDEN P2P EN CURSO"
     }
 

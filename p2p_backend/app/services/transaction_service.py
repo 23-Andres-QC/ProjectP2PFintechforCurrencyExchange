@@ -269,9 +269,15 @@ class TransactionService:
                 raise AppException('INVALID_STATE', 'Can only close completed transactions', 400)
             if txn.buyer_id != user_id:
                 raise AuthorizationError('Only buyer can close the transaction')
-            new_status = 'completed'
         elif new_status not in ('cancelled', 'paused'):
             raise AppException('INVALID_STATUS', 'Status must be cancelled or paused', 400)
+
+        if new_status == 'cancelled' and txn.status in ('pending', 'voucher_uploaded'):
+            offer = OfferRepository.get_by_id_for_update(txn.offer_id)
+            if offer:
+                offer.available_amount += txn.amount_from
+                if offer.status == 'closed' and offer.available_amount > 0:
+                    offer.status = 'active'
 
         txn.status = new_status
         db.session.commit()
