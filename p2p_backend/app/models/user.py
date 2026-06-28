@@ -49,4 +49,9 @@ class User(BaseModel):
             'total_transactions': self.completed_transactions_count(),
             'avatar_url': self.avatar_url,
             'is_active': self.is_active,
+            'dni': self.dni,
+            'dni_image_url': self.dni_image_url,
+            'dni_back_url': self.dni_back_url,
+            'selfie_url': self.selfie_url,
+            'signature_url': self.signature_url,
         }

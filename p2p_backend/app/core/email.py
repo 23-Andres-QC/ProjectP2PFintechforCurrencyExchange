@@ -1,7 +1,9 @@
+import logging
 import os
 import smtplib
 from email.message import EmailMessage
-from flask import current_app
+
+logger = logging.getLogger(__name__)
 
 
 def send_voucher_email(
@@ -18,7 +20,7 @@ def send_voucher_email(
     sender = os.getenv('SMTP_FROM') or username
 
     if not username or not password or not sender or not to_email:
-        current_app.logger.warning('SMTP email skipped: missing SMTP configuration or recipient')
+        logger.warning('SMTP email skipped: missing SMTP configuration or recipient')
         return False
 
     msg = EmailMessage()
@@ -71,5 +73,5 @@ def send_voucher_email(
             smtp.send_message(msg)
         return True
     except Exception as exc:
-        current_app.logger.warning('SMTP voucher email failed: %s', exc)
+        logger.warning('SMTP voucher email failed: %s', exc)
         return False

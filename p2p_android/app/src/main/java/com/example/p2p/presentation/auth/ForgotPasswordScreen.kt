@@ -22,7 +22,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.sp
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -69,6 +71,7 @@ fun ForgotPasswordScreen(
     Box(modifier = Modifier.fillMaxSize().background(BackgroundApp)) {
         Column(
             modifier = Modifier.fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .imePadding()
@@ -108,19 +111,18 @@ fun ForgotPasswordScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            Card(
+            GlassCard(
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                elevation = 4.dp,
             ) {
-                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
                     if (sent) {
-                        Card(
+                        GlassCard(
                             modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = SuccessColor.copy(alpha = 0.08f))
+                            tint = SuccessColor,
                         ) {
-                            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Email, null, tint = SuccessColor, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(10.dp))
                                 Text("Enlace enviado a $email", fontSize = 12.sp, color = SuccessColor, fontWeight = FontWeight.SemiBold)

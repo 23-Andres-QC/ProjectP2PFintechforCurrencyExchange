@@ -24,7 +24,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.sp
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 
 @Composable
@@ -43,7 +45,7 @@ fun RatingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundApp)
+            .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 36.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -87,13 +89,13 @@ fun RatingScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        GlassCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            elevation = 3.dp,
+        ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(elevation = 3.dp, shape = RoundedCornerShape(20.dp))
-                .clip(RoundedCornerShape(20.dp))
-                .background(SurfaceColor)
-                .padding(20.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
@@ -165,6 +167,7 @@ fun RatingScreen(
                     cursorColor = Primary
                 )
             )
+        }
         }
 
         Spacer(modifier = Modifier.height(24.dp))

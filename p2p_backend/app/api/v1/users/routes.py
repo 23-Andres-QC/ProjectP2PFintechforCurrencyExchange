@@ -63,6 +63,25 @@ def submit_kyc():
     }, 200
 
 
+@users_bp.route('/signature', methods=['POST'])
+@jwt_required()
+def submit_signature():
+    user_id = get_jwt_identity()
+    user = UserService.get_by_id(user_id)
+
+    signature_file = request.files.get('signature')
+    if not signature_file:
+        return {
+            'error': {'code': 'MISSING_SIGNATURE_FILE', 'message': 'Falta el archivo de firma'}
+        }, 400
+
+    from app.core.storage import upload_kyc_document
+
+    signature_url = upload_kyc_document(signature_file.read(), user.email, 'signature')
+    UserService.save_signature(user_id, signature_url)
+    return {'message': 'Firma guardada', 'signature_url': signature_url}, 200
+
+
 @users_bp.route('/<user_id>', methods=['GET'])
 def get_public_profile(user_id):
     return UserService.get_public_profile(user_id), 200

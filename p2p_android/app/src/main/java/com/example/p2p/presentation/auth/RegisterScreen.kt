@@ -27,11 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -48,6 +50,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.example.p2p.presentation.kyc.KycViewModel
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 import java.io.File
 import java.text.SimpleDateFormat
@@ -76,6 +79,8 @@ fun RegisterScreen(
     var contractAccepted by remember { mutableStateOf(false) }
     var signaturePaths by remember { mutableStateOf(listOf<List<Offset>>()) }
     var currentPath by remember { mutableStateOf(listOf<Offset>()) }
+    var signatureCanvasSize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize(600, 300)) }
+    var signatureBytes by remember { mutableStateOf<ByteArray?>(null) }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -119,8 +124,9 @@ fun RegisterScreen(
             val s = kycState
             if (s.dniFrontUri != null && s.dniBackUri != null && s.selfieUri != null) {
                 kycSubmitted = true
-                kycViewModel?.submitKyc(context)
+                kycViewModel?.submitKyc(context, signatureBytes)
             } else {
+                signatureBytes?.let { kycViewModel?.uploadSignatureOnly(it) }
                 onRegisterSuccess()
             }
         }
@@ -143,6 +149,7 @@ fun RegisterScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .imePadding()
@@ -191,7 +198,17 @@ fun RegisterScreen(
                             }
                         },
                         onClearSignature = { signaturePaths = emptyList(); currentPath = emptyList() },
-                        onNext = { if (contractAccepted && signaturePaths.isNotEmpty()) currentStep = 4 }
+                        onCanvasSizeChanged = { signatureCanvasSize = it },
+                        onNext = {
+                            if (contractAccepted && signaturePaths.isNotEmpty()) {
+                                signatureBytes = com.example.p2p.core.util.signaturePathsToBytes(
+                                    signaturePaths,
+                                    signatureCanvasSize.width,
+                                    signatureCanvasSize.height,
+                                )
+                                currentStep = 4
+                            }
+                        }
                     )
                     4 -> StepPassword(
                         password = password, confirmPassword = confirmPassword,
@@ -267,11 +284,12 @@ private fun StepPersonalData(
 ) {
     val canContinue = fullName.isNotBlank() && email.isNotBlank() && "@" in email && dni.length == 8
 
-    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    GlassCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        contentPadding = PaddingValues(20.dp),
     ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             StepCardHeader(Icons.Default.Person, Primary, "Datos personales", "Paso 1 de 4")
 
             HorizontalDivider(color = BorderColor)
@@ -322,6 +340,7 @@ private fun StepPersonalData(
 
 @Composable
 private fun StepKyc(
+
     kycState: com.example.p2p.presentation.kyc.KycState,
     onLaunchFront: () -> Unit,
     onLaunchBack: () -> Unit,
@@ -332,12 +351,13 @@ private fun StepKyc(
 ) {
     val subStep = kycState.currentStep
 
-    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    GlassCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        contentPadding = PaddingValues(20.dp),
     ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            StepCardHeader(Icons.Default.CreditCard, WarningColor, "Verificación KYC", "Paso 2 de 4")
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            StepCardHeader(Icons.Default.CreditCard, Primary, "Verificación KYC", "Paso 2 de 4")
 
             HorizontalDivider(color = BorderColor)
 
@@ -460,15 +480,18 @@ private fun StepContract(
     contractAccepted: Boolean, onContractAcceptedChange: (Boolean) -> Unit,
     signaturePaths: List<List<Offset>>, currentPath: List<Offset>,
     onDrawStart: (Offset) -> Unit, onDrawMove: (Offset) -> Unit, onDrawEnd: () -> Unit,
-    onClearSignature: () -> Unit, onNext: () -> Unit
+    onClearSignature: () -> Unit,
+    onCanvasSizeChanged: (androidx.compose.ui.unit.IntSize) -> Unit = {},
+    onNext: () -> Unit
 ) {
     val hasSigned = signaturePaths.isNotEmpty()
 
-    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    GlassCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        contentPadding = PaddingValues(20.dp),
     ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             StepCardHeader(Icons.Default.Description, Primary, "Contrato de usuario", "Paso 3 de 4")
             HorizontalDivider(color = BorderColor)
 
@@ -487,6 +510,7 @@ private fun StepContract(
                 modifier = Modifier.fillMaxWidth().height(130.dp)
                     .clip(RoundedCornerShape(12.dp)).background(Color.White)
                     .border(1.5.dp, if (hasSigned) SuccessColor else BorderColor, RoundedCornerShape(12.dp))
+                    .onSizeChanged(onCanvasSizeChanged)
             ) {
                 Canvas(
                     modifier = Modifier.fillMaxSize().pointerInput(Unit) {
@@ -583,11 +607,12 @@ private fun StepPassword(
     val passwordsMatch = confirmPassword.isEmpty() || password == confirmPassword
     val canRegister = password.length >= 8 && password == confirmPassword && termsAccepted
 
-    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    GlassCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        contentPadding = PaddingValues(20.dp),
     ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             StepCardHeader(Icons.Default.Lock, Primary, "Crea tu contraseña", "Paso 4 de 4")
             HorizontalDivider(color = BorderColor)
 
@@ -678,9 +703,7 @@ private fun StepCardHeader(
     title: String, subtitle: String
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(iconColor.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
-            Icon(icon, null, tint = iconColor, modifier = Modifier.size(20.dp))
-        }
+        com.example.p2p.ui.components.GlassIconBadge(icon = icon, tint = iconColor, size = 40.dp, iconSize = 20.dp)
         Column {
             Text(title, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextMain)
             Text(subtitle, fontSize = 11.sp, color = TextMuted)
@@ -706,45 +729,4 @@ private fun peruFieldColors() = OutlinedTextFieldDefaults.colors(
     errorTextColor = TextMain, errorPlaceholderColor = TextSubtle
 )
 
-private const val CONTRACT_TEXT = """CONTRATO DE USUARIO — P2P EXCHANGE PLATFORM
-
-Fecha de entrada en vigor: al momento del registro.
-
-1. PARTES DEL CONTRATO
-El presente contrato se celebra entre P2P Exchange Platform (en adelante "la Plataforma") y el usuario que procede a registrarse (en adelante "el Usuario").
-
-2. OBJETO
-La Plataforma ofrece un servicio de intermediación para el intercambio de divisas entre particulares (peer-to-peer), facilitando transacciones de compra y venta de moneda extranjera conforme a la normativa vigente.
-
-3. OBLIGACIONES DEL USUARIO
-- Proporcionar información veraz y actualizada durante el registro.
-- Usar la plataforma únicamente para fines lícitos.
-- No realizar operaciones que impliquen lavado de activos, financiamiento del terrorismo u otras actividades ilícitas.
-- Mantener la confidencialidad de sus credenciales de acceso.
-- Cumplir con los procesos de verificación KYC (Conoce a tu Cliente).
-
-4. VERIFICACIÓN DE IDENTIDAD (KYC)
-El Usuario acepta que la Plataforma podrá solicitar documentación adicional para verificar su identidad conforme a las regulaciones de la SBS (Superintendencia de Banca, Seguros y AFP del Perú).
-
-5. OPERACIONES P2P
-Las transacciones se realizan entre usuarios. La Plataforma actúa como facilitador y no es parte de la operación de cambio. El Usuario asume la responsabilidad de verificar la información de su contraparte.
-
-6. COMISIONES Y TARIFAS
-El uso de la plataforma puede estar sujeto a comisiones según la tabla de tarifas vigente, disponible en la sección de ayuda.
-
-7. DISPUTAS
-En caso de conflicto entre usuarios, la Plataforma podrá intervenir como mediador. Las decisiones del equipo de soporte son definitivas dentro del ámbito de la plataforma.
-
-8. PRIVACIDAD DE DATOS
-Los datos personales del Usuario serán tratados conforme a la Ley N° 29733 — Ley de Protección de Datos Personales del Perú y nuestra Política de Privacidad.
-
-9. RESPONSABILIDAD LIMITADA
-La Plataforma no garantiza la disponibilidad continua del servicio y no se responsabiliza por pérdidas derivadas de interrupciones técnicas, errores del usuario o fluctuaciones del mercado cambiario.
-
-10. TERMINACIÓN
-El Usuario puede cancelar su cuenta en cualquier momento. La Plataforma se reserva el derecho de suspender cuentas que incumplan estos términos.
-
-11. LEY APLICABLE
-Este contrato se rige por las leyes de la República del Perú. Cualquier disputa será sometida a los tribunales competentes de la ciudad de Lima.
-
-Al firmar electrónicamente este contrato, el Usuario declara haber leído, comprendido y aceptado íntegramente los términos y condiciones aquí establecidos."""
+private val CONTRACT_TEXT = com.example.p2p.presentation.common.CONTRACT_TEXT

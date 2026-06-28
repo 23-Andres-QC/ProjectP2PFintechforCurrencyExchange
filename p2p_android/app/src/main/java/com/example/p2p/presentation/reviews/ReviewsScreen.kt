@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.api.ReceivedRating
 import com.example.p2p.presentation.common.RefreshOnResume
+import com.example.p2p.ui.components.GlassCard
+import com.example.p2p.ui.components.GlassIconBadge
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,19 +85,19 @@ fun ReviewsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
 
-            Card(
+            GlassCard(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-                elevation = CardDefaults.cardElevation(2.dp),
+                contentPadding = PaddingValues(20.dp),
+                elevation = 2.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Row(
@@ -143,13 +145,7 @@ fun ReviewsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Box(
-                        modifier = Modifier.size(56.dp).clip(CircleShape)
-                            .background(WarningColor.copy(alpha = 0.08f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.StarBorder, contentDescription = null, tint = WarningColor, modifier = Modifier.size(26.dp))
-                    }
+                    GlassIconBadge(icon = Icons.Default.StarBorder, tint = Primary, size = 56.dp, iconSize = 26.dp)
                     Text(
                         "Aún no tienes reseñas. Completa transacciones para recibirlas.",
                         fontSize = 13.sp,
@@ -215,14 +211,13 @@ private fun ReviewItem(rating: ReceivedRating) {
         .ifEmpty { "??" }
     val date = rating.created_at?.take(10) ?: ""
 
-    Card(
+    GlassCard(
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(2.dp),
+        contentPadding = PaddingValues(14.dp),
+        elevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(

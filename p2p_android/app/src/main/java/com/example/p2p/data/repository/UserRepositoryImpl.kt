@@ -47,7 +47,8 @@ class UserRepositoryImpl(
     override suspend fun submitKyc(
         dniFront: ByteArray,
         dniBack: ByteArray,
-        selfie: ByteArray
+        selfie: ByteArray,
+        signature: ByteArray?
     ): NetworkResult<Unit> {
         return try {
             val dniFrontPart = MultipartBody.Part.createFormData(
@@ -65,8 +66,33 @@ class UserRepositoryImpl(
                 "selfie.jpg",
                 selfie.toRequestBody("image/jpeg".toMediaTypeOrNull())
             )
+            val signaturePart = signature?.let {
+                MultipartBody.Part.createFormData(
+                    "signature",
+                    "signature.jpg",
+                    it.toRequestBody("image/jpeg".toMediaTypeOrNull())
+                )
+            }
 
-            val response = api.submitKyc(dniFrontPart, dniBackPart, selfiePart)
+            val response = api.submitKyc(dniFrontPart, dniBackPart, selfiePart, signaturePart)
+            if (response.isSuccessful) {
+                NetworkResult.Success(Unit)
+            } else {
+                NetworkResult.Error(response.code(), response.message())
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(-1, e.message ?: "An error occurred")
+        }
+    }
+
+    override suspend fun uploadSignature(signature: ByteArray): NetworkResult<Unit> {
+        return try {
+            val signaturePart = MultipartBody.Part.createFormData(
+                "signature",
+                "signature.jpg",
+                signature.toRequestBody("image/jpeg".toMediaTypeOrNull())
+            )
+            val response = api.uploadSignature(signaturePart)
             if (response.isSuccessful) {
                 NetworkResult.Success(Unit)
             } else {

@@ -25,7 +25,9 @@ import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.Complaint
 import com.example.p2p.data.remote.model.ComplaintStatus
 import com.example.p2p.data.remote.model.ComplaintType
+import androidx.compose.ui.graphics.Brush
 import com.example.p2p.presentation.common.RefreshOnResume
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,19 +72,18 @@ fun ComplaintsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
 
-            Card(
+            GlassCard(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-                elevation = CardDefaults.cardElevation(2.dp),
+                elevation = 2.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Text(
@@ -263,16 +264,18 @@ private fun ComplaintItem(complaint: Complaint) {
     val statusLabel = ComplaintStatus.entries
         .firstOrNull { it.name == complaint.status }?.label ?: complaint.status
 
-    Card(
+    val cardTint = when (complaint.status) {
+        ComplaintStatus.RESOLVED.name -> SuccessColor
+        else -> Primary
+    }
+    GlassCard(
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(2.dp),
+        tint = cardTint,
+        elevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {

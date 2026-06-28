@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -53,7 +54,7 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundApp)
+            .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
             .verticalScroll(rememberScrollState())
             .padding(bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -62,80 +63,91 @@ fun ProfileScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
-                .background(Brush.verticalGradient(listOf(Primary, PrimaryLight)))
-                .padding(top = 24.dp, bottom = 16.dp, start = 20.dp, end = 20.dp)
+                .clip(RoundedCornerShape(bottomStart = 22.dp, bottomEnd = 22.dp))
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.96f), PrimaryDark)))
+                .padding(top = 24.dp, bottom = 20.dp, start = 18.dp, end = 18.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(54.dp)
+                        .size(74.dp)
+                        .shadow(elevation = 12.dp, shape = CircleShape, ambientColor = Color.Black.copy(alpha = 0.24f), spotColor = Color.Black.copy(alpha = 0.24f))
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.25f))
-                        .border(2.dp, Color.White.copy(alpha = 0.5f), CircleShape),
+                        .background(Brush.linearGradient(listOf(Color.White.copy(alpha = 0.30f), Color.White.copy(alpha = 0.12f))))
+                        .border(2.dp, Color.White.copy(alpha = 0.72f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(initials, color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
+                    Text(initials, color = Color.White, fontWeight = FontWeight.Black, fontSize = 23.sp)
                 }
-                Text(fullName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text(email, color = PrimaryMint, fontSize = 11.sp)
-                Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-                    ProfileBadge(ratingStr, Color.White, WarningColor, icon = Icons.Default.Star)
-                    ProfileBadge(roleStr, Color.White, Primary)
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(fullName, color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+                    Text(email, color = Color.White.copy(alpha = 0.78f), fontSize = 11.sp)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    ProfileBadge(ratingStr, Color.White.copy(alpha = 0.96f), WarningColor, icon = Icons.Default.Star)
+                    ProfileBadge(roleStr, Color.White.copy(alpha = 0.96f), Primary)
                     if (isVerified) {
-                        ProfileBadge("Verificado", Color.White, SuccessColor, icon = Icons.Default.CheckCircle)
+                        ProfileBadge("Verificado", Color.White.copy(alpha = 0.96f), SuccessColor, icon = Icons.Default.CheckCircle)
                     }
                 }
-                Spacer(Modifier.height(2.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .shadow(elevation = 10.dp, shape = RoundedCornerShape(18.dp), ambientColor = Color.Black.copy(alpha = 0.16f), spotColor = Color.Black.copy(alpha = 0.16f))
+                        .clip(RoundedCornerShape(18.dp))
                         .background(Color.White)
-                        .padding(vertical = 9.dp),
+                        .padding(horizontal = 10.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatColumn(txCount, "Operaciones")
+                    StatColumn(txCount, "Operaciones", Icons.Default.SwapHoriz)
                     VerticalDividerLine()
                     StatColumn(ratingStr, "Calificación")
                 }
             }
         }
 
-        Row(
+        com.example.p2p.ui.components.GlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(SuccessColor.copy(alpha = 0.1f))
-                .border(1.dp, SuccessColor.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-                .clickable { onNavigate(Screen.Kyc.route) }
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                .clickable { onNavigate(if (isVerified) Screen.KycSummary.route else Screen.Kyc.route) },
+            tint = if (isVerified) SuccessColor else Primary,
+            contentPadding = PaddingValues(12.dp)
         ) {
-            Box(
-                modifier = Modifier.size(32.dp).clip(CircleShape).background(SuccessColor),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                com.example.p2p.ui.components.GlassIconBadge(
+                    icon = if (isVerified) Icons.Default.CheckCircle else Icons.Default.Shield,
+                    tint = if (isVerified) SuccessColor else Primary,
+                    size = 36.dp, iconSize = 18.dp
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        if (isVerified) "KYC Verificado" else "Verifica tu identidad",
+                        fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
+                        color = if (isVerified) SuccessColor else Primary
+                    )
+                    Text(
+                        if (isVerified) "Límites ampliados · Cuenta Premium" else "Completa tu KYC para operar sin límites",
+                        fontSize = 11.sp, color = TextMuted
+                    )
+                }
+                Icon(
+                    Icons.Default.ChevronRight, contentDescription = null,
+                    tint = if (isVerified) SuccessColor else Primary, modifier = Modifier.size(16.dp)
+                )
             }
-            Column(modifier = Modifier.weight(1f)) {
-                Text("KYC Verificado", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = SuccessColor)
-                Text("Límites ampliados · Cuenta Premium", fontSize = 11.sp, color = TextMuted)
-            }
-            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(16.dp))
         }
 
         if (isAdmin) {
 
             MenuSection(title = "ADMINISTRACIÓN") {
                 MenuItem(
-                    icon = Icons.Default.AdminPanelSettings, iconBg = DangerColor.copy(.1f), iconTint = DangerColor,
+                    icon = Icons.Default.AdminPanelSettings, iconTint = DangerColor,
                     label = "Panel Administrador",
                     onClick = { onNavigate(Screen.Admin.route) },
                     showDivider = false
@@ -163,22 +175,22 @@ fun ProfileScreen(
 
             MenuSection(title = "MI CUENTA") {
                 MenuItem(
-                    icon = Icons.Default.CreditCard, iconBg = Primary.copy(.12f), iconTint = Primary,
+                    icon = Icons.Default.CreditCard, iconTint = Primary,
                     label = "Tarjetas y Cuentas",
                     onClick = { onNavigate(Screen.BankAccounts.route) }
                 )
                 MenuItem(
-                    icon = Icons.Default.History, iconBg = PrimaryLight.copy(.15f), iconTint = PrimaryLight,
+                    icon = Icons.Default.History, iconTint = PrimaryLight,
                     label = "Historial de Operaciones",
                     onClick = { onNavigate(Screen.History.createRoute()) }
                 )
                 MenuItem(
-                    icon = Icons.Default.Star, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
+                    icon = Icons.Default.Star, iconTint = WarningColor,
                     label = "Mis Reseñas",
                     onClick = { onNavigate(Screen.Reviews.route) }
                 )
                 MenuItem(
-                    icon = Icons.Default.Campaign, iconBg = SuccessColor.copy(.12f), iconTint = SuccessColor,
+                    icon = Icons.Default.Campaign, iconTint = SuccessColor,
                     label = "Mis Ofertas",
                     onClick = { onNavigate(Screen.MyOffers.route) },
                     showDivider = false
@@ -187,12 +199,12 @@ fun ProfileScreen(
 
             MenuSection(title = "SOPORTE") {
                 MenuItem(
-                    icon = Icons.Default.HeadsetMic, iconBg = Primary.copy(.12f), iconTint = Primary,
+                    icon = Icons.Default.HeadsetMic, iconTint = Primary,
                     label = "Reclamos",
                     onClick = { onNavigate(Screen.Complaints.route) }
                 )
                 MenuItem(
-                    icon = Icons.Default.Notifications, iconBg = WarningColor.copy(.12f), iconTint = WarningColor,
+                    icon = Icons.Default.Notifications, iconTint = WarningColor,
                     label = "Notificaciones",
                     badge = unreadCount,
                     onClick = { onNavigate(Screen.Notifications.route) },
@@ -202,22 +214,22 @@ fun ProfileScreen(
 
             MenuSection(title = "LEGAL") {
                 MenuItem(
-                    icon = Icons.Default.Description, iconBg = Primary.copy(.1f), iconTint = Primary,
+                    icon = Icons.Default.Description, iconTint = Primary,
                     label = "Términos y Condiciones",
                     onClick = { onNavigate(Screen.Terms.route) }
                 )
                 MenuItem(
-                    icon = Icons.Default.Lock, iconBg = Primary.copy(.1f), iconTint = Primary,
+                    icon = Icons.Default.Lock, iconTint = Primary,
                     label = "Política de Privacidad",
                     onClick = { onNavigate(Screen.Privacy.route) }
                 )
                 MenuItem(
-                    icon = Icons.Default.Info, iconBg = PrimaryLight.copy(.12f), iconTint = PrimaryLight,
+                    icon = Icons.Default.Info, iconTint = PrimaryLight,
                     label = "Acerca de Perú Exchange",
                     onClick = { onNavigate(Screen.About.route) }
                 )
                 MenuItem(
-                    icon = Icons.AutoMirrored.Filled.HelpOutline, iconBg = SuccessColor.copy(.1f), iconTint = SuccessColor,
+                    icon = Icons.AutoMirrored.Filled.HelpOutline, iconTint = SuccessColor,
                     label = "Centro de Ayuda",
                     onClick = { onNavigate(Screen.Help.route) },
                     showDivider = false
@@ -272,16 +284,32 @@ private fun ProfileBadge(text: String, bg: Color, textColor: Color, icon: ImageV
 }
 
 @Composable
-private fun StatColumn(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(value, color = Primary, fontWeight = FontWeight.Black, fontSize = 15.sp)
-        Text(label, color = TextMuted, fontSize = 9.sp)
+private fun RowScope.StatColumn(value: String, label: String, icon: ImageVector = Icons.Default.Star) {
+    Row(
+        modifier = Modifier.weight(1f),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(Primary.copy(alpha = 0.10f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(17.dp))
+        }
+        Spacer(Modifier.width(8.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(value, color = Primary, fontWeight = FontWeight.Black, fontSize = 16.sp)
+            Text(label, color = TextMuted, fontSize = 10.sp)
+        }
     }
 }
 
 @Composable
 private fun VerticalDividerLine() {
-    Box(modifier = Modifier.width(1.dp).height(24.dp).background(BorderColor))
+    Box(modifier = Modifier.width(1.dp).height(34.dp).background(BorderColor))
 }
 
 @Composable
@@ -295,21 +323,18 @@ private fun MenuSection(title: String, content: @Composable ColumnScope.() -> Un
             modifier = Modifier.padding(bottom = 8.dp),
             letterSpacing = 1.sp
         )
-        Card(
+        com.example.p2p.ui.components.GlassCard(
+            modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-            elevation = CardDefaults.cardElevation(2.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(vertical = 4.dp)) { content() }
-        }
+            contentPadding = PaddingValues(vertical = 4.dp),
+            elevation = 6.dp,
+        ) { content() }
     }
 }
 
 @Composable
 fun MenuItem(
     icon: ImageVector,
-    iconBg: Color,
     iconTint: Color,
     label: String,
     onClick: () -> Unit = {},
@@ -325,12 +350,7 @@ fun MenuItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Box(
-                modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(iconBg),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(icon, contentDescription = label, tint = iconTint, modifier = Modifier.size(20.dp))
-            }
+            com.example.p2p.ui.components.GlassIconBadge(icon = icon, tint = iconTint, size = 40.dp, iconSize = 20.dp, contentDescription = label)
             Text(label, fontSize = 14.sp, color = TextMain, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
             if (badge > 0) {
                 Box(

@@ -36,6 +36,7 @@ import com.example.p2p.data.remote.model.CreateTransactionRequest
 import com.example.p2p.data.remote.model.ExchangeRate
 import com.example.p2p.data.remote.model.Offer
 import com.example.p2p.presentation.common.RefreshOnResume
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,6 +95,7 @@ fun MarketScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(0.dp),
             contentPadding = PaddingValues(bottom = 16.dp)
@@ -297,32 +299,36 @@ private fun MarketTopBar(
         fromApi.ifEmpty { listOf("USD" to "Cargando...", "EUR" to "Cargando...") }
     }
 
-    Surface(color = Primary, shadowElevation = 2.dp) {
-        Column {
-            Row(
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(bottomStart = 22.dp, bottomEnd = 22.dp))
+            .background(Brush.verticalGradient(listOf(Primary, PrimaryDark)))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_market_logo),
+                contentDescription = null,
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(Modifier.width(10.dp))
+            Text("Peru", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
+            Text("Exchange", color = PrimaryMint, fontWeight = FontWeight.Black, fontSize = 18.sp)
+            Spacer(Modifier.weight(1f))
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.16f))
+                    .border(1.dp, Color.White.copy(alpha = 0.3f), CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_launcher_logo),
-                        contentDescription = null,
-                        modifier = Modifier.size(120.dp)
-                    )
-                }
-                Spacer(Modifier.width(8.dp))
-                Text("Peru", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                Text("Exchange", color = PrimaryMint, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                Spacer(Modifier.weight(1f))
-                IconButton(onClick = onNavigateToNotifications, modifier = Modifier.size(36.dp)) {
+                IconButton(onClick = onNavigateToNotifications, modifier = Modifier.size(38.dp)) {
                     BadgedBox(
                         badge = {
                             if (unreadCount > 0) {
@@ -340,31 +346,38 @@ private fun MarketTopBar(
                             Icons.Default.Notifications,
                             contentDescription = "Notificaciones",
                             tint = Color.White,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White.copy(alpha = 0.08f))
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 7.dp),
-                horizontalArrangement = Arrangement.spacedBy(24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                tickerItems.forEach { (currency, rate) ->
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Box(
-                            modifier = Modifier
-                                .size(5.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.72f))
-                        )
-                        Text(currency, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 11.sp)
-                        Text(rate, color = Color.White.copy(alpha = 0.78f), fontSize = 11.sp)
-                    }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            tickerItems.forEach { (currency, rate) ->
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50.dp))
+                        .background(Color.White.copy(alpha = 0.14f))
+                        .border(1.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(50.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(5.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryMint)
+                    )
+                    Text(currency, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    Text(rate, color = Color.White.copy(alpha = 0.85f), fontSize = 11.sp)
                 }
             }
         }
@@ -382,18 +395,16 @@ private fun FilterSection(
     onCurrencyChange: (String) -> Unit,
     onSwap: () -> Unit
 ) {
-    Card(
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+        elevation = 3.dp,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -489,18 +500,16 @@ private fun ActionRow(
     fiatCurrency: String,
     onMatchingClick: () -> Unit
 ) {
-    Card(
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+        elevation = 2.dp,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -748,18 +757,15 @@ private fun OfferCard(
         ?.filter { it.isNotEmpty() }?.take(2)?.map { it.first().uppercaseChar() }?.joinToString("") ?: "??"
     val verified = offer.vendor?.kyc_verified ?: false
 
-    Card(
+    GlassCard(
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+        elevation = 2.dp,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
     ) {
-        Column {
             Column(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 if (isBestRate || isQuickSale) {
@@ -1106,6 +1112,5 @@ private fun OfferCard(
                     }
                 }
             }
-        }
     }
 }
