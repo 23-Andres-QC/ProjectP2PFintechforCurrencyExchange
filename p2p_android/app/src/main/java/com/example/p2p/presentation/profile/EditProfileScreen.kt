@@ -23,7 +23,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 
@@ -40,7 +39,7 @@ fun EditProfileScreen(
     var fullNameText by remember { mutableStateOf("") }
     var phoneText by remember { mutableStateOf("") }
 
-    RefreshOnResume {
+    LaunchedEffect(viewModel) {
         viewModel?.loadProfile()
     }
 
@@ -62,6 +61,7 @@ fun EditProfileScreen(
     LaunchedEffect(uiState.error) {
         if (uiState.error != null) {
             Toast.makeText(context, uiState.error, Toast.LENGTH_LONG).show()
+            viewModel?.clearError()
         }
     }
 
@@ -161,7 +161,7 @@ fun EditProfileScreen(
                         "El correo no puede modificarse",
                         fontSize = 11.sp,
                         color = TextMuted,
-                        modifier = Modifier.padding(start = 4.dp, top = (-6).dp)
+                        modifier = Modifier.padding(start = 4.dp)
                     )
 
                     OutlinedTextField(

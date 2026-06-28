@@ -64,47 +64,47 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(bottomStart = 22.dp, bottomEnd = 22.dp))
-                .background(Brush.verticalGradient(listOf(Primary, PrimaryDark)))
-                .padding(top = 28.dp, bottom = 18.dp, start = 20.dp, end = 20.dp)
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.96f), PrimaryDark)))
+                .padding(top = 24.dp, bottom = 20.dp, start = 18.dp, end = 18.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
-                        .shadow(elevation = 8.dp, shape = CircleShape, ambientColor = Color.Black.copy(alpha = 0.2f), spotColor = Color.Black.copy(alpha = 0.2f))
+                        .size(74.dp)
+                        .shadow(elevation = 12.dp, shape = CircleShape, ambientColor = Color.Black.copy(alpha = 0.24f), spotColor = Color.Black.copy(alpha = 0.24f))
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.18f))
-                        .border(2.dp, Color.White.copy(alpha = 0.55f), CircleShape),
+                        .background(Brush.linearGradient(listOf(Color.White.copy(alpha = 0.30f), Color.White.copy(alpha = 0.12f))))
+                        .border(2.dp, Color.White.copy(alpha = 0.72f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(initials, color = Color.White, fontWeight = FontWeight.Black, fontSize = 20.sp)
+                    Text(initials, color = Color.White, fontWeight = FontWeight.Black, fontSize = 23.sp)
                 }
-                Spacer(Modifier.height(2.dp))
-                Text(fullName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                Text(email, color = PrimaryMint, fontSize = 11.sp)
-                Spacer(Modifier.height(2.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(fullName, color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+                    Text(email, color = Color.White.copy(alpha = 0.78f), fontSize = 11.sp)
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    ProfileBadge(ratingStr, Color.White, WarningColor, icon = Icons.Default.Star)
-                    ProfileBadge(roleStr, Color.White, Primary)
+                    ProfileBadge(ratingStr, Color.White.copy(alpha = 0.96f), WarningColor, icon = Icons.Default.Star)
+                    ProfileBadge(roleStr, Color.White.copy(alpha = 0.96f), Primary)
                     if (isVerified) {
-                        ProfileBadge("Verificado", Color.White, SuccessColor, icon = Icons.Default.CheckCircle)
+                        ProfileBadge("Verificado", Color.White.copy(alpha = 0.96f), SuccessColor, icon = Icons.Default.CheckCircle)
                     }
                 }
-                Spacer(Modifier.height(6.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(elevation = 6.dp, shape = RoundedCornerShape(14.dp), ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.15f))
-                        .clip(RoundedCornerShape(14.dp))
+                        .shadow(elevation = 10.dp, shape = RoundedCornerShape(18.dp), ambientColor = Color.Black.copy(alpha = 0.16f), spotColor = Color.Black.copy(alpha = 0.16f))
+                        .clip(RoundedCornerShape(18.dp))
                         .background(Color.White)
-                        .padding(vertical = 10.dp),
+                        .padding(horizontal = 10.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatColumn(txCount, "Operaciones")
+                    StatColumn(txCount, "Operaciones", Icons.Default.SwapHoriz)
                     VerticalDividerLine()
                     StatColumn(ratingStr, "Calificación")
                 }
@@ -284,16 +284,32 @@ private fun ProfileBadge(text: String, bg: Color, textColor: Color, icon: ImageV
 }
 
 @Composable
-private fun StatColumn(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(value, color = Primary, fontWeight = FontWeight.Black, fontSize = 15.sp)
-        Text(label, color = TextMuted, fontSize = 9.sp)
+private fun RowScope.StatColumn(value: String, label: String, icon: ImageVector = Icons.Default.Star) {
+    Row(
+        modifier = Modifier.weight(1f),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(Primary.copy(alpha = 0.10f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(17.dp))
+        }
+        Spacer(Modifier.width(8.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(value, color = Primary, fontWeight = FontWeight.Black, fontSize = 16.sp)
+            Text(label, color = TextMuted, fontSize = 10.sp)
+        }
     }
 }
 
 @Composable
 private fun VerticalDividerLine() {
-    Box(modifier = Modifier.width(1.dp).height(24.dp).background(BorderColor))
+    Box(modifier = Modifier.width(1.dp).height(34.dp).background(BorderColor))
 }
 
 @Composable

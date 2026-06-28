@@ -24,9 +24,9 @@ class EditProfileViewModel(private val userRepository: UserRepository) : ViewMod
     private val _uiState = MutableStateFlow(EditProfileUiState())
     val uiState: StateFlow<EditProfileUiState> = _uiState.asStateFlow()
 
-    init { loadProfile() }
-
     fun loadProfile() {
+        if (_uiState.value.isLoading) return
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             when (val result = userRepository.getMe()) {
@@ -38,6 +38,8 @@ class EditProfileViewModel(private val userRepository: UserRepository) : ViewMod
     }
 
     fun saveProfile(fullName: String, phone: String?) {
+        if (_uiState.value.isSaving) return
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, error = null, saveSuccess = false)
             when (val result = userRepository.updateProfile(fullName, phone)) {
@@ -50,6 +52,10 @@ class EditProfileViewModel(private val userRepository: UserRepository) : ViewMod
 
     fun resetSaveSuccess() {
         _uiState.value = _uiState.value.copy(saveSuccess = false)
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
     }
 
     class Factory(private val repo: UserRepository) : ViewModelProvider.Factory {
