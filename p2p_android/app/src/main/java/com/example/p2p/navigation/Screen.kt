@@ -43,4 +43,5 @@ sealed class Screen(val route: String) {
     object DisputeDetail : Screen("dispute_detail/{disputeId}") {
         fun createRoute(id: String) = "dispute_detail/$id"
     }
+    object ChatBot : Screen("chatbot")
 }
