@@ -132,13 +132,18 @@ fun LoginScreen(
                         text = "Iniciar Sesión",
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 20.sp,
-                        color = TextMain
+                        color = TextMain,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
                     )
                     Text(
                         text = "Bienvenido de nuevo",
                         fontSize = 13.sp,
                         color = TextMuted,
-                        modifier = Modifier.padding(top = 2.dp, bottom = 20.dp)
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 2.dp, bottom = 20.dp)
                     )
 
                     AnimatedVisibility(

@@ -100,11 +100,11 @@ import com.example.p2p.ui.theme.WarningColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private val authRoutes = setOf(
-    Screen.Login.route,
-    Screen.Register.route,
-    Screen.ForgotPass.route,
-    Screen.Kyc.route
+private val bottomBarRoutes = setOf(
+    Screen.Market.route,
+    Screen.Pending.route,
+    Screen.Publish.route,
+    Screen.Profile.route
 )
 
 @Composable
@@ -116,7 +116,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val showBottomBar = currentRoute != null && currentRoute !in authRoutes
+    val showBottomBar = currentRoute in bottomBarRoutes
 
     Scaffold(
         containerColor = BackgroundApp,
@@ -407,7 +407,11 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                 )
                 ProfileScreen(
                     viewModel = vm,
-                    onNavigate = { route -> navController.navigate(route) },
+                    onNavigate = { route ->
+                        navController.navigate(route) {
+                            launchSingleTop = true
+                        }
+                    },
                     onLogout = {
                         scope.launch {
                             tokenManager.clearSession()

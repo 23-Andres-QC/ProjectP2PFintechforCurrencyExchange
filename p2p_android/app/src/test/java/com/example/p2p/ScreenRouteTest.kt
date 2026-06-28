@@ -13,6 +13,7 @@ class ScreenRouteTest {
             Screen.Register.route,
             Screen.Market.route,
             Screen.Profile.route,
+            Screen.EditProfile.route,
             Screen.History.route,
             Screen.Publish.route
         )
