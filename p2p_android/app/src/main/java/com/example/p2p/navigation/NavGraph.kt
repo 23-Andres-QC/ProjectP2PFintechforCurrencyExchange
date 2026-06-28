@@ -1,7 +1,18 @@
 package com.example.p2p.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -12,8 +23,13 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import com.example.p2p.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,8 +60,11 @@ import com.example.p2p.data.repository.OfferRepositoryImpl
 import com.example.p2p.data.repository.RatingRepositoryImpl
 import com.example.p2p.data.repository.TransactionRepositoryImpl
 import com.example.p2p.data.repository.UserRepositoryImpl
+import com.example.p2p.data.local.ChatHistoryStore
 import com.example.p2p.presentation.about.AboutScreen
 import com.example.p2p.presentation.admin.AdminScreen
+import com.example.p2p.presentation.chatbot.ChatBotScreen
+import com.example.p2p.presentation.chatbot.ChatBotViewModel
 import com.example.p2p.presentation.admin.AdminViewModel
 import com.example.p2p.presentation.auth.ForgotPasswordScreen
 import com.example.p2p.presentation.auth.LoginScreen
@@ -114,12 +133,43 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
     val tokenManager = TokenManager.getInstance(context)
     val scope = rememberCoroutineScope()
 
+    val chatHistoryStore = remember { ChatHistoryStore(context) }
+
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val showBottomBar = currentRoute != null && currentRoute !in authRoutes
+    val showChatFab = currentRoute == Screen.Market.route
     val showBottomBar = currentRoute in bottomBarRoutes
 
     Scaffold(
         containerColor = BackgroundApp,
+        floatingActionButton = {
+            if (showChatFab) {
+                val pulse = rememberInfiniteTransition(label = "chatbot_pulse")
+                val scale by pulse.animateFloat(
+                    initialValue = 1f,
+                    targetValue = 1.20f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 900, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "scale"
+                )
+                Box(
+                    modifier = Modifier
+                        .size(93.dp)
+                        .scale(scale)
+                        .clickable { navController.navigate(Screen.ChatBot.route) }
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_chatbot),
+                        contentDescription = "Asistente virtual",
+                        modifier = Modifier.size(93.dp)
+                    )
+                }
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End,
         bottomBar = {
             if (showBottomBar) {
                 AppBottomBar(
@@ -414,6 +464,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                     },
                     onLogout = {
                         scope.launch {
+                            chatHistoryStore.clear()
                             tokenManager.clearSession()
                             navController.navigate(Screen.Login.route) {
                                 popUpTo(0) { inclusive = true }
@@ -536,6 +587,11 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
 
             composable(Screen.Help.route) {
                 HelpScreen(onBack = { navController.popBackStack() })
+            }
+
+            composable(Screen.ChatBot.route) {
+                val vm: ChatBotViewModel = viewModel(factory = ChatBotViewModel.Factory(chatHistoryStore))
+                ChatBotScreen(viewModel = vm, onBack = { navController.popBackStack() })
             }
         }
     }
