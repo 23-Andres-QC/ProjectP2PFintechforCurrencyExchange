@@ -64,7 +64,7 @@ class KycViewModel(
         }
     }
 
-    fun submitKyc(context: Context) {
+    fun submitKyc(context: Context, signatureBytes: ByteArray? = null) {
         viewModelScope.launch {
             val currentState = _state.value
             if (currentState.dniFrontUri == null || currentState.dniBackUri == null || currentState.selfieUri == null) {
@@ -88,7 +88,7 @@ class KycViewModel(
                     return@launch
                 }
 
-                when (val result = userRepository.submitKyc(dniFrontBytes, dniBackBytes, selfieBytes)) {
+                when (val result = userRepository.submitKyc(dniFrontBytes, dniBackBytes, selfieBytes, signatureBytes)) {
                     is NetworkResult.Success -> {
                         _state.value = _state.value.copy(isLoading = false, isSuccess = true)
                     }
@@ -99,6 +99,17 @@ class KycViewModel(
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(isLoading = false, error = e.message ?: "Error desconocido")
+            }
+        }
+    }
+
+    /** Sube solo la firma del contrato, independiente de los documentos KYC (caso: usuario omitió KYC al registrarse). */
+    fun uploadSignatureOnly(signatureBytes: ByteArray) {
+        viewModelScope.launch {
+            try {
+                userRepository.uploadSignature(signatureBytes)
+            } catch (_: Exception) {
+                // Best-effort: no bloquea el flujo de registro si falla.
             }
         }
     }

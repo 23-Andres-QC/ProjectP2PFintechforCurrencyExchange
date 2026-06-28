@@ -3,7 +3,12 @@ package com.example.p2p.core.util
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
 import android.net.Uri
+import androidx.compose.ui.geometry.Offset
 import java.io.ByteArrayOutputStream
 
 private const val MAX_DIMENSION = 1600
@@ -37,6 +42,52 @@ fun compressImageFromUri(
     val bitmap = resolver.openInputStream(uri)?.use {
         BitmapFactory.decodeStream(it, null, decodeOptions)
     } ?: return null
+
+    return try {
+        ByteArrayOutputStream().use { output ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output)
+            output.toByteArray()
+        }
+    } finally {
+        bitmap.recycle()
+    }
+}
+
+/**
+ * Renderiza los trazos de la firma electrónica (capturados como puntos en pantalla)
+ * a un bitmap con fondo blanco, para poder subirla como imagen JPEG igual que el resto
+ * de documentos KYC.
+ */
+fun signaturePathsToBytes(
+    paths: List<List<Offset>>,
+    width: Int = 600,
+    height: Int = 300,
+    quality: Int = 90,
+): ByteArray? {
+    if (paths.isEmpty()) return null
+
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    canvas.drawColor(Color.WHITE)
+
+    val paint = Paint().apply {
+        color = Color.rgb(0x1A, 0x23, 0x32)
+        style = Paint.Style.STROKE
+        strokeWidth = 4f
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+        isAntiAlias = true
+    }
+
+    for (points in paths) {
+        if (points.size < 2) continue
+        val path = Path()
+        path.moveTo(points.first().x, points.first().y)
+        for (i in 1 until points.size) {
+            path.lineTo(points[i].x, points[i].y)
+        }
+        canvas.drawPath(path, paint)
+    }
 
     return try {
         ByteArrayOutputStream().use { output ->

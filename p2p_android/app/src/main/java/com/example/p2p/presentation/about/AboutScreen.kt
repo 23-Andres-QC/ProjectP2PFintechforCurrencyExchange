@@ -21,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.p2p.ui.components.GlassCard
+import com.example.p2p.ui.components.GlassIconBadge
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,6 +53,7 @@ fun AboutScreen(onBack: () -> Unit = {}) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -118,14 +121,14 @@ fun AboutScreen(onBack: () -> Unit = {}) {
                 ) {
                     FeatureCard(
                         icon = Icons.Default.Security,
-                        iconColor = Primary,
+                        iconColor = SuccessColor,
                         title = "Regulados SBS",
                         description = "Supervisados por la Superintendencia de Banca",
                         modifier = Modifier.weight(1f)
                     )
                     FeatureCard(
                         icon = Icons.Default.Bolt,
-                        iconColor = SuccessColor,
+                        iconColor = WarningColor,
                         title = "Tecnología IA",
                         description = "Verificación OCR y detección de fraude con IA",
                         modifier = Modifier.weight(1f)
@@ -137,14 +140,14 @@ fun AboutScreen(onBack: () -> Unit = {}) {
                 ) {
                     FeatureCard(
                         icon = Icons.Default.Lock,
-                        iconColor = WarningColor,
+                        iconColor = Primary,
                         title = "P2P Seguro",
                         description = "Fondos en custodia hasta confirmar la transacción",
                         modifier = Modifier.weight(1f)
                     )
                     FeatureCard(
                         icon = Icons.Default.HeadsetMic,
-                        iconColor = Primary,
+                        iconColor = PrimaryLight,
                         title = "Soporte 24/7",
                         description = "Atención continua todos los días del año",
                         modifier = Modifier.weight(1f)
@@ -184,30 +187,16 @@ private fun FeatureCard(
     description: String,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    GlassCard(
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(1.dp),
+        contentPadding = PaddingValues(14.dp),
+        elevation = 1.dp,
         modifier = modifier
     ) {
         Column(
-            modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(iconColor.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    tint = iconColor,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            GlassIconBadge(icon = icon, tint = iconColor, size = 36.dp, iconSize = 20.dp)
             Text(
                 title,
                 fontSize = 13.sp,

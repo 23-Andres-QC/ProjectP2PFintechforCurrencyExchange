@@ -2,6 +2,10 @@ package com.example.p2p.navigation
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.BarChart
@@ -61,6 +65,8 @@ import com.example.p2p.presentation.history.HistoryScreen
 import com.example.p2p.presentation.history.HistoryViewModel
 import com.example.p2p.presentation.kyc.KycScreen
 import com.example.p2p.presentation.kyc.KycViewModel
+import com.example.p2p.presentation.kyc.KycSummaryScreen
+import com.example.p2p.presentation.kyc.KycSummaryViewModel
 import com.example.p2p.presentation.legal.PrivacyScreen
 import com.example.p2p.presentation.legal.TermsScreen
 import com.example.p2p.presentation.market.MarketScreen
@@ -85,10 +91,12 @@ import com.example.p2p.presentation.transaction.TransactionDetailScreen
 import com.example.p2p.presentation.transaction.TransactionScreen
 import com.example.p2p.presentation.transaction.TransactionViewModel
 import com.example.p2p.ui.theme.BackgroundApp
-import com.example.p2p.ui.theme.BorderColor
+import com.example.p2p.ui.theme.InfoColor
 import com.example.p2p.ui.theme.Primary
+import com.example.p2p.ui.theme.SuccessColor
 import com.example.p2p.ui.theme.SurfaceColor
 import com.example.p2p.ui.theme.TextMuted
+import com.example.p2p.ui.theme.WarningColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -194,6 +202,16 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                             popUpTo(0) { inclusive = true }
                         }
                     }
+                )
+            }
+
+            composable(Screen.KycSummary.route) {
+                val userRepo = UserRepositoryImpl(ApiClient.userApi)
+                val vm: KycSummaryViewModel = viewModel(factory = KycSummaryViewModel.Factory(userRepo))
+                KycSummaryScreen(
+                    viewModel = vm,
+                    onNavigateBack = { navController.popBackStack() },
+                    onEdit = { navController.navigate(Screen.Kyc.route) }
                 )
             }
 
@@ -562,8 +580,16 @@ private fun AppBottomBar(
         }
     }
 
-    Column {
-        HorizontalDivider(color = BorderColor, thickness = 1.dp)
+    Column(
+        modifier = Modifier
+            .shadow(
+                elevation = 12.dp,
+                shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
+                ambientColor = Color.Black.copy(alpha = 0.12f),
+                spotColor = Color.Black.copy(alpha = 0.12f)
+            )
+            .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
+    ) {
         NavigationBar(containerColor = SurfaceColor, tonalElevation = 0.dp) {
             NavigationBarItem(
                 selected = currentRoute == Screen.Market.route,
@@ -581,7 +607,7 @@ private fun AppBottomBar(
                     selectedTextColor = Primary,
                     unselectedIconColor = TextMuted,
                     unselectedTextColor = TextMuted,
-                    indicatorColor = Primary.copy(alpha = 0.10f)
+                    indicatorColor = Primary.copy(alpha = 0.16f)
                 )
             )
             if (isVendor) {
@@ -613,11 +639,11 @@ private fun AppBottomBar(
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Primary,
-                        selectedTextColor = Primary,
+                        selectedIconColor = WarningColor,
+                        selectedTextColor = WarningColor,
                         unselectedIconColor = TextMuted,
                         unselectedTextColor = TextMuted,
-                        indicatorColor = Primary.copy(alpha = 0.10f)
+                        indicatorColor = WarningColor.copy(alpha = 0.16f)
                     )
                 )
                 NavigationBarItem(
@@ -632,11 +658,11 @@ private fun AppBottomBar(
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Primary,
-                        selectedTextColor = Primary,
+                        selectedIconColor = SuccessColor,
+                        selectedTextColor = SuccessColor,
                         unselectedIconColor = TextMuted,
                         unselectedTextColor = TextMuted,
-                        indicatorColor = Primary.copy(alpha = 0.10f)
+                        indicatorColor = SuccessColor.copy(alpha = 0.16f)
                     )
                 )
             }
@@ -652,11 +678,11 @@ private fun AppBottomBar(
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Primary,
-                    selectedTextColor = Primary,
+                    selectedIconColor = InfoColor,
+                    selectedTextColor = InfoColor,
                     unselectedIconColor = TextMuted,
                     unselectedTextColor = TextMuted,
-                    indicatorColor = Primary.copy(alpha = 0.10f)
+                    indicatorColor = InfoColor.copy(alpha = 0.16f)
                 )
             )
         }

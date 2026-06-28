@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.data.remote.model.Notification
 import com.example.p2p.presentation.common.RefreshOnResume
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 import kotlinx.coroutines.delay
 
@@ -156,7 +157,11 @@ fun NotificationsScreen(
         }
 
         // ── Content ─────────────────────────────────────────────────────────
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
+        ) {
             when {
                 state.isLoading -> {
                     Column(
@@ -334,16 +339,12 @@ private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
         },
     ) {
         val (icon, accentColor) = notifIconAndColor(item.type)
-        val bgColor by animateColorAsState(
-            targetValue = if (!item.is_read) Color(0xFFEFF6FF) else SurfaceColor,
-            animationSpec = tween(300),
-            label = "cardBg",
-        )
 
-        Card(
+        GlassCard(
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = bgColor),
-            elevation = CardDefaults.cardElevation(defaultElevation = if (!item.is_read) 2.dp else 0.5.dp),
+            tint = Primary,
+            elevation = if (!item.is_read) 4.dp else 1.dp,
+            contentPadding = PaddingValues(0.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -364,15 +365,7 @@ private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
                 ) {
 
                     // Icon
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(accentColor.copy(alpha = 0.1f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(icon, null, tint = accentColor, modifier = Modifier.size(20.dp))
-                    }
+                    com.example.p2p.ui.components.GlassIconBadge(icon = icon, tint = accentColor, size = 40.dp, iconSize = 20.dp)
 
                     // Text content
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {

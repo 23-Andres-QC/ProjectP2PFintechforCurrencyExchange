@@ -41,6 +41,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.R
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 
 @Composable
@@ -66,6 +67,7 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .navigationBarsPadding()
                 .imePadding()
                 .verticalScroll(rememberScrollState()),
@@ -88,14 +90,14 @@ fun LoginScreen(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(104.dp)
+                        .size(132.dp)
                         .clipToBounds(),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.login_logo),
                         contentDescription = "PeruExchange",
-                        modifier = Modifier.size(96.dp)
+                        modifier = Modifier.size(124.dp)
                     )
                 }
 
@@ -116,16 +118,15 @@ fun LoginScreen(
                 )
             }
 
-            Card(
+            GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
                     .offset(y = (-28).dp),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+                contentPadding = PaddingValues(24.dp),
+                elevation = 12.dp,
             ) {
-                Column(modifier = Modifier.padding(24.dp)) {
 
                     Text(
                         text = "Iniciar Sesión",
@@ -262,7 +263,6 @@ fun LoginScreen(
                             Text("Ingresar", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
                     }
-                }
             }
 
             Spacer(Modifier.height(4.dp))

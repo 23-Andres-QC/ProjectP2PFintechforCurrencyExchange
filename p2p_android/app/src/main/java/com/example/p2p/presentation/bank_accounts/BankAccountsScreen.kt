@@ -60,8 +60,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Brush
 import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.presentation.common.RefreshOnResume
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.BackgroundApp
 import com.example.p2p.ui.theme.BbvaColor
 import com.example.p2p.ui.theme.BcpColor
@@ -186,7 +188,10 @@ fun BankAccountsScreen(
         containerColor = BackgroundApp,
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
+                .padding(innerPadding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
@@ -379,24 +384,21 @@ fun BankAccountsScreen(
                 }
             } else if (uiState.accounts.isEmpty()) {
                 item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(SurfaceColor)
-                            .border(1.dp, BorderColor, RoundedCornerShape(12.dp))
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    GlassCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(24.dp),
                     ) {
-                        Box(
-                            modifier = Modifier.size(56.dp).clip(CircleShape)
-                                .background(Primary.copy(alpha = 0.08f)),
-                            contentAlignment = Alignment.Center
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(Icons.Filled.AccountBalance, contentDescription = null, tint = Primary, modifier = Modifier.size(26.dp))
+                            com.example.p2p.ui.components.GlassIconBadge(
+                                icon = Icons.Filled.AccountBalance, tint = Primary, size = 56.dp, iconSize = 26.dp
+                            )
+                            Text("No tienes cuentas bancarias registradas.", color = TextMuted, fontSize = 13.sp)
                         }
-                        Text("No tienes cuentas bancarias registradas.", color = TextMuted, fontSize = 13.sp)
                     }
                 }
             } else {
@@ -422,15 +424,14 @@ private fun BankAccountCard(account: BankAccount, onDelete: () -> Unit) {
         "binance"   -> Color(0xFFF0B90B)
         else        -> Primary
     }
-    Card(
+    GlassCard(
         modifier  = Modifier.fillMaxWidth(),
         shape     = RoundedCornerShape(16.dp),
-        colors    = CardDefaults.cardColors(containerColor = SurfaceColor),
-        border    = BorderStroke(1.dp, BorderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+        elevation = 2.dp,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(

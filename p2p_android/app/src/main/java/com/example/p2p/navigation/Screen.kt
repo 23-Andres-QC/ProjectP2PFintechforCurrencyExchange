@@ -5,6 +5,7 @@ sealed class Screen(val route: String) {
     object Register      : Screen("register")
     object ForgotPass    : Screen("forgot_pass")
     object Kyc           : Screen("kyc")
+    object KycSummary    : Screen("kyc_summary")
     object Market        : Screen("market")
     object Publish       : Screen("publish")
     object History : Screen("history?filter={filter}") {

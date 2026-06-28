@@ -113,6 +113,16 @@ class UserService:
         return user
 
     @staticmethod
+    def save_signature(user_id: str, signature_url: str) -> User:
+        user = UserRepository.get_by_id(user_id)
+        if not user:
+            raise NotFoundError('User not found')
+
+        user.signature_url = signature_url
+        db.session.commit()
+        return user
+
+    @staticmethod
     def get_public_profile(user_id: str) -> dict:
         user = UserRepository.get_by_id(user_id)
         if not user:

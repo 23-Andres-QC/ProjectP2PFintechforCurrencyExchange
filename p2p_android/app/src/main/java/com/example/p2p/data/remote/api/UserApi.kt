@@ -20,4 +20,10 @@ interface UserApi {
         @Part selfie: MultipartBody.Part,
         @Part signature: MultipartBody.Part? = null
     ): Response<Unit>
+
+    @Multipart
+    @POST("users/signature")
+    suspend fun uploadSignature(
+        @Part signature: MultipartBody.Part
+    ): Response<Unit>
 }

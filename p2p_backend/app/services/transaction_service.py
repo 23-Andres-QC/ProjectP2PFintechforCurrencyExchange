@@ -1,3 +1,5 @@
+import threading
+
 from app.core.database import db
 from app.core.email import send_voucher_email
 from app.core.exceptions import NotFoundError, AuthorizationError, AppException
@@ -220,13 +222,17 @@ class TransactionService:
         pdf_bytes = build_receipt_pdf(receipt_payload)
         if buyer:
             txn.receipt_pdf_url = upload_receipt_pdf(pdf_bytes, buyer.email, txn.id)
-            send_voucher_email(
-                to_email=buyer.email,
-                buyer_name=buyer.full_name,
-                transaction_id=txn.id,
-                pdf_url=txn.receipt_pdf_url,
-                pdf_bytes=pdf_bytes,
-            )
+            threading.Thread(
+                target=send_voucher_email,
+                kwargs={
+                    'to_email': buyer.email,
+                    'buyer_name': buyer.full_name,
+                    'transaction_id': txn.id,
+                    'pdf_url': txn.receipt_pdf_url,
+                    'pdf_bytes': pdf_bytes,
+                },
+                daemon=True,
+            ).start()
 
         db.session.commit()
         return {

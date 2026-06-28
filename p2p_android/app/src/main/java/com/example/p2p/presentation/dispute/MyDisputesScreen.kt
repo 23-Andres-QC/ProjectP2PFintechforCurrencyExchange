@@ -56,7 +56,9 @@ import com.example.p2p.ui.theme.SuccessColor
 import com.example.p2p.ui.theme.SurfaceColor
 import com.example.p2p.ui.theme.TextMain
 import com.example.p2p.ui.theme.TextMuted
+import androidx.compose.ui.graphics.Brush
 import com.example.p2p.ui.theme.WarningColor
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.presentation.common.RefreshOnResume
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -156,6 +158,7 @@ fun MyDisputesScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .padding(innerPadding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -206,14 +209,18 @@ fun MyDisputesScreen(
 
 @Composable
 private fun DisputeCard(dispute: Dispute, onViewDetail: (String) -> Unit = {}) {
-    Card(
+    val cardTint = when (dispute.status) {
+        "Resuelta" -> SuccessColor
+        "Abierta" -> DangerColor
+        else -> Primary
+    }
+    GlassCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        border = BorderStroke(1.dp, BorderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        tint = cardTint,
+        elevation = 2.dp,
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

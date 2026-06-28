@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.core.util.compressImageFromUri
 import com.example.p2p.presentation.common.RefreshOnResume
+import com.example.p2p.ui.components.GlassCard
+import com.example.p2p.ui.components.GlassIconBadge
 import com.example.p2p.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -215,6 +217,7 @@ fun TransactionScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -296,12 +299,10 @@ fun TransactionScreen(
 
             val steps = listOf("Inicio", "Pagar", "Voucher", "Confirmar", "Liberado")
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(SurfaceColor)
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
+            GlassCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -363,15 +364,11 @@ fun TransactionScreen(
                 }
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Primary.copy(alpha = 0.08f))
-                    .border(1.dp, Primary.copy(alpha = 0.18f), RoundedCornerShape(16.dp))
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+            GlassCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
             ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = "CUENTA RECEPTORA",
                     fontSize = 10.sp,
@@ -405,17 +402,14 @@ fun TransactionScreen(
                         )
                     }
                 }
+                }
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(SurfaceColor)
-                    .border(1.dp, BorderColor, RoundedCornerShape(16.dp))
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            GlassCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
             ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -444,6 +438,7 @@ fun TransactionScreen(
                     fontSize = 12.sp,
                     color = TextMuted
                 )
+                }
             }
 
             // ── Sección de subir comprobante (siempre visible al pagar) ──────────
@@ -457,15 +452,7 @@ fun TransactionScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Primary.copy(alpha = 0.12f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Filled.Receipt, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
-                        }
+                        GlassIconBadge(icon = Icons.Filled.Receipt, tint = Primary, size = 28.dp, iconSize = 16.dp)
                         Text(
                             text = "Comprobante de pago",
                             fontWeight = FontWeight.Bold,
@@ -645,17 +632,16 @@ fun TransactionScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = WarningColor.copy(alpha = 0.1f)),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, WarningColor.copy(alpha = 0.3f)),
-                        shape = RoundedCornerShape(12.dp)
+                    GlassCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(14.dp),
                     ) {
                         Row(
-                            modifier = Modifier.padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(Icons.Filled.Schedule, contentDescription = null, tint = WarningColor)
+                            Icon(Icons.Filled.Schedule, contentDescription = null, tint = Primary)
                             Column {
                                 Text("Esperando confirmación del vendedor...", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = TextMain)
                                 Text("El vendedor está verificando tu pago en su cuenta bancaria. Recibirás una notificación cuando libere los fondos.", fontSize = 10.sp, color = TextMuted)
@@ -677,15 +663,14 @@ fun TransactionScreen(
             }
 
             if (txn?.status == "completed" || txn?.status == "closed") {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = SuccessColor.copy(alpha = 0.1f)),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, SuccessColor.copy(alpha = 0.3f)),
-                    shape = RoundedCornerShape(16.dp)
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    tint = SuccessColor,
+                    shape = RoundedCornerShape(16.dp),
+                    contentPadding = PaddingValues(20.dp),
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -767,14 +752,13 @@ fun TransactionScreen(
             }
 
             if (isExpired) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = DangerColor.copy(alpha = 0.1f)),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, DangerColor.copy(alpha = 0.4f)),
+                GlassCard(
+                    tint = DangerColor,
                     shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {

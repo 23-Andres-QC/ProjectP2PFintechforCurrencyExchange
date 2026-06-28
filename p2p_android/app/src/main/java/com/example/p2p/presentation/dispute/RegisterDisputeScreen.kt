@@ -21,6 +21,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Brush
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,6 +72,7 @@ fun RegisterDisputeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -267,17 +270,13 @@ fun RegisterDisputeScreen(
 
 @Composable
 private fun TransactionCard(id: String, amount: String, isSelected: Boolean) {
-    val borderColor = if (isSelected) Primary else BorderColor
-    val borderWidth = if (isSelected) 2.dp else 1.dp
-    val bgColor = if (isSelected) Primary.copy(alpha = 0.05f) else SurfaceColor
-
+    GlassCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        contentPadding = PaddingValues(14.dp),
+    ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(bgColor)
-            .border(borderWidth, borderColor, RoundedCornerShape(12.dp))
-            .padding(14.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -313,5 +312,6 @@ private fun TransactionCard(id: String, amount: String, isSelected: Boolean) {
                     .border(1.5.dp, BorderColor, androidx.compose.foundation.shape.CircleShape)
             )
         }
+    }
     }
 }

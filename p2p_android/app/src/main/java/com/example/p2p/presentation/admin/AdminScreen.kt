@@ -38,6 +38,7 @@ import com.example.p2p.ui.theme.TextMain
 import com.example.p2p.ui.theme.TextMuted
 import com.example.p2p.ui.theme.WarningColor
 import com.example.p2p.presentation.common.RefreshOnResume
+import com.example.p2p.ui.components.GlassCard
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,6 +88,7 @@ fun AdminScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 24.dp),
         ) {
@@ -430,14 +432,17 @@ private fun DisputeCard(
     onResolve: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    val cardTint = when (dispute.status) {
+        "resolved" -> SuccessColor
+        else -> DangerColor
+    }
+    GlassCard(
         modifier = modifier.fillMaxWidth().clickable { onViewDetail(dispute.id) },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        border = BorderStroke(1.dp, BorderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        tint = cardTint,
+        elevation = 2.dp,
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -564,14 +569,17 @@ private fun ComplaintAdminCard(
         )
     }
 
-    Card(
+    val complaintCardTint = when (complaint.status) {
+        "resolved" -> SuccessColor
+        else -> Primary
+    }
+    GlassCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        border = BorderStroke(1.dp, BorderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        tint = complaintCardTint,
+        elevation = 2.dp,
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,

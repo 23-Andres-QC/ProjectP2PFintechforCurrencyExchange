@@ -26,7 +26,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Brush
 import com.example.p2p.presentation.common.RefreshOnResume
+import com.example.p2p.ui.components.GlassCard
+import com.example.p2p.ui.components.GlassIconBadge
 import com.example.p2p.ui.theme.*
 import kotlinx.coroutines.delay
 
@@ -171,6 +174,7 @@ fun HistoryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
         ) {
 
             Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
@@ -299,14 +303,16 @@ private fun TransactionCard(
     onNavigateToTransactionDetail: (String) -> Unit = {}
 ) {
     val isActive = tx.status == "Pendiente" || tx.status == "Aceptado" || tx.status == "En Proceso"
-    Card(
+    val cardTint = when (tx.status) {
+        "Completado" -> SuccessColor
+        "Disputa", "Cancelado" -> DangerColor
+        else -> Primary
+    }
+    GlassCard(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        border = androidx.compose.foundation.BorderStroke(
-            width = if (isActive) 1.5.dp else 1.dp,
-            color = if (isActive) WarningColor.copy(alpha = 0.5f) else BorderColor
-        ),
-        elevation = CardDefaults.cardElevation(2.dp),
+        tint = cardTint,
+        contentPadding = PaddingValues(14.dp),
+        elevation = 2.dp,
         modifier = Modifier
             .fillMaxWidth()
             .then(
@@ -317,26 +323,13 @@ private fun TransactionCard(
                 else Modifier
             )
     ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(tx.statusColor.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        tx.icon,
-                        contentDescription = null,
-                        tint = tx.statusColor,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                GlassIconBadge(icon = tx.icon, tint = tx.statusColor, size = 38.dp, iconSize = 20.dp)
                 Column(modifier = Modifier.weight(1f)) {
                     Text(tx.id, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextMain)
                     if (tx.isBuyerActive) {

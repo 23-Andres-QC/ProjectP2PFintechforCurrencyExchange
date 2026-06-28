@@ -17,7 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Brush
 import com.example.p2p.presentation.common.RefreshOnResume
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,6 +88,7 @@ fun DisputeDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -111,13 +114,12 @@ fun DisputeDetailScreen(
                 }
             }
 
-            Card(
+            GlassCard(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-                elevation = CardDefaults.cardElevation(1.dp),
+                elevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                     DetailRow("Transacción:", "#TX-${(dispute?.transaction_id ?: "--").takeLast(4).uppercase()}")
                     DetailRow("Motivo:", DisputeReason.label(dispute?.reason ?: ""))
                     DetailRow("Descripción:", dispute?.description ?: "Sin descripción")
@@ -127,13 +129,12 @@ fun DisputeDetailScreen(
             }
 
             dispute?.transaction?.let { txn ->
-                Card(
+                GlassCard(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-                    elevation = CardDefaults.cardElevation(1.dp),
+                    elevation = 1.dp,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                         Text(
                             "Transacción Asociada",
                             fontSize = 13.sp,
@@ -150,13 +151,13 @@ fun DisputeDetailScreen(
             }
 
             if (dispute?.status == "resolved") {
-                Card(
+                GlassCard(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SuccessColor.copy(alpha = 0.08f)),
-                    elevation = CardDefaults.cardElevation(0.dp),
+                    tint = SuccessColor,
+                    elevation = 0.dp,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("Resolución", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = SuccessColor)
                         Text(
                             when (dispute.resolution) {

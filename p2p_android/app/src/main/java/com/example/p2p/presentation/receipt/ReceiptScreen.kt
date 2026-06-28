@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.presentation.transaction.TransactionUiState
 import com.example.p2p.presentation.transaction.TransactionViewModel
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 
 @Composable
@@ -66,7 +67,7 @@ fun ReceiptScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundApp)
+            .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -113,12 +114,15 @@ fun ReceiptScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        GlassCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            tint = SuccessColor,
+            contentPadding = PaddingValues(0.dp),
+            elevation = 4.dp,
+        ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(elevation = 4.dp, shape = RoundedCornerShape(20.dp))
-                .clip(RoundedCornerShape(20.dp))
-                .background(SurfaceColor)
+            modifier = Modifier.fillMaxWidth()
         ) {
 
             Column(
@@ -210,6 +214,7 @@ fun ReceiptScreen(
                     )
                 }
             }
+        }
         }
 
         Spacer(modifier = Modifier.height(24.dp))

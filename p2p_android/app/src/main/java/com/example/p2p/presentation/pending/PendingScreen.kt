@@ -23,16 +23,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Brush
 import com.example.p2p.data.remote.model.Transaction
 import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.presentation.transaction.TransactionViewModel
 import com.example.p2p.presentation.vendor.VendorInboxScreen
+import com.example.p2p.ui.components.GlassCard
+import com.example.p2p.ui.components.GlassIconBadge
 import com.example.p2p.ui.theme.*
 import kotlinx.coroutines.delay
 
@@ -82,7 +86,12 @@ fun PendingScreen(
         },
         containerColor = BackgroundApp
     ) { innerPadding ->
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
+        ) {
             PendingTabSelector(
                 selectedTab = selectedTab,
                 onSelectTab = { selectedTab = it }
@@ -104,30 +113,30 @@ fun PendingScreen(
 
 @Composable
 private fun PendingTabSelector(selectedTab: Int, onSelectTab: (Int) -> Unit) {
-    Row(
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(SurfaceElevated)
-            .border(1.dp, BorderColor, RoundedCornerShape(14.dp))
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        shape = RoundedCornerShape(14.dp),
+        contentPadding = PaddingValues(4.dp),
+        elevation = 4.dp,
     ) {
-        PendingTabChip(
-            label = "Comprar",
-            icon = Icons.Default.ShoppingCart,
-            selected = selectedTab == 0,
-            modifier = Modifier.weight(1f),
-            onClick = { onSelectTab(0) }
-        )
-        PendingTabChip(
-            label = "Ventas",
-            icon = Icons.Default.Store,
-            selected = selectedTab == 1,
-            modifier = Modifier.weight(1f),
-            onClick = { onSelectTab(1) }
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            PendingTabChip(
+                label = "Comprar",
+                icon = Icons.Default.ShoppingCart,
+                selected = selectedTab == 0,
+                modifier = Modifier.weight(1f),
+                onClick = { onSelectTab(0) }
+            )
+            PendingTabChip(
+                label = "Ventas",
+                icon = Icons.Default.Store,
+                selected = selectedTab == 1,
+                modifier = Modifier.weight(1f),
+                onClick = { onSelectTab(1) }
+            )
+        }
     }
 }
 
@@ -142,7 +151,13 @@ private fun PendingTabChip(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(11.dp))
-            .background(if (selected) Primary else Color.Transparent)
+            .then(
+                if (selected) {
+                    Modifier
+                        .shadow(elevation = 3.dp, shape = RoundedCornerShape(11.dp), ambientColor = Primary.copy(alpha = 0.4f), spotColor = Primary.copy(alpha = 0.4f))
+                        .background(Brush.verticalGradient(listOf(Primary, PrimaryDark)))
+                } else Modifier
+            )
             .clickable { onClick() }
             .padding(vertical = 9.dp),
         horizontalArrangement = Arrangement.Center,
@@ -229,32 +244,26 @@ internal fun ActiveTransactionBanner(
         }
     }
 
-    Card(
+    val cardTint = when (transaction.status) {
+        "completed" -> SuccessColor
+        else -> Primary
+    }
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, statusColor.copy(alpha = 0.35f))
+        tint = cardTint,
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+        elevation = 2.dp,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(statusColor.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(statusIcon, contentDescription = null, tint = statusColor, modifier = Modifier.size(20.dp))
-            }
+            GlassIconBadge(icon = statusIcon, tint = statusColor, size = 40.dp, iconSize = 20.dp)
             Column(modifier = Modifier.weight(1f)) {
                 Box(
                     modifier = Modifier
@@ -284,20 +293,7 @@ internal fun ActiveTransactionBanner(
                     modifier = Modifier.padding(top = 1.dp)
                 )
             }
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(statusColor.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    tint = statusColor,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
+            GlassIconBadge(icon = Icons.AutoMirrored.Filled.ArrowForward, tint = statusColor, size = 28.dp, iconSize = 16.dp)
         }
     }
 }

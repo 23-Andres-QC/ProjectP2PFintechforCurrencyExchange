@@ -42,6 +42,7 @@ import com.example.p2p.core.util.compressImageFromUri
 import com.example.p2p.data.remote.model.Transaction
 import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.presentation.transaction.TransactionViewModel
+import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -157,7 +158,9 @@ fun VendorInboxScreen(
 
     val bodyContent: @Composable (Modifier) -> Unit = { modifier ->
         Column(
-            modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = modifier
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             if (uiState.isLoading && pendingTransactions.isEmpty()) {
@@ -357,6 +360,7 @@ private fun VendorConfirmScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -945,22 +949,18 @@ private fun VendorTransactionCard(
         "completed"        -> SuccessColor
         else               -> TextMuted
     }
-    val cardBorder = when (transaction.status) {
-        "pending"          -> Primary.copy(alpha = 0.4f)
-        "accepted"         -> SuccessColor.copy(alpha = 0.3f)
-        "voucher_uploaded" -> WarningColor.copy(alpha = 0.3f)
-        "completed"        -> SuccessColor.copy(alpha = 0.4f)
-        else               -> BorderColor
+    val cardTint = when (transaction.status) {
+        "accepted", "completed" -> SuccessColor
+        else               -> Primary
     }
 
-    Card(
+    GlassCard(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        border = androidx.compose.foundation.BorderStroke(1.dp, cardBorder),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        tint = cardTint,
+        elevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
             // Header
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
