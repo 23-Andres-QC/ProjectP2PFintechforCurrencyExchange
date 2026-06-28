@@ -4,6 +4,33 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+fun readLocalEnv(name: String): String {
+    val projectProperty = project.findProperty(name) as? String
+    if (!projectProperty.isNullOrBlank()) return projectProperty
+
+    val systemEnv = System.getenv(name)
+    if (!systemEnv.isNullOrBlank()) return systemEnv
+
+    val envFiles = listOf(rootProject.file(".env"), rootProject.file("../.env"))
+    for (envFile in envFiles) {
+        if (!envFile.exists()) continue
+        val match = envFile.readLines()
+            .map { it.trim() }
+            .firstOrNull { it.startsWith("$name=") && !it.startsWith("#") }
+        if (match != null) {
+            return match.substringAfter("=")
+                .trim()
+                .trim('"')
+                .trim('\'')
+        }
+    }
+
+    return ""
+}
+
+fun buildConfigString(value: String): String =
+    "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
 android {
     namespace = "com.example.p2p"
     compileSdk {
@@ -25,10 +52,12 @@ android {
         ?: "http://157.137.189.178/api/v1/"
     val baseUrlRelease: String = project.findProperty("BASE_URL_RELEASE") as? String
         ?: "http://157.137.189.178/api/v1/"
+    val groqApiKey: String = readLocalEnv("GROQ_API_KEY")
 
     buildTypes {
         debug {
             buildConfigField("String", "BASE_URL", "\"$baseUrlDebug\"")
+            buildConfigField("String", "GROQ_API_KEY", buildConfigString(groqApiKey))
         }
         release {
             isMinifyEnabled = false
@@ -37,6 +66,7 @@ android {
                 "proguard-rules.pro"
             )
             buildConfigField("String", "BASE_URL", "\"$baseUrlRelease\"")
+            buildConfigField("String", "GROQ_API_KEY", buildConfigString(groqApiKey))
         }
     }
 

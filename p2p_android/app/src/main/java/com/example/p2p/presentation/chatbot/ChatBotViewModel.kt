@@ -7,14 +7,13 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.p2p.BuildConfig
 import com.example.p2p.core.network.GroqClient
 import com.example.p2p.data.local.ChatHistoryStore
 import com.example.p2p.data.remote.model.GroqMessage
 import com.example.p2p.data.remote.model.GroqRequest
 import kotlinx.coroutines.launch
 import java.util.UUID
-
-private const val GROQ_API_KEY = "Bearer YOUR_GROQ_API_KEY_HERE"
 
 private const val SYSTEM_PROMPT =
     "Eres un asistente virtual de PeruExchange, la mejor plataforma P2P de cambio de divisas en Perú. " +
@@ -45,6 +44,17 @@ class ChatBotViewModel(private val store: ChatHistoryStore) : ViewModel() {
     fun sendMessage(text: String) {
         if (text.isBlank() || isLoading) return
         currentMessages.add(ChatMessage(role = "user", content = text.trim()))
+
+        if (BuildConfig.GROQ_API_KEY.isBlank()) {
+            currentMessages.add(
+                ChatMessage(
+                    role = "assistant",
+                    content = "El chatbot no tiene configurada su clave de IA. Revisa el archivo .env e intenta nuevamente."
+                )
+            )
+            return
+        }
+
         isLoading = true
         viewModelScope.launch {
             try {
@@ -53,7 +63,7 @@ class ChatBotViewModel(private val store: ChatHistoryStore) : ViewModel() {
                 val msgs = mutableListOf(GroqMessage(role = "system", content = SYSTEM_PROMPT))
                 msgs.addAll(history)
                 val response = GroqClient.groqApi.chat(
-                    authorization = GROQ_API_KEY,
+                    authorization = "Bearer ${BuildConfig.GROQ_API_KEY}",
                     request = GroqRequest(messages = msgs)
                 )
                 val reply = response.choices.firstOrNull()?.message?.content
