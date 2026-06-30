@@ -1,22 +1,15 @@
 package com.example.p2p.presentation.bank_accounts
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -25,111 +18,102 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.Brush
 import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.components.GlassCard
-import com.example.p2p.ui.theme.BackgroundApp
-import com.example.p2p.ui.theme.BbvaColor
-import com.example.p2p.ui.theme.BcpColor
-import com.example.p2p.ui.theme.BorderColor
-import com.example.p2p.ui.theme.DangerColor
-import com.example.p2p.ui.theme.InterbankColor
-import com.example.p2p.ui.theme.PlinColor
-import com.example.p2p.ui.theme.Primary
-import com.example.p2p.ui.theme.SuccessColor
-import com.example.p2p.ui.theme.SurfaceColor
-import com.example.p2p.ui.theme.TextMain
-import com.example.p2p.ui.theme.TextMuted
-import com.example.p2p.ui.theme.YapeColor
+import com.example.p2p.ui.components.GlassIconBadge
+import com.example.p2p.ui.theme.*
 
-private data class BankChip(val name: String, val color: Color)
+// ── Definición de bancos ─────────────────────────────────────────────────────
 
-private val bankChips = listOf(
-    BankChip("BCP",       BcpColor),
-    BankChip("Interbank", InterbankColor),
-    BankChip("BBVA",      BbvaColor),
-    BankChip("Yape",      YapeColor),
-    BankChip("Plin",      PlinColor),
-    BankChip("Wise",      Color(0xFF00B9FF)),
-    BankChip("Binance",   Color(0xFFF0B90B)),
-    BankChip("Otro",      Color(0xFF6B7280)),
+private data class BankDef(
+    val key: String,
+    val displayName: String,
+    val shortHint: String,
+    val fieldLabel: String,
+    val fieldHint: String,
+    val maxLength: Int,
+    val digitsOnly: Boolean,
+    val color: Color,
+    val currencies: List<String>,   // monedas soportadas por este banco
+    val isOther: Boolean = false
 )
 
-private val currencyOptions = listOf(
-    "PEN", "USD", "EUR", "USDT", "COP", "MXN", "ARS", "GBP", "BRL", "CAD", "AUD", "JPY", "CLP"
+private val BANKS = listOf(
+    BankDef(
+        key = "BCP", displayName = "BCP", shortHint = "CCI · 20 díg.",
+        fieldLabel = "Número de CCI",
+        fieldHint = "20 dígitos · ej. 00219100987654321234",
+        maxLength = 20, digitsOnly = true, color = BcpColor,
+        currencies = listOf("PEN", "USD")           // BCP: soles y dólares
+    ),
+    BankDef(
+        key = "Interbank", displayName = "Interbank", shortHint = "CCI · 20 díg.",
+        fieldLabel = "Número de CCI",
+        fieldHint = "20 dígitos · ej. 00385800987654321234",
+        maxLength = 20, digitsOnly = true, color = InterbankColor,
+        currencies = listOf("PEN", "USD", "EUR")    // Interbank: soles, dólares y euros
+    ),
+    BankDef(
+        key = "BBVA", displayName = "BBVA", shortHint = "CCI · 20 díg.",
+        fieldLabel = "Número de CCI",
+        fieldHint = "20 dígitos · ej. 01140024987654321234",
+        maxLength = 20, digitsOnly = true, color = BbvaColor,
+        currencies = listOf("PEN", "USD", "EUR")    // BBVA: soles, dólares y euros
+    ),
+    BankDef(
+        key = "Yape", displayName = "Yape", shortHint = "Celular · 9 díg.",
+        fieldLabel = "Número de celular",
+        fieldHint = "9 dígitos · ej. 987654321",
+        maxLength = 9, digitsOnly = true, color = YapeColor,
+        currencies = listOf("PEN")                  // Yape: solo soles
+    ),
+    BankDef(
+        key = "Plin", displayName = "Plin", shortHint = "Celular · 9 díg.",
+        fieldLabel = "Número de celular",
+        fieldHint = "9 dígitos · ej. 987654321",
+        maxLength = 9, digitsOnly = true, color = PlinColor,
+        currencies = listOf("PEN")                  // Plin: solo soles
+    ),
+    BankDef(
+        key = "Otros", displayName = "Otros", shortHint = "Libre",
+        fieldLabel = "Número / Código de cuenta",
+        fieldHint = "IBAN, número de cuenta, wallet, etc.",
+        maxLength = 60, digitsOnly = false,
+        color = Color(0xFF64748B), isOther = true,
+        currencies = listOf("PEN", "USD", "EUR", "USDT", "GBP", "BRL", "COP", "MXN")
+    ),
 )
 
-private val mobileWalletBanks = listOf("yape", "plin")
-private val strictDigitBanks  = listOf("bcp", "interbank", "bbva")
-
-private fun cleanAccountNumber(number: String) = number.replace("-", "").replace(" ", "")
-
-private fun validateAccountNumber(number: String, bank: String): String? {
-    val bankLower = bank.lowercase()
+private fun validate(value: String, bank: BankDef): String? {
+    if (value.isBlank()) return "El número de cuenta es obligatorio"
     return when {
-        number.isBlank() -> "El número de cuenta es obligatorio"
-        bankLower in mobileWalletBanks -> {
-            val d = cleanAccountNumber(number)
-            when {
-                !d.all { it.isDigit() } -> "Solo dígitos"
-                d.length != 9           -> "Yape/Plin requiere exactamente 9 dígitos"
-                else                    -> null
-            }
+        bank.isOther -> if (value.trim().length < 4) "Mínimo 4 caracteres" else null
+        bank.digitsOnly -> when {
+            !value.all { it.isDigit() } -> "Solo se permiten dígitos"
+            value.length < bank.maxLength -> "Debe tener exactamente ${bank.maxLength} dígitos (${value.length}/${bank.maxLength})"
+            else -> null
         }
-        bankLower in strictDigitBanks -> {
-            val d = cleanAccountNumber(number)
-            when {
-                !d.all { it.isDigit() } -> "Solo dígitos (sin letras)"
-                d.length != 20          -> "El CCI debe tener exactamente 20 dígitos"
-                else                    -> null
-            }
-        }
-        else -> {
-            val clean = number.trim()
-            when {
-                clean.length < 4  -> "Mínimo 4 caracteres"
-                clean.length > 60 -> "Máximo 60 caracteres"
-                else              -> null
-            }
-        }
+        else -> null
     }
 }
+
+// ── Pantalla principal ───────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -137,35 +121,48 @@ fun BankAccountsScreen(
     viewModel: BankAccountsViewModel? = null,
     onBack: () -> Unit = {}
 ) {
-    var selectedBank     by remember { mutableStateOf("BCP") }
+    var selectedBankKey  by remember { mutableStateOf("BCP") }
+    var otherBankName    by remember { mutableStateOf("") }
     var accountNumber    by remember { mutableStateOf("") }
     var selectedCurrency by remember { mutableStateOf("PEN") }
-    var accountTouched   by remember { mutableStateOf(false) }
+    var touched          by remember { mutableStateOf(false) }
 
     val uiState by viewModel?.uiState?.collectAsState(initial = BankAccountsUiState())
         ?: remember { mutableStateOf(BankAccountsUiState()) }
     val context = LocalContext.current
 
-    val isYapeOrPlin   = selectedBank.lowercase() in mobileWalletBanks
-    val isInternational = selectedBank.lowercase() !in (mobileWalletBanks + strictDigitBanks)
-    val accountError   = if (accountTouched) validateAccountNumber(accountNumber, selectedBank) else null
-    val canAdd         = validateAccountNumber(accountNumber, selectedBank) == null && accountNumber.isNotBlank()
+    val bank         = BANKS.first { it.key == selectedBankKey }
+    val isYapeOrPlin = selectedBankKey in listOf("Yape", "Plin")
+    val fieldError   = if (touched) validate(accountNumber, bank) else null
 
-    RefreshOnResume {
-        viewModel?.loadBankAccounts()
+    // Monedas disponibles según el banco seleccionado
+    val availableCurrencies = bank.currencies
+
+    // Detectar cuenta duplicada (mismo banco + mismo número)
+    val resolvedBankName = if (bank.isOther) otherBankName.trim() else bank.key
+    val isDuplicate = accountNumber.isNotBlank() && uiState.accounts.any { existing ->
+        existing.account_number == accountNumber &&
+        existing.bank_name.lowercase() == resolvedBankName.lowercase()
     }
 
+    val canAdd = fieldError == null && accountNumber.isNotBlank() &&
+        (!bank.isOther || otherBankName.trim().length >= 2) && !isDuplicate
+
+    LaunchedEffect(selectedBankKey) {
+        // Al cambiar de banco, fijar la primera moneda disponible si la actual no es compatible
+        if (selectedCurrency !in bank.currencies) selectedCurrency = bank.currencies.first()
+    }
+
+    RefreshOnResume { viewModel?.loadBankAccounts() }
     LaunchedEffect(Unit) { viewModel?.loadBankAccounts() }
 
     LaunchedEffect(uiState.successMessage) {
         if (uiState.successMessage != null) {
             android.widget.Toast.makeText(context, uiState.successMessage, android.widget.Toast.LENGTH_SHORT).show()
             viewModel?.clearMessages()
-            accountNumber  = ""
-            accountTouched = false
+            accountNumber = ""; otherBankName = ""; touched = false
         }
     }
-
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show()
@@ -176,10 +173,10 @@ fun BankAccountsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis Cuentas Bancarias", fontWeight = FontWeight.Bold, color = TextMain) },
+                title = { Text("Métodos de Pago", fontWeight = FontWeight.Bold, color = TextMain) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = TextMain)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = TextMain)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceColor),
@@ -187,145 +184,287 @@ fun BankAccountsScreen(
         },
         containerColor = BackgroundApp,
     ) { innerPadding ->
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
+                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.05f), BackgroundApp)))
                 .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
 
+            // ── Tarjeta: Agregar cuenta ──────────────────────────────────
             item {
-                Text("Agregar Cuenta Bancaria", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextMain)
-            }
+                GlassCard(
+                    shape = RoundedCornerShape(22.dp),
+                    elevation = 3.dp,
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(20.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
 
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Selecciona tu banco", fontSize = 13.sp, color = TextMuted, fontWeight = FontWeight.Medium)
-                    Row(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        bankChips.forEach { chip ->
-                            val isSelected = chip.name == selectedBank
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(50.dp))
-                                    .background(if (isSelected) chip.color else SurfaceColor)
-                                    .border(1.dp, if (isSelected) chip.color else BorderColor, RoundedCornerShape(50.dp))
-                                    .clickable { selectedBank = chip.name; accountNumber = ""; accountTouched = false }
-                                    .padding(horizontal = 14.dp, vertical = 8.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    chip.name,
-                                    fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) Color.White else TextMuted,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    OutlinedTextField(
-                        value = accountNumber,
-                        onValueChange = {
-                            val maxLen = when {
-                                isYapeOrPlin    -> 9
-                                isInternational -> 60
-                                else            -> 20
-                            }
-                            val allowed = when {
-                                isYapeOrPlin                  -> it.all { c -> c.isDigit() }
-                                isInternational               -> true
-                                else                          -> it.all { c -> c.isDigit() }
-                            }
-                            if (it.length <= maxLen && allowed) {
-                                accountNumber  = it
-                                accountTouched = true
-                            }
-                        },
-                        label = {
-                            Text(
-                                when {
-                                    isYapeOrPlin    -> "Número de celular"
-                                    isInternational -> "Número / IBAN / Wallet"
-                                    else            -> "Número de CCI (20 dígitos)"
-                                },
-                                fontSize = 13.sp
-                            )
-                        },
-                        placeholder = {
-                            Text(
-                                when {
-                                    isYapeOrPlin    -> "9 dígitos (ej. 987654321)"
-                                    isInternational -> "Ej. IBAN, dirección wallet, etc."
-                                    else            -> "20 dígitos CCI (ej. 00219100987654321234)"
-                                },
-                                fontSize = 13.sp,
-                                color = TextMuted.copy(alpha = 0.6f),
-                            )
-                        },
-                        isError = accountError != null,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = if (isInternational) KeyboardType.Text else KeyboardType.Number
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor  = Primary,
-                            unfocusedBorderColor = BorderColor,
-                            errorBorderColor    = DangerColor,
-                            focusedLabelColor   = Primary,
-                            unfocusedLabelColor = TextMuted,
-                            errorLabelColor     = DangerColor,
-                            cursorColor         = Primary,
-                        ),
-                    )
-                    if (accountError != null) {
-                        Text(accountError, fontSize = 11.sp, color = DangerColor, modifier = Modifier.padding(start = 4.dp))
-                    } else if (accountTouched && accountNumber.isNotBlank()) {
+                        // Header
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier.padding(start = 4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(12.dp))
-                            Text("Número válido", fontSize = 11.sp, color = SuccessColor)
-                        }
-                    }
-                }
-            }
-
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Moneda de la cuenta", fontSize = 13.sp, color = TextMuted, fontWeight = FontWeight.Medium)
-                    Row(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        currencyOptions.forEach { currency ->
-                            val isSelected = currency == selectedCurrency
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(50.dp))
-                                    .background(if (isSelected) Primary else SurfaceColor)
-                                    .border(1.dp, if (isSelected) Primary else BorderColor, RoundedCornerShape(50.dp))
-                                    .clickable { selectedCurrency = currency }
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
+                            GlassIconBadge(
+                                icon = Icons.Default.AccountBalance,
+                                tint = Primary,
+                                size = 44.dp,
+                                iconSize = 20.dp
+                            )
+                            Column {
                                 Text(
-                                    currency,
+                                    "Agregar cuenta bancaria",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = TextMain
+                                )
+                                Text(
+                                    "Selecciona el banco y el número de cuenta",
+                                    fontSize = 12.sp,
+                                    color = TextMuted
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(color = DividerColor)
+
+                        // ── Selector de banco (grid 3×2) ─────────────────
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                "Banco o billetera",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecond
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            BankGrid(
+                                banks = BANKS,
+                                selectedKey = selectedBankKey,
+                                onSelect = { key ->
+                                    selectedBankKey = key
+                                    accountNumber = ""
+                                    otherBankName = ""
+                                    touched = false
+                                }
+                            )
+                        }
+
+                        // ── Campo nombre banco (solo Otros) ──────────────
+                        AnimatedVisibility(
+                            visible = bank.isOther,
+                            enter = fadeIn() + expandVertically(),
+                            exit  = fadeOut() + shrinkVertically()
+                        ) {
+                            OutlinedTextField(
+                                value = otherBankName,
+                                onValueChange = { if (it.length <= 40) otherBankName = it },
+                                label = { Text("Nombre del banco o billetera", fontSize = 13.sp) },
+                                placeholder = {
+                                    Text(
+                                        "Ej. Scotiabank, BanBif, Wise, Binance...",
+                                        fontSize = 13.sp,
+                                        color = TextMuted.copy(alpha = 0.6f)
+                                    )
+                                },
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = fieldColors(),
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Business,
+                                        null,
+                                        tint = TextMuted,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                },
+                                trailingIcon = {
+                                    Text(
+                                        "${otherBankName.length}/40",
+                                        fontSize = 10.sp,
+                                        color = TextSubtle,
+                                        modifier = Modifier.padding(end = 10.dp)
+                                    )
+                                }
+                            )
+                        }
+
+                        // ── Campo número de cuenta ───────────────────────
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            OutlinedTextField(
+                                value = accountNumber,
+                                onValueChange = { input ->
+                                    val filtered = if (bank.digitsOnly)
+                                        input.filter { it.isDigit() } else input
+                                    if (filtered.length <= bank.maxLength) {
+                                        accountNumber = filtered
+                                        touched = true
+                                    }
+                                },
+                                label = { Text(bank.fieldLabel, fontSize = 13.sp) },
+                                placeholder = {
+                                    Text(
+                                        bank.fieldHint,
+                                        fontSize = 12.sp,
+                                        color = TextMuted.copy(alpha = 0.6f)
+                                    )
+                                },
+                                isError = fieldError != null,
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = if (bank.digitsOnly) KeyboardType.Number else KeyboardType.Text
+                                ),
+                                colors = fieldColors(),
+                                trailingIcon = {
+                                    Text(
+                                        "${accountNumber.length}/${bank.maxLength}",
+                                        fontSize = 10.sp,
+                                        color = if (fieldError != null) DangerColor else TextSubtle,
+                                        modifier = Modifier.padding(end = 10.dp)
+                                    )
+                                }
+                            )
+                            // Feedback de validación del campo
+                            when {
+                                fieldError != null ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.padding(start = 4.dp)
+                                    ) {
+                                        Icon(Icons.Default.ErrorOutline, null, tint = DangerColor, modifier = Modifier.size(12.dp))
+                                        Text(fieldError, fontSize = 11.sp, color = DangerColor)
+                                    }
+                                touched && accountNumber.isNotBlank() && !isDuplicate ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.padding(start = 4.dp)
+                                    ) {
+                                        Icon(Icons.Default.CheckCircle, null, tint = SuccessColor, modifier = Modifier.size(12.dp))
+                                        Text("Número válido", fontSize = 11.sp, color = SuccessColor)
+                                    }
+                            }
+                        }
+
+                        // ── Banner: cuenta duplicada ──────────────────────
+                        AnimatedVisibility(
+                            visible = isDuplicate,
+                            enter = fadeIn() + expandVertically(),
+                            exit  = fadeOut() + shrinkVertically()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(DangerColor.copy(alpha = 0.08f))
+                                    .border(1.dp, DangerColor.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(Icons.Default.Info, null, tint = DangerColor, modifier = Modifier.size(18.dp))
+                                Column {
+                                    Text(
+                                        "Esta cuenta ya está registrada",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = DangerColor
+                                    )
+                                    Text(
+                                        "Ya tienes una cuenta con este número en $resolvedBankName.",
+                                        fontSize = 11.sp,
+                                        color = DangerColor.copy(alpha = 0.75f)
+                                    )
+                                }
+                            }
+                        }
+
+                        // ── Moneda (solo monedas del banco seleccionado) ──
+                        AnimatedVisibility(
+                            visible = !isYapeOrPlin,
+                            enter = fadeIn() + expandVertically(),
+                            exit  = fadeOut() + shrinkVertically()
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    "Moneda de la cuenta",
                                     fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) Color.White else TextMuted,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextSecond
+                                )
+                                Row(
+                                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    availableCurrencies.forEach { currency ->
+                                        val isSelected = currency == selectedCurrency
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(50.dp))
+                                                .background(if (isSelected) Primary else SurfaceElevated)
+                                                .border(1.dp, if (isSelected) Primary else BorderColor, RoundedCornerShape(50.dp))
+                                                .clickable { selectedCurrency = currency }
+                                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                currency,
+                                                fontSize = 12.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (isSelected) Color.White else TextMuted,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ── Botón agregar ─────────────────────────────────
+                        Button(
+                            onClick = {
+                                touched = true
+                                if (canAdd) {
+                                    val bankName = if (bank.isOther) otherBankName.trim() else bank.key
+                                    val holder = uiState.currentUserName?.takeIf { it.isNotBlank() } ?: bankName
+                                    viewModel?.addBankAccount(
+                                        bankName      = bankName,
+                                        accountNumber = accountNumber,
+                                        accountHolder = holder,
+                                        currency      = selectedCurrency
+                                    )
+                                }
+                            },
+                            enabled  = canAdd && !uiState.isLoading,
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            shape    = RoundedCornerShape(14.dp),
+                            colors   = ButtonDefaults.buttonColors(containerColor = Primary),
+                        ) {
+                            if (uiState.isLoading) {
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.Add,
+                                    null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    "Agregar cuenta",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White
                                 )
                             }
                         }
@@ -333,77 +472,84 @@ fun BankAccountsScreen(
                 }
             }
 
+            // ── Encabezado: Mis cuentas ──────────────────────────────────
             item {
-                Button(
-                    onClick = {
-                        accountTouched = true
-                        if (canAdd) {
-                            val holder = uiState.currentUserName?.takeIf { it.isNotBlank() } ?: selectedBank
-                            viewModel?.addBankAccount(
-                                bankName      = selectedBank,
-                                accountNumber = accountNumber,
-                                accountHolder = holder,
-                                currency      = selectedCurrency
-                            )
-                        }
-                    },
-                    enabled  = canAdd,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape    = RoundedCornerShape(12.dp),
-                    colors   = ButtonDefaults.buttonColors(containerColor = Primary),
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Agregar Cuenta", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-                }
-            }
-
-            item {
-                HorizontalDivider(color = BorderColor)
-                Spacer(Modifier.height(12.dp))
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Mis cuentas registradas", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextMain)
+                    Text(
+                        "Mis cuentas registradas",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = TextMain
+                    )
                     if (uiState.accounts.isNotEmpty()) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(50.dp))
+                                .clip(CircleShape)
                                 .background(Primary)
-                                .padding(horizontal = 8.dp, vertical = 2.dp),
+                                .size(22.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text("${uiState.accounts.size}", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                "${uiState.accounts.size}",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
             }
 
-            if (uiState.isLoading && uiState.accounts.isEmpty()) {
-                item {
-                    Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+            // ── Lista de cuentas ─────────────────────────────────────────
+            when {
+                uiState.isLoading && uiState.accounts.isEmpty() -> item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(120.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         CircularProgressIndicator(color = Primary)
                     }
                 }
-            } else if (uiState.accounts.isEmpty()) {
-                item {
+                uiState.accounts.isEmpty() -> item {
                     GlassCard(
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(32.dp),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(24.dp),
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            com.example.p2p.ui.components.GlassIconBadge(
-                                icon = Icons.Filled.AccountBalance, tint = Primary, size = 56.dp, iconSize = 26.dp
+                            GlassIconBadge(
+                                icon = Icons.Default.AccountBalance,
+                                tint = Primary,
+                                size = 60.dp,
+                                iconSize = 28.dp
                             )
-                            Text("No tienes cuentas bancarias registradas.", color = TextMuted, fontSize = 13.sp)
+                            Text(
+                                "Sin cuentas bancarias",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp,
+                                color = TextMain
+                            )
+                            Text(
+                                "Agrega una cuenta para empezar a operar en el mercado",
+                                fontSize = 12.sp,
+                                color = TextMuted,
+                                textAlign = TextAlign.Center
+                            )
                         }
                     }
                 }
-            } else {
-                items(uiState.accounts, key = { it.id }) { account ->
-                    BankAccountCard(account = account, onDelete = { viewModel?.deleteBankAccount(account.id) })
+                else -> items(uiState.accounts, key = { it.id }) { account ->
+                    BankAccountCard(
+                        account  = account,
+                        onDelete = { viewModel?.deleteBankAccount(account.id) }
+                    )
                 }
             }
 
@@ -411,6 +557,119 @@ fun BankAccountsScreen(
         }
     }
 }
+
+// ── Grid de bancos (3 columnas) ───────────────────────────────────────────────
+
+@Composable
+private fun BankGrid(
+    banks: List<BankDef>,
+    selectedKey: String,
+    onSelect: (String) -> Unit
+) {
+    val rows = banks.chunked(3)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        rows.forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                row.forEach { bank ->
+                    BankCard(
+                        bank       = bank,
+                        isSelected = selectedKey == bank.key,
+                        modifier   = Modifier.weight(1f),
+                        onClick    = { onSelect(bank.key) }
+                    )
+                }
+                // Rellenar celdas vacías si la fila no está completa
+                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BankCard(
+    bank: BankDef,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val bgBrush = if (isSelected)
+        Brush.linearGradient(listOf(bank.color.copy(alpha = 0.12f), bank.color.copy(alpha = 0.06f)))
+    else
+        Brush.linearGradient(listOf(SurfaceColor, SurfaceElevated))
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(bgBrush)
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = if (isSelected) bank.color else BorderColor,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(vertical = 14.dp, horizontal = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            // Círculo con inicial o ícono "+"
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isSelected) bank.color
+                        else bank.color.copy(alpha = 0.14f)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (bank.isOther) {
+                    Icon(
+                        Icons.Default.Add,
+                        null,
+                        tint = if (isSelected) Color.White else bank.color,
+                        modifier = Modifier.size(20.dp)
+                    )
+                } else {
+                    Text(
+                        text = bank.displayName.take(2).uppercase(),
+                        color = if (isSelected) Color.White else bank.color,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // Nombre del banco
+            Text(
+                text = bank.displayName,
+                fontSize = 11.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) bank.color else TextMain,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            // Formato requerido
+            Text(
+                text = bank.shortHint,
+                fontSize = 9.sp,
+                color = if (isSelected) bank.color.copy(alpha = 0.75f) else TextSubtle,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+// ── Tarjeta de cuenta guardada ────────────────────────────────────────────────
 
 @Composable
 private fun BankAccountCard(account: BankAccount, onDelete: () -> Unit) {
@@ -420,56 +679,147 @@ private fun BankAccountCard(account: BankAccount, onDelete: () -> Unit) {
         "bbva"      -> BbvaColor
         "yape"      -> YapeColor
         "plin"      -> PlinColor
-        "wise"      -> Color(0xFF00B9FF)
-        "binance"   -> Color(0xFFF0B90B)
         else        -> Primary
     }
+    val initials = account.bank_name.trim().split(" ")
+        .filter { it.isNotEmpty() }.take(2)
+        .joinToString("") { it.first().uppercaseChar().toString() }
+        .ifEmpty { "??" }.take(2)
+
     GlassCard(
-        modifier  = Modifier.fillMaxWidth(),
-        shape     = RoundedCornerShape(16.dp),
+        modifier       = Modifier.fillMaxWidth(),
+        shape          = RoundedCornerShape(18.dp),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
-        elevation = 2.dp,
+        elevation      = 2.dp,
+        tint           = if (account.is_primary) bankColor else Primary
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // Avatar circular
             Box(
-                modifier = Modifier.size(44.dp).clip(CircleShape).background(bankColor),
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            listOf(bankColor, bankColor.copy(alpha = 0.75f))
+                        )
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = account.bank_name.firstOrNull()?.toString() ?: "B",
+                    initials,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
+                    fontSize = 17.sp
                 )
             }
 
             Spacer(Modifier.width(14.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(account.bank_name, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextMain)
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Nombre del banco + badge "Principal"
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        account.bank_name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = TextMain
+                    )
+                    if (account.is_primary) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(bankColor)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                "Principal",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+
+                // Número enmascarado
+                Text(
+                    maskAccount(account.account_number),
+                    fontSize = 13.sp,
+                    color = TextMuted,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+
+                // Moneda + titular
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .background(Primary.copy(alpha = 0.12f))
-                            .padding(horizontal = 5.dp, vertical = 1.dp)
+                            .background(Primary.copy(alpha = 0.10f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
-                        Text(account.currency, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Primary)
+                        Text(
+                            account.currency,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Primary
+                        )
                     }
-                }
-                Text(account.account_number, fontSize = 13.sp, color = TextMuted)
-                if (account.account_holder.isNotBlank()) {
-                    Spacer(Modifier.height(2.dp))
-                    Text("Titular: ${account.account_holder}", fontSize = 11.sp, color = TextMuted.copy(alpha = 0.7f))
+                    if (account.account_holder.isNotBlank()) {
+                        Text(
+                            account.account_holder,
+                            fontSize = 11.sp,
+                            color = TextSubtle,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
 
+            // Botón eliminar
             IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = DangerColor)
+                Icon(
+                    Icons.Default.Delete,
+                    "Eliminar cuenta",
+                    tint = DangerColor.copy(alpha = 0.65f)
+                )
             }
         }
     }
 }
+
+// Enmascara el número dejando visible solo el inicio y el final
+private fun maskAccount(number: String): String {
+    if (number.length <= 8) return number
+    val visible = minOf(4, number.length / 3)
+    val masked = "•".repeat(number.length - visible * 2)
+    return "${number.take(visible)} $masked ${number.takeLast(visible)}"
+}
+
+// Colores compartidos para OutlinedTextField
+@Composable
+private fun fieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor   = Primary,
+    unfocusedBorderColor = BorderColor,
+    errorBorderColor     = DangerColor,
+    focusedLabelColor    = Primary,
+    unfocusedLabelColor  = TextMuted,
+    errorLabelColor      = DangerColor,
+    cursorColor          = Primary,
+    focusedTextColor     = TextMain,
+    unfocusedTextColor   = TextMain,
+)
+

@@ -1,5 +1,10 @@
 package com.example.p2p.presentation.transaction
 
+import android.app.DownloadManager
+import android.content.Context
+import android.net.Uri
+import android.os.Environment
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -15,13 +20,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Brush
+import coil.compose.AsyncImage
 import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +41,7 @@ fun TransactionDetailScreen(
     onNavigateToDispute: (String) -> Unit = {},
     onBack: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val uiState by viewModel?.uiState?.collectAsState(initial = TransactionUiState())
         ?: remember { mutableStateOf(TransactionUiState()) }
 
@@ -48,19 +59,36 @@ fun TransactionDetailScreen(
 
     val statusLabel = when (txn?.status) {
         "completed", "closed" -> "COMPLETADO"
-        "pending"         -> "PENDIENTE"
-        "voucher_uploaded"-> "EN PROCESO"
-        "cancelled"       -> "CANCELADO"
-        "disputed"        -> "EN DISPUTA"
-        "paused"          -> "EN PAUSA"
-        else              -> txn?.status?.uppercase() ?: "CARGANDO..."
+        "pending"             -> "PENDIENTE"
+        "accepted"            -> "ACEPTADO"
+        "voucher_uploaded"    -> "EN PROCESO"
+        "cancelled"           -> "CANCELADO"
+        "disputed"            -> "EN DISPUTA"
+        "paused"              -> "EN PAUSA"
+        else                  -> txn?.status?.uppercase() ?: "CARGANDO..."
     }
     val statusColor = when (txn?.status) {
-        "completed", "closed" -> SuccessColor
-        "pending", "voucher_uploaded", "paused" -> WarningColor
-        "cancelled", "disputed"       -> DangerColor
-        else              -> TextMuted
+        "completed", "closed"                          -> SuccessColor
+        "pending", "accepted", "voucher_uploaded", "paused" -> WarningColor
+        "cancelled", "disputed"                        -> DangerColor
+        else                                           -> TextMuted
     }
+
+    val isCompleted = txn?.status in listOf("completed", "closed")
+
+    val fromCur = txn?.from_currency ?: "USD"
+    val toCur   = txn?.to_currency   ?: "PEN"
+
+    val formattedDate = try {
+        val parser    = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        val formatter = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
+        val date = parser.parse((txn?.created_at ?: "").substringBefore("."))
+        if (date != null) formatter.format(date) else txn?.created_at?.take(10) ?: "--"
+    } catch (e: Exception) {
+        txn?.created_at?.take(10) ?: "--"
+    }
+
+    val voucherUrl = txn?.buyer_voucher_url ?: txn?.vendor_voucher_url ?: txn?.seller_voucher_url
 
     Scaffold(
         topBar = {
@@ -120,40 +148,104 @@ fun TransactionDetailScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
-                    DetailRow("Tipo:", "Compra de divisas", showDivider = true)
                     DetailRow("Comprador:", txn?.buyer_name ?: txn?.buyer_id?.take(8)?.uppercase() ?: "--", showDivider = true)
                     DetailRow("Vendedor:", txn?.vendor_name ?: txn?.vendor_id?.take(8)?.uppercase() ?: "--", showDivider = true)
-                    DetailRow("Monto enviado:", "${String.format("%.2f", txn?.amount_from ?: 0.0)} USD", showDivider = true)
-                    DetailRow("Monto recibido:", "S/ ${String.format("%.2f", txn?.amount_to ?: 0.0)}", showDivider = true)
-                    DetailRow("Tasa:", "S/ ${txn?.exchange_rate ?: "--"}", showDivider = true)
-                    DetailRow("Método de pago:", txn?.vendor_payment_account ?: "--", showDivider = true)
-                    DetailRow("Fecha:", txn?.created_at?.take(10) ?: "--", showDivider = true)
-                    // OCR row
+                    DetailRow(
+                        label = "Monto enviado:",
+                        value = "${String.format("%.2f", txn?.amount_from ?: 0.0)} $fromCur",
+                        showDivider = true
+                    )
+                    DetailRow(
+                        label = "Monto recibido:",
+                        value = "${String.format("%.2f", txn?.amount_to ?: 0.0)} $toCur",
+                        showDivider = true
+                    )
+                    DetailRow(
+                        label = "Tasa aplicada:",
+                        value = "1 $fromCur = ${String.format("%.3f", txn?.exchange_rate ?: 0.0)} $toCur",
+                        showDivider = true
+                    )
+                    if (!txn?.buyer_payment_account.isNullOrBlank()) {
+                        DetailRow("Cuenta comprador:", txn!!.buyer_payment_account!!, showDivider = true)
+                    }
+                    if (!txn?.vendor_payment_account.isNullOrBlank()) {
+                        DetailRow("Cuenta vendedor:", txn!!.vendor_payment_account!!, showDivider = true)
+                    }
+                    DetailRow("Fecha:", formattedDate, showDivider = true)
+
+                    // OCR audit row
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Estado OCR:", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextMain)
-                        Text("✓ Auténtico", fontSize = 13.sp, color = SuccessColor, fontWeight = FontWeight.SemiBold)
+                        Text("Auditoría OCR:", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextMain)
+                        if (isCompleted) {
+                            Text("✓ Auténtico", fontSize = 13.sp, color = SuccessColor, fontWeight = FontWeight.SemiBold)
+                        } else {
+                            Text("Pendiente", fontSize = 13.sp, color = WarningColor, fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             }
 
-            // Download PDF button
-            Button(
-                onClick = {},
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Primary)
-            ) {
-                Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.White)
-                Spacer(Modifier.width(8.dp))
-                Text("Descargar PDF", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            // Voucher card — solo si hay URL
+            if (!voucherUrl.isNullOrBlank()) {
+                GlassCard(
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = 1.dp,
+                    contentPadding = PaddingValues(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "Voucher de pago",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextMain
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    AsyncImage(
+                        model = voucherUrl,
+                        contentDescription = "Voucher de pago",
+                        contentScale = ContentScale.FillWidth,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 120.dp, max = 320.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                    )
+                }
             }
-            // Dispute button — solo si la transacción no está completada ni cancelada
 
+            // Download button — solo cuando está completada
+            if (isCompleted) {
+                Button(
+                    onClick = {
+                        val pdfUrl = txn?.receipt_pdf_url
+                        if (pdfUrl.isNullOrBlank()) {
+                            Toast.makeText(context, "El PDF aún no está disponible.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            val fileName = "comprobante-${(txn.id).takeLast(8)}.pdf"
+                            val request = DownloadManager.Request(Uri.parse(pdfUrl))
+                                .setTitle(fileName)
+                                .setDescription("Comprobante PeruExchange")
+                                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+                            val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                            manager.enqueue(request)
+                            Toast.makeText(context, "Descargando comprobante...", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                ) {
+                    Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.White)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Descargar Comprobante PDF", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                }
+            }
 
+            // Dispute button — solo si no está completada, cancelada ni en disputa
             if (txn?.status !in listOf("completed", "closed", "cancelled", "disputed")) {
                 OutlinedButton(
                     onClick = { transactionId?.let { onNavigateToDispute(it) } },
@@ -167,6 +259,7 @@ fun TransactionDetailScreen(
                     Text("Abrir Disputa", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
+
             // Back to history
             OutlinedButton(
                 onClick = onBack,
@@ -205,5 +298,4 @@ private fun DetailRow(
         if (showDivider) HorizontalDivider(color = BorderColor, thickness = 0.5.dp)
     }
 }
-
 

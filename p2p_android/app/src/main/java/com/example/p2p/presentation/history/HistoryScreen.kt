@@ -55,7 +55,7 @@ private val sampleTransactions = listOf(
     Transaction("", "#TX-9521", "Completado", SuccessColor, "Carlos", "Víctor",  "$ 300.00 USD", "S/ 3.780", "18 May 2026", Icons.Default.SwapHoriz)
 )
 
-private val filterChips = listOf("Todos", "Completados", "Pendientes", "Disputas")
+private val filterChips = listOf("Todos", "Completados", "Pendientes", "Disputas", "Cancelados")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,6 +116,8 @@ fun HistoryScreen(
             dto.created_at.take(10)
         }
 
+        val fromCur = dto.from_currency ?: "PEN"
+        val toCur   = dto.to_currency   ?: "USD"
         Transaction(
             rawId = dto.id,
             id = "#TX-${dto.id.takeLast(4).uppercase()}",
@@ -123,8 +125,8 @@ fun HistoryScreen(
             statusColor = sColor,
             from = dto.buyer_name ?: dto.buyer_id.take(6).uppercase(),
             to = dto.vendor_name ?: dto.vendor_id.take(6).uppercase(),
-            amount = "${String.format("%.2f", dto.amount_from)} USD",
-            rate = "S/ ${String.format("%.3f", dto.exchange_rate)}",
+            amount = "${String.format("%.2f", dto.amount_from)} $fromCur → ${String.format("%.2f", dto.amount_to)} $toCur",
+            rate = "1 $toCur = ${String.format("%.3f", dto.exchange_rate)} $fromCur",
             date = formattedDate,
             icon = icon,
             isBuyerActive = currentUserId.isNotBlank() &&
@@ -139,6 +141,7 @@ fun HistoryScreen(
                 1 -> it.status == "Completado"
                 2 -> it.status == "Pendiente" || it.status == "Aceptado" || it.status == "En Proceso"
                 3 -> it.status == "Disputa"
+                4 -> it.status == "Cancelado"
                 else -> true
             }
         }
@@ -402,3 +405,4 @@ private fun PartyAvatar(initials: String, color: Color) {
         Text(initials, color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
     }
 }
+

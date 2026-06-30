@@ -32,14 +32,15 @@ import com.example.p2p.ui.theme.*
 @Composable
 fun RatingScreen(
     transactionId: String? = null,
-    defaultScore: Int = 5,
+    defaultScore: Int = 0,
     viewModel: RatingViewModel? = null,
     onSuccess: () -> Unit = {},
     onSkip: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    var score by remember { mutableIntStateOf(defaultScore.coerceIn(1, 5)) }
+    var score by remember { mutableIntStateOf(defaultScore.coerceIn(0, 5)) }
     var commentText by remember { mutableStateOf("") }
+    var showConfirmDialog by remember { mutableStateOf(false) }
     val uiState by viewModel?.uiState?.collectAsState(initial = RatingUiState()) ?: remember { mutableStateOf(RatingUiState()) }
 
     Column(
@@ -121,17 +122,25 @@ fun RatingScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Selecciona tu calificación",
+                text = if (score == 0) "Selecciona una calificación *" else when (score) {
+                    1 -> "Muy malo"
+                    2 -> "Malo"
+                    3 -> "Regular"
+                    4 -> "Bueno"
+                    else -> "Excelente"
+                },
                 fontSize = 12.sp,
-                color = TextMuted,
-                textAlign = TextAlign.Center
+                color = if (score == 0) DangerColor else WarningColor,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Medium
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "Comentario (opcional)",
@@ -139,13 +148,18 @@ fun RatingScreen(
                     fontWeight = FontWeight.SemiBold,
                     color = TextMain
                 )
+                Text(
+                    text = "${commentText.length}/200",
+                    fontSize = 11.sp,
+                    color = if (commentText.length >= 200) DangerColor else TextMuted
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 value = commentText,
-                onValueChange = { commentText = it },
+                onValueChange = { if (it.length <= 200) commentText = it },
                 placeholder = {
                     Text(
                         text = "¿Cómo fue la experiencia con este vendedor?",
@@ -172,31 +186,59 @@ fun RatingScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Button(
-            onClick = {
-                if (transactionId != null) {
-                    viewModel?.submitRating(
-                        transactionId = transactionId,
-                        score = score,
-                        comment = commentText,
-                        onSuccess = {
-                            Toast.makeText(context, "Calificación enviada", Toast.LENGTH_SHORT).show()
-                            onSuccess()
-                        },
-                        onError = { err ->
-                            Toast.makeText(context, "Error: $err", Toast.LENGTH_LONG).show()
-                        }
+        if (showConfirmDialog) {
+            AlertDialog(
+                onDismissRequest = { showConfirmDialog = false },
+                title = { Text("Confirmar calificación", fontWeight = FontWeight.Bold) },
+                text = {
+                    Text(
+                        "Vas a enviar ${score} estrella${if (score != 1) "s" else ""} al vendedor. Esta acción no se puede deshacer.",
+                        fontSize = 14.sp,
+                        color = TextMain
                     )
-                } else {
-                    onSuccess()
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showConfirmDialog = false
+                            if (transactionId != null) {
+                                viewModel?.submitRating(
+                                    transactionId = transactionId,
+                                    score = score,
+                                    comment = commentText.ifBlank { null },
+                                    onSuccess = {
+                                        Toast.makeText(context, "Calificación enviada", Toast.LENGTH_SHORT).show()
+                                        onSuccess()
+                                    },
+                                    onError = { err ->
+                                        Toast.makeText(context, "Error: $err", Toast.LENGTH_LONG).show()
+                                    }
+                                )
+                            } else {
+                                onSuccess()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                    ) {
+                        Text("Confirmar", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showConfirmDialog = false }) {
+                        Text("Cancelar", color = TextMuted)
+                    }
                 }
-            },
+            )
+        }
+
+        Button(
+            onClick = { showConfirmDialog = true },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Primary),
-            enabled = !uiState.isLoading
+            enabled = !uiState.isLoading && score > 0
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
@@ -215,25 +257,7 @@ fun RatingScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-
-        TextButton(
-            onClick = {
-                if (transactionId != null) {
-                    viewModel?.closeTransaction(transactionId) { onSkip() }
-                } else {
-                    onSkip()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "Omitir por ahora",
-                fontSize = 14.sp,
-                color = TextMuted
-            )
-        }
-
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
+

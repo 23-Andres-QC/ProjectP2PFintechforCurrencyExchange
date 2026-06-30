@@ -10,6 +10,8 @@ data class Transaction(
     val amount_from: Double,
     val amount_to: Double,
     val exchange_rate: Double,
+    val from_currency: String? = null,
+    val to_currency: String? = null,
     val status: String,
     val buyer_payment_account: String?,
     val vendor_payment_account: String?,
@@ -33,3 +35,4 @@ data class CreateTransactionRequest(
     val buyer_payment_account: String,
     val vendor_payment_account: String
 )
+
