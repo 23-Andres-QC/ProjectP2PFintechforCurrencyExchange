@@ -4,6 +4,7 @@ from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
 )
+from app.core.exceptions import AuthorizationError
 from app.core.rate_limit import limiter
 from app.services.user_service import UserService
 
@@ -44,6 +45,9 @@ def login():
 @jwt_required(refresh=True)
 def refresh():
     user_id = get_jwt_identity()
+    user = UserService.get_by_id(user_id)
+    if not user.is_active or user.is_banned:
+        raise AuthorizationError('Account is banned or inactive')
     return {'access_token': create_access_token(identity=user_id)}, 200
 
 

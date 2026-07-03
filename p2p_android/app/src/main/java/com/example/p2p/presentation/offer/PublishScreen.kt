@@ -98,6 +98,7 @@ fun PublishScreen(
 
     val accountsForFiat = uiState.bankAccounts.filter { it.currency == selectedFiatCurrency }
     val selectedAccount = accountsForFiat.find { it.id == selectedAccountId }
+        ?: accountsForFiat.find { it.is_primary }
         ?: accountsForFiat.firstOrNull()
 
     RefreshOnResume {

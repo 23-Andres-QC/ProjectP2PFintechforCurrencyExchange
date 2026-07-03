@@ -1,4 +1,5 @@
 from app.core.database import db
+from app.core.audit import log_action
 from app.core.exceptions import NotFoundError, AppException
 from app.core.notifications import notify
 from app.models.user import User
@@ -60,7 +61,7 @@ class AdminService:
         }
 
     @staticmethod
-    def ban_user(user_id: str, banned: bool) -> dict:
+    def ban_user(admin_id: str, user_id: str, banned: bool) -> dict:
         user = UserRepository.get_by_id(user_id)
         if not user:
             raise NotFoundError('User not found')
@@ -82,6 +83,13 @@ class AdminService:
                 title='Cuenta reactivada',
                 body='Tu cuenta ha sido reactivada. Ya puedes operar con normalidad en la plataforma.',
             )
+
+        log_action(
+            admin_id=admin_id,
+            action='ban_user' if banned else 'unban_user',
+            resource=f'user:{user_id}',
+            changes={'banned': banned},
+        )
 
         db.session.commit()
         action = 'banned' if user.is_banned else 'unbanned'
@@ -174,7 +182,14 @@ class AdminService:
                 ) + (f' Nota: {resolution_note}' if resolution_note else ''),
                 resource_id=dispute.id,
             )
-            db.session.commit()
+
+        log_action(
+            admin_id=admin_id,
+            action='resolve_dispute',
+            resource=f'dispute:{dispute_id}',
+            changes={'resolution': resolution, 'resolution_note': resolution_note},
+        )
+        db.session.commit()
 
         return {
             'message': 'Dispute resolved',
@@ -196,5 +211,13 @@ class AdminService:
         return ComplaintService.get_by_id(complaint_id)
 
     @staticmethod
-    def resolve_complaint(complaint_id: str, admin_note: str) -> dict:
-        return ComplaintService.resolve(complaint_id, admin_note)
+    def resolve_complaint(admin_id: str, complaint_id: str, admin_note: str) -> dict:
+        result = ComplaintService.resolve(complaint_id, admin_note)
+        log_action(
+            admin_id=admin_id,
+            action='resolve_complaint',
+            resource=f'complaint:{complaint_id}',
+            changes={'admin_note': admin_note},
+        )
+        db.session.commit()
+        return result

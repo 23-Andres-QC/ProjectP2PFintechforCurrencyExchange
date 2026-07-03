@@ -12,9 +12,9 @@ class DisputeRepository:
 
     @staticmethod
     def get_by_transaction(transaction_id: str) -> Dispute | None:
-        return Dispute.query.filter_by(
-            transaction_id=transaction_id,
-            status='open'
+        return Dispute.query.filter(
+            Dispute.transaction_id == transaction_id,
+            Dispute.status.in_(('open', 'under_review'))
         ).first()
 
     @staticmethod

@@ -47,6 +47,12 @@ class TransactionService:
             raise AuthorizationError('Buyer is not active')
         if not buyer.kyc_verified:
             raise AuthorizationError('KYC approval is required to buy')
+        if TransactionRepository.get_open_for_buyer_and_offer(user_id, offer.id):
+            raise AppException(
+                'DUPLICATE_TRANSACTION',
+                'Ya tienes una transacción activa para esta oferta',
+                409,
+            )
 
         amount_from = float(data.get('amount_from') or 0)
         amount_to = round(amount_from * offer.price_per_unit, 2)
@@ -118,6 +124,15 @@ class TransactionService:
             role = 'seller'
         else:
             raise AuthorizationError('No eres parte de esta transacción')
+
+        if role == 'buyer' and txn.status not in ('pending', 'accepted'):
+            raise AppException(
+                'INVALID_STATE', f'Cannot upload buyer voucher from status: {txn.status}', 400
+            )
+        if role == 'seller' and txn.status != 'voucher_uploaded':
+            raise AppException(
+                'INVALID_STATE', f'Cannot upload from status: {txn.status}', 400
+            )
 
         user = UserRepository.get_by_id(user_id)
         user_email = user.email if user else user_id
@@ -299,7 +314,12 @@ class TransactionService:
                 raise AppException('INVALID_STATE', 'Can only close completed transactions', 400)
             if txn.buyer_id != user_id:
                 raise AuthorizationError('Only buyer can close the transaction')
-        elif new_status not in ('cancelled', 'paused'):
+        elif new_status in ('cancelled', 'paused'):
+            if txn.status in ('completed', 'closed'):
+                raise AppException(
+                    'INVALID_STATE', f'Cannot {new_status} a {txn.status} transaction', 400
+                )
+        else:
             raise AppException('INVALID_STATUS', 'Status must be cancelled or paused', 400)
 
         if new_status == 'cancelled':

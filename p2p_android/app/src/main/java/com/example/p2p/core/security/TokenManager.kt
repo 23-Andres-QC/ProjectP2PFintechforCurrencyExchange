@@ -1,27 +1,24 @@
 package com.example.p2p.core.security
 
 import android.content.Context
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
+import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-
-private val Context.dataStore by preferencesDataStore(name = "p2p_prefs")
+import kotlinx.coroutines.withContext
 
 class TokenManager(private val context: Context) {
 
     companion object {
-        private val ACCESS_TOKEN = stringPreferencesKey("access_token")
-        private val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
-        private val USER_ID = stringPreferencesKey("user_id")
-        private val USER_ROLE = stringPreferencesKey("user_role")
-        private val USER_NAME = stringPreferencesKey("user_name")
-        private val USER_EMAIL = stringPreferencesKey("user_email")
+        private const val ACCESS_TOKEN = "access_token"
+        private const val REFRESH_TOKEN = "refresh_token"
+        private const val USER_ID = "user_id"
+        private const val USER_ROLE = "user_role"
+        private const val USER_NAME = "user_name"
+        private const val USER_EMAIL = "user_email"
 
         @Volatile
         private var instance: TokenManager? = null
@@ -30,6 +27,21 @@ class TokenManager(private val context: Context) {
             instance ?: synchronized(this) {
                 instance ?: TokenManager(context.applicationContext).also { instance = it }
             }
+    }
+
+    // Guardado con androidx.security (Android Keystore) en vez de DataStore plano:
+    // los tokens de sesion de una app financiera no deben quedar en texto plano en disco.
+    private val prefs: SharedPreferences by lazy {
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        EncryptedSharedPreferences.create(
+            context,
+            "p2p_secure_prefs",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
     }
 
     // Cache en memoria para que el interceptor HTTP pueda leer el token sin bloquear
@@ -53,40 +65,46 @@ class TokenManager(private val context: Context) {
         role: String,
         name: String,
         email: String
-    ) {
-        context.dataStore.edit { prefs ->
-            prefs[ACCESS_TOKEN] = accessToken
-            prefs[REFRESH_TOKEN] = refreshToken
-            prefs[USER_ID] = userId
-            prefs[USER_ROLE] = role
-            prefs[USER_NAME] = name
-            prefs[USER_EMAIL] = email
-        }
+    ) = withContext(Dispatchers.IO) {
+        prefs.edit()
+            .putString(ACCESS_TOKEN, accessToken)
+            .putString(REFRESH_TOKEN, refreshToken)
+            .putString(USER_ID, userId)
+            .putString(USER_ROLE, role)
+            .putString(USER_NAME, name)
+            .putString(USER_EMAIL, email)
+            .apply()
         cachedAccessToken = accessToken
     }
 
-    suspend fun getAccessToken(): String? =
-        context.dataStore.data.map { it[ACCESS_TOKEN] }.first()
+    suspend fun getAccessToken(): String? = withContext(Dispatchers.IO) {
+        prefs.getString(ACCESS_TOKEN, null)
+    }
 
-    suspend fun getRefreshToken(): String? =
-        context.dataStore.data.map { it[REFRESH_TOKEN] }.first()
+    suspend fun getRefreshToken(): String? = withContext(Dispatchers.IO) {
+        prefs.getString(REFRESH_TOKEN, null)
+    }
 
-    suspend fun getUserId(): String? =
-        context.dataStore.data.map { it[USER_ID] }.first()
+    suspend fun getUserId(): String? = withContext(Dispatchers.IO) {
+        prefs.getString(USER_ID, null)
+    }
 
-    suspend fun getUserRole(): String? =
-        context.dataStore.data.map { it[USER_ROLE] }.first()
+    suspend fun getUserRole(): String? = withContext(Dispatchers.IO) {
+        prefs.getString(USER_ROLE, null)
+    }
 
-    suspend fun getUserName(): String? =
-        context.dataStore.data.map { it[USER_NAME] }.first()
+    suspend fun getUserName(): String? = withContext(Dispatchers.IO) {
+        prefs.getString(USER_NAME, null)
+    }
 
-    suspend fun getUserEmail(): String? =
-        context.dataStore.data.map { it[USER_EMAIL] }.first()
+    suspend fun getUserEmail(): String? = withContext(Dispatchers.IO) {
+        prefs.getString(USER_EMAIL, null)
+    }
 
     suspend fun isLoggedIn(): Boolean = getAccessToken()?.isNotEmpty() == true
 
-    suspend fun clearSession() {
-        context.dataStore.edit { it.clear() }
+    suspend fun clearSession() = withContext(Dispatchers.IO) {
+        prefs.edit().clear().apply()
         cachedAccessToken = null
     }
 }

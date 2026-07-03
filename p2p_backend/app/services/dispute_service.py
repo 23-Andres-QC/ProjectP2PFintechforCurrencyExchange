@@ -94,6 +94,9 @@ class DisputeService:
             raise AppException('INVALID_RESOLUTION',
                                "resolution must be 'favour_buyer' or 'favour_vendor'", 400)
 
+        if not resolution_note or not resolution_note.strip():
+            raise AppException('MISSING_FIELD', 'resolution_note is required', 400)
+
         dispute = DisputeRepository.get_by_id(dispute_id)
         if not dispute:
             raise NotFoundError('Dispute not found')

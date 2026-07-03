@@ -31,6 +31,14 @@ class TransactionRepository:
         ).order_by(Transaction.created_at.desc()).all()
 
     @staticmethod
+    def get_open_for_buyer_and_offer(buyer_id: str, offer_id: str) -> Transaction | None:
+        return Transaction.query.filter(
+            Transaction.buyer_id == buyer_id,
+            Transaction.offer_id == offer_id,
+            Transaction.status.in_(('pending', 'accepted', 'voucher_uploaded'))
+        ).first()
+
+    @staticmethod
     def create(offer_id: str, buyer_id: str, vendor_id: str,
                amount_from: float, amount_to: float, exchange_rate: float,
                buyer_payment_account: str | None = None,

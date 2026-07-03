@@ -46,7 +46,8 @@ class BankAccountRepository:
     def has_active_transaction(account: BankAccount) -> bool:
         label = f"{account.bank_name} · {account.account_number}"
         return Transaction.query.filter(
-            Transaction.buyer_payment_account == label,
+            (Transaction.buyer_payment_account == label) |
+            (Transaction.vendor_payment_account == label),
             Transaction.status.in_([
                 'pending', 'accepted', 'voucher_uploaded', 'disputed'
             ])

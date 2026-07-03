@@ -2,6 +2,7 @@ import json
 from app.core.database import db
 from app.core.exceptions import NotFoundError, AuthorizationError, AppException
 from app.models import Offer
+from app.repositories.bank_account_repository import BankAccountRepository
 from app.repositories.offer_repository import OfferRepository
 from app.repositories.user_repository import UserRepository
 
@@ -43,6 +44,12 @@ class OfferService:
             raise AuthorizationError('KYC approval is required to publish offers')
         if user.role == 'admin':
             raise AuthorizationError('Admins cannot publish market offers')
+        if not BankAccountRepository.get_by_user(user_id):
+            raise AppException(
+                'BANK_ACCOUNT_REQUIRED',
+                'Debes registrar una cuenta bancaria antes de publicar una oferta',
+                400,
+            )
 
         amount = float(data.get('amount') or 0)
         price_per_unit = float(data.get('price_per_unit') or 0)

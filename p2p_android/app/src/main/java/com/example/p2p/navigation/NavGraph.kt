@@ -657,7 +657,9 @@ private fun AppBottomBar(
             }
 
             pendingCount = count
-            delay(4000L)
+            // La barra inferior es global (corre en toda la app, no solo en una pantalla),
+            // asi que un intervalo corto aqui es mas caro que en un poll de pantalla especifica.
+            delay(15000L)
         }
     }
 

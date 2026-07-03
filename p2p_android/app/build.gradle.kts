@@ -120,6 +120,7 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation(libs.datastore.preferences)
     implementation(libs.coil.compose)
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("com.google.firebase:firebase-analytics:22.4.0")
     implementation("com.google.firebase:firebase-messaging-ktx:24.1.1")
     implementation("com.google.firebase:firebase-auth-ktx:23.2.1")

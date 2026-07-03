@@ -49,12 +49,12 @@ def get_user(user_id):
 @admin_bp.route('/users/<user_id>/ban', methods=['PATCH'])
 @jwt_required()
 def ban_user(user_id):
-    _require_admin()
+    admin = _require_admin()
     data = request.get_json() or {}
     banned = data.get('banned')
     if banned is None:
         raise AppException('MISSING_FIELD', '"banned" field is required', 400)
-    return AdminService.ban_user(user_id, bool(banned)), 200
+    return AdminService.ban_user(admin.id, user_id, bool(banned)), 200
 
 
 @admin_bp.route('/users/<user_id>/kyc', methods=['PATCH'])
@@ -124,6 +124,6 @@ def get_complaint(complaint_id):
 @admin_bp.route('/complaints/<complaint_id>/resolve', methods=['PATCH'])
 @jwt_required()
 def resolve_complaint(complaint_id):
-    _require_admin()
+    admin = _require_admin()
     data = request.get_json() or {}
-    return AdminService.resolve_complaint(complaint_id, data.get('admin_note', '')), 200
+    return AdminService.resolve_complaint(admin.id, complaint_id, data.get('admin_note', '')), 200
