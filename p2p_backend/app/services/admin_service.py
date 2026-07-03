@@ -6,6 +6,7 @@ from app.repositories.admin_repository import AdminRepository
 from app.repositories.user_repository import UserRepository
 from app.services.dispute_service import DisputeService
 from app.services.complaint_service import ComplaintService
+from app.services.user_service import UserService
 
 
 class AdminService:
@@ -85,6 +86,16 @@ class AdminService:
         db.session.commit()
         action = 'banned' if user.is_banned else 'unbanned'
         return {'message': f'User {action}', 'user_id': user_id, 'is_banned': user.is_banned}
+
+    @staticmethod
+    def review_user_kyc(user_id: str, approved: bool, note: str | None = None) -> dict:
+        user = UserService.review_kyc(user_id, approved, note)
+        return {
+            'message': 'KYC approved' if approved else 'KYC rejected',
+            'user_id': user.id,
+            'kyc_status': user.kyc_status,
+            'kyc_verified': user.kyc_verified,
+        }
 
     @staticmethod
     def list_disputes(page: int = 1, per_page: int = 20,

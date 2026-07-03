@@ -7,6 +7,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 
@@ -20,4 +21,7 @@ interface BankAccountsApi {
 
     @DELETE("bank-accounts/{id}")
     suspend fun deleteAccount(@Path("id") id: String): Response<Unit>
+
+    @PATCH("bank-accounts/{id}/set-default")
+    suspend fun setDefault(@Path("id") id: String): Response<Unit>
 }

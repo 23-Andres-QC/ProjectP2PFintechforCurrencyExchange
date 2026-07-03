@@ -55,6 +55,8 @@ class Transaction(BaseModel):
     vendor_payment_account = db.Column(db.Text)
     vendor_voucher_url     = db.Column(db.Text, nullable=True)
     receipt_pdf_url        = db.Column(db.Text, nullable=True)
+    accepted_at            = db.Column(db.DateTime, nullable=True)
+    confirmed_at           = db.Column(db.DateTime, nullable=True)
 
 
 class Voucher(BaseModel):

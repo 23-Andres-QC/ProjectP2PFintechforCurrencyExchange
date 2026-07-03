@@ -37,13 +37,32 @@ class OfferService:
         user = UserRepository.get_by_id(user_id)
         if not user:
             raise AuthorizationError('User not found')
+        if not user.is_active or user.is_banned:
+            raise AuthorizationError('User is not active')
+        if not user.kyc_verified:
+            raise AuthorizationError('KYC approval is required to publish offers')
+        if user.role == 'admin':
+            raise AuthorizationError('Admins cannot publish market offers')
 
-        amount = data.get('amount', 0)
-        price_per_unit = data.get('price_per_unit', 0)
+        amount = float(data.get('amount') or 0)
+        price_per_unit = float(data.get('price_per_unit') or 0)
+        min_transaction = float(data.get('min_transaction') or 0)
+        max_transaction = data.get('max_transaction')
+        max_transaction = float(max_transaction) if max_transaction not in (None, '') else None
         if not amount or amount <= 0:
             raise AppException('INVALID_AMOUNT', 'El monto debe ser mayor a 0', 400)
         if not price_per_unit or price_per_unit <= 0:
             raise AppException('INVALID_PRICE', 'El precio debe ser mayor a 0', 400)
+        if min_transaction < 0:
+            raise AppException('INVALID_MIN_TRANSACTION', 'El monto minimo no puede ser negativo', 400)
+        if max_transaction is not None and max_transaction <= 0:
+            raise AppException('INVALID_MAX_TRANSACTION', 'El monto maximo debe ser mayor a 0', 400)
+        if max_transaction is not None and min_transaction > max_transaction:
+            raise AppException('INVALID_LIMITS', 'El monto minimo no puede superar el maximo', 400)
+        if max_transaction is not None and max_transaction > amount:
+            raise AppException('INVALID_LIMITS', 'El monto maximo no puede superar el monto total', 400)
+        if min_transaction > amount:
+            raise AppException('INVALID_LIMITS', 'El monto minimo no puede superar el monto total', 400)
 
         offer = OfferRepository.create(
             vendor_id=user_id,
@@ -52,8 +71,8 @@ class OfferService:
             amount=amount,
             price_per_unit=price_per_unit,
             offer_type=data.get('offer_type', 'sell'),
-            min_transaction=data.get('min_transaction', 0),
-            max_transaction=data.get('max_transaction'),
+            min_transaction=min_transaction,
+            max_transaction=max_transaction,
             payment_methods=data.get('payment_methods', []),
         )
         db.session.commit()
@@ -88,9 +107,17 @@ class OfferService:
 
         allowed = {
             k: v for k, v in data.items()
-            if k in ('price_per_unit', 'status', 'available_amount',
-                     'min_transaction', 'max_transaction')
+            if k in ('price_per_unit', 'status', 'min_transaction', 'max_transaction')
         }
+        if 'status' in allowed and allowed['status'] not in ('active', 'paused', 'closed', 'cancelled'):
+            raise AppException('INVALID_STATUS', 'Invalid offer status', 400)
+        new_min = float(allowed.get('min_transaction', offer.min_transaction) or 0)
+        new_max_raw = allowed.get('max_transaction', offer.max_transaction)
+        new_max = float(new_max_raw) if new_max_raw not in (None, '') else None
+        if new_min < 0 or new_min > offer.available_amount:
+            raise AppException('INVALID_LIMITS', 'Invalid minimum transaction amount', 400)
+        if new_max is not None and (new_max <= 0 or new_min > new_max or new_max > offer.available_amount):
+            raise AppException('INVALID_LIMITS', 'Invalid maximum transaction amount', 400)
         OfferRepository.update_fields(offer, allowed)
         db.session.commit()
         return OfferService._to_dict(offer)

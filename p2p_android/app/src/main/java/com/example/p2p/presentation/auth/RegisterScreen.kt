@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,6 +36,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -150,21 +152,39 @@ fun RegisterScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.08f), BackgroundApp)))
-                .statusBarsPadding()
                 .navigationBarsPadding()
-                .imePadding()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+                .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AuthTopBar(
-                title = "Crear cuenta",
-                onBack = { if (currentStep == 1) onNavigateBack() else currentStep-- },
-                modifier = Modifier.padding(bottom = 20.dp)
+            AuthBrandHeader(
+                topPadding = 4.dp,
+                bottomPadding = 24.dp,
+                logoContainerSize = 92.dp,
+                logoSize = 86.dp,
+                titleFontSize = 18.sp,
+                subtitleFontSize = 10.sp,
+                logoTextGap = 4.dp
             )
 
-            StepIndicator(currentStep = currentStep, totalSteps = 4, stepTitles = stepTitles)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .offset(y = (8).dp)
+                    .padding(horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+            StepIndicator(
+                currentStep = currentStep,
+                totalSteps = 4,
+                stepTitles = stepTitles,
+                onStepClick = { step ->
+                    if (step < currentStep) currentStep = step
+                },
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(14.dp))
 
             Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 when (currentStep) {
@@ -223,7 +243,7 @@ fun RegisterScreen(
                         onTermsAcceptedChange = { termsAccepted = it },
                         onRegister = {
                             if (password == confirmPassword && termsAccepted) {
-                                viewModel?.register(email, password, fullName, dni)
+                                viewModel?.register(email, password, fullName, dni, termsAccepted)
                             }
                         }
                     )
@@ -241,13 +261,20 @@ fun RegisterScreen(
                 )
                 Spacer(Modifier.height(24.dp))
             }
+            }
         }
     }
 }
 
 @Composable
-private fun StepIndicator(currentStep: Int, totalSteps: Int, stepTitles: List<String>) {
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+private fun StepIndicator(
+    currentStep: Int,
+    totalSteps: Int,
+    stepTitles: List<String>,
+    onStepClick: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         repeat(totalSteps) { index ->
             val step = index + 1
             val isDone = step < currentStep
@@ -256,20 +283,21 @@ private fun StepIndicator(currentStep: Int, totalSteps: Int, stepTitles: List<St
 
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                 Box(
-                    modifier = Modifier.size(36.dp).clip(CircleShape)
+                    modifier = Modifier.size(28.dp).clip(CircleShape)
                         .background(when { isDone -> SuccessColor; isCurrent -> Primary; else -> SurfaceColor })
-                        .border(2.dp, color, CircleShape),
+                        .border(1.5.dp, color, CircleShape)
+                        .clickable(enabled = step < currentStep) { onStepClick(step) },
                     contentAlignment = Alignment.Center
                 ) {
-                    if (isDone) Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(18.dp))
-                    else Text("$step", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (isCurrent) Color.White else TextMuted)
+                    if (isDone) Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(14.dp))
+                    else Text("$step", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (isCurrent) Color.White else TextMuted)
                 }
-                Spacer(Modifier.height(4.dp))
-                Text(stepTitles[index], fontSize = 10.sp, fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal, color = color, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(3.dp))
+                Text(stepTitles[index], fontSize = 8.sp, fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal, color = color, textAlign = TextAlign.Center)
             }
 
             if (index < totalSteps - 1) {
-                Box(modifier = Modifier.weight(0.5f).height(2.dp).background(if (index + 1 < currentStep) SuccessColor else BorderColor))
+                Box(modifier = Modifier.weight(0.35f).height(1.dp).background(if (index + 1 < currentStep) SuccessColor else BorderColor))
             }
         }
     }
@@ -606,6 +634,7 @@ private fun StepPassword(
 ) {
     val passwordsMatch = confirmPassword.isEmpty() || password == confirmPassword
     val canRegister = password.length >= 8 && password == confirmPassword && termsAccepted
+    val uriHandler = LocalUriHandler.current
 
     GlassCard(
         modifier = Modifier.fillMaxWidth(),
@@ -654,7 +683,8 @@ private fun StepPassword(
                 colors = peruFieldColors(), singleLine = true
             )
 
-            Row(
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().clickable { onTermsAcceptedChange(!termsAccepted) }.padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -665,6 +695,25 @@ private fun StepPassword(
                     append("Acepto los ")
                     withStyle(SpanStyle(color = Primary, fontWeight = FontWeight.SemiBold)) { append("Términos y Condiciones") }
                 }, fontSize = 13.sp, color = TextMain)
+            }
+
+                TextButton(
+                    onClick = { uriHandler.openUri(TERMS_AND_CONDITIONS_URL) },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Ver términos y condiciones", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.width(4.dp))
+                    Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(14.dp))
+                }
+
+                if (!termsAccepted) {
+                    Text(
+                        text = "Debes aceptar los términos y condiciones para crear tu cuenta.",
+                        fontSize = 11.sp,
+                        color = TextMuted,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
             Button(onClick = onRegister, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(14.dp),
@@ -730,3 +779,4 @@ private fun peruFieldColors() = OutlinedTextFieldDefaults.colors(
 )
 
 private val CONTRACT_TEXT = com.example.p2p.presentation.common.CONTRACT_TEXT
+private const val TERMS_AND_CONDITIONS_URL = "https://www.termsfeed.com/live/29f4bfac-d43c-456f-ba32-3e6282624b01"

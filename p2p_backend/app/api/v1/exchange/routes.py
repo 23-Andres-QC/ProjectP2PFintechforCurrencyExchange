@@ -10,7 +10,7 @@ CACHE_TTL = 600
 
 EXTERNAL_URL = "https://api.exchangerate-api.com/v4/latest/{base}"
 
-MAIN_CURRENCIES = ["USD", "PEN", "EUR", "GBP", "BRL", "CLP", "COP", "ARS", "MXN", "JPY", "CAD", "AUD"]
+MAIN_CURRENCIES = ["USD", "PEN", "EUR", "USDT", "GBP", "BRL", "CLP", "COP", "ARS", "MXN", "JPY", "CAD", "AUD"]
 
 
 def _fetch_rates(base: str) -> dict:
@@ -75,6 +75,39 @@ def get_rates():
 
     return {
         'base': from_c,
+        'rates': rates_list,
+        'source': data['source'],
+        'updated_at': data['next_update'],
+    }, 200
+
+
+@exchange_bp.route('/ticker', methods=['GET'])
+@jwt_required()
+def ticker():
+    quote = request.args.get('quote', 'PEN').upper()
+    try:
+        data = _fetch_rates(quote)
+    except Exception as e:
+        return {'error': {'code': 'EXCHANGE_FETCH_FAILED', 'message': str(e)}}, 502
+
+    quote_rates = data['rates']
+    rates_list = []
+    for currency in MAIN_CURRENCIES:
+        if currency == quote:
+            continue
+        quote_to_currency = quote_rates.get(currency)
+        if not quote_to_currency:
+            continue
+        rates_list.append({
+            'from_currency': currency,
+            'to_currency': quote,
+            'rate': round(1 / quote_to_currency, 6),
+            'amount': 1,
+            'converted': round(1 / quote_to_currency, 6),
+        })
+
+    return {
+        'base': quote,
         'rates': rates_list,
         'source': data['source'],
         'updated_at': data['next_update'],

@@ -10,4 +10,9 @@ interface ExchangeApi {
     suspend fun getRates(
         @Query("from") from: String = "USD"
     ): Response<ExchangeRatesResponse>
+
+    @GET("exchange/ticker")
+    suspend fun getTicker(
+        @Query("quote") quote: String = "PEN"
+    ): Response<ExchangeRatesResponse>
 }

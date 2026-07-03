@@ -56,8 +56,9 @@ def submit_kyc():
 
     updated_user = UserService.submit_kyc(user_id, document_urls)
     return {
-        'message': 'KYC aprobado',
-        'kyc_verified': True,
+        'message': 'KYC recibido y en revision',
+        'kyc_status': updated_user.kyc_status,
+        'kyc_verified': updated_user.kyc_verified,
         'documents_saved': True,
         'has_signature': bool(updated_user.signature_url),
     }, 200

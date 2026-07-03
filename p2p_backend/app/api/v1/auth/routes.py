@@ -14,13 +14,17 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 @limiter.limit('10 per hour')
 def register():
     data = request.get_json() or {}
+    dni = (data.get('dni') or '').strip() or None
     user = UserService.register(
         email=data.get('email', '').strip(),
         password=data.get('password', ''),
         full_name=data.get('full_name', ''),
         role=data.get('role', 'buyer'),
         phone=data.get('phone'),
-        dni=data.get('dni', '').strip() or None,
+        dni=dni,
+        terms_accepted=bool(data.get('terms_accepted')),
+        terms_url=data.get('terms_url'),
+        terms_version=data.get('terms_version'),
     )
     return UserService.build_auth_response(user), 201
 

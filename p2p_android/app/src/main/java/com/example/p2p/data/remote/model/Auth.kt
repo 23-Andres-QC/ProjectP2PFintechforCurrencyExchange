@@ -13,7 +13,10 @@ data class RegisterRequest(
     @SerializedName("full_name") val fullName: String,
     val dni: String? = null,
     val phone: String? = null,
-    val role: String = "buyer"
+    val role: String = "buyer",
+    @SerializedName("terms_accepted") val termsAccepted: Boolean = false,
+    @SerializedName("terms_url") val termsUrl: String? = null,
+    @SerializedName("terms_version") val termsVersion: String? = null
 )
 
 data class LoginResponse(
@@ -21,6 +24,7 @@ data class LoginResponse(
     val email: String,
     @SerializedName("full_name") val fullName: String,
     val role: String,
+    @SerializedName("kyc_status") val kycStatus: String = "not_started",
     @SerializedName("kyc_verified") val kycVerified: Boolean = false,
     val rating: Float = 0f,
     @SerializedName("avatar_url") val avatarUrl: String? = null,
@@ -33,6 +37,7 @@ data class UserResponse(
     val email: String,
     @SerializedName("full_name") val fullName: String,
     val role: String,
+    @SerializedName("kyc_status") val kycStatus: String = "not_started",
     @SerializedName("kyc_verified") val kycVerified: Boolean = false,
     val rating: Float = 0f,
     @SerializedName("total_transactions") val totalTransactions: Int = 0,

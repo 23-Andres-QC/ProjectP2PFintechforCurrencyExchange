@@ -6,10 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="c8e2ce9f-0af8-4705-9132-4cb53dc75f10" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-
-      <change beforePath="$PROJECT_DIR$/p2p_android/app/src/main/java/com/example/p2p/data/remote/model/Transaction.kt" beforeDir="false" afterPath="$PROJECT_DIR$/p2p_android/app/src/main/java/com/example/p2p/data/remote/model/Transaction.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/p2p_android/app/src/main/java/com/example/p2p/presentation/transaction/TransactionDetailScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/p2p_android/app/src/main/java/com/example/p2p/presentation/transaction/TransactionDetailScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/p2p_android/gradle/libs.versions.toml" beforeDir="false" afterPath="$PROJECT_DIR$/p2p_android/gradle/libs.versions.toml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,15 +27,9 @@
   <component name="GithubPullRequestsUISettings"><![CDATA[{
   "selectedUrlAndAccountId": {
     "url": "https://github.com/23-Andres-QC/ProjectP2PFintechforCurrencyExchange.git",
-    "accountId": "7b74a288-098d-4df6-a6f3-f4e03cc74b2a"
+    "accountId": "3992c321-202c-483c-828d-9e335a1bd3cd"
   }
 }]]></component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/23-Andres-QC/ProjectP2PFintechforCurrencyExchange.git&quot;,
-    &quot;accountId&quot;: &quot;df678e1c-d312-4480-92b0-644eceee1faa&quot;
-  }
-}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 8
 }</component>
@@ -48,22 +38,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "fix/Vaucherfeature",
-    "kotlin-language-version-configured": "true"
-    "git-widget-placeholder": "fix/admin",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/home/AndroidStudioProjects/ProjectP2PFintechforCurrencyExchange"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;fix/Vaucherfeature&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;
+    &quot;git-widget-placeholder&quot;: &quot;fix/admin&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/home/AndroidStudioProjects/ProjectP2PFintechforCurrencyExchange&quot;
   }
-}]]></component>
+}</component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="c8e2ce9f-0af8-4705-9132-4cb53dc75f10" name="Changes" comment="" />

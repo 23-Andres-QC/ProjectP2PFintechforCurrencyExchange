@@ -8,4 +8,5 @@ interface BankAccountRepository {
     suspend fun listAccounts(): NetworkResult<List<BankAccount>>
     suspend fun createAccount(request: CreateBankAccountRequest): NetworkResult<BankAccount>
     suspend fun deleteAccount(id: String): NetworkResult<Unit>
+    suspend fun setDefault(id: String): NetworkResult<Unit>
 }

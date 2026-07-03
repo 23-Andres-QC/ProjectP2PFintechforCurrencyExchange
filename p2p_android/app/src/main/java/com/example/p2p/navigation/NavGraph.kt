@@ -10,6 +10,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -34,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -69,6 +71,7 @@ import com.example.p2p.presentation.auth.LoginScreen
 import com.example.p2p.presentation.auth.LoginViewModel
 import com.example.p2p.presentation.auth.RegisterScreen
 import com.example.p2p.presentation.auth.RegisterViewModel
+import com.example.p2p.presentation.auth.WelcomeScreen
 import com.example.p2p.presentation.bank_accounts.BankAccountsScreen
 import com.example.p2p.presentation.bank_accounts.BankAccountsViewModel
 import com.example.p2p.presentation.complaints.ComplaintsScreen
@@ -125,7 +128,7 @@ private val bottomBarRoutes = setOf(
 )
 
 @Composable
-fun NavGraph(startDestination: String = Screen.Login.route) {
+fun NavGraph(startDestination: String = Screen.AuthGate.route) {
     val navController = rememberNavController()
     val context = LocalContext.current
     val tokenManager = TokenManager.getInstance(context)
@@ -186,6 +189,27 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
             startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(Screen.AuthGate.route) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Primary)
+                }
+                LaunchedEffect(Unit) {
+                    val destination = if (tokenManager.isLoggedIn()) Screen.Market.route else Screen.Welcome.route
+                    navController.navigate(destination) {
+                        popUpTo(Screen.AuthGate.route) { inclusive = true }
+                    }
+                }
+            }
+
+            composable(Screen.Welcome.route) {
+                WelcomeScreen(
+                    onNavigateToLogin = { navController.navigate(Screen.Login.route) },
+                    onNavigateToRegister = { navController.navigate(Screen.Register.route) }
+                )
+            }
 
             composable(Screen.Login.route) {
                 val authRepo = AuthRepositoryImpl(tokenManager)
@@ -194,7 +218,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                     viewModel = vm,
                     onLoginSuccess = {
                         navController.navigate(Screen.Market.route) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
                         }
                     },
                     onNavigateToRegister = {
@@ -222,7 +246,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                     },
                     onRegisterSuccess = {
                         navController.navigate(Screen.Market.route) {
-                            popUpTo(Screen.Register.route) { inclusive = true }
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
                         }
                     }
                 )
@@ -463,7 +487,7 @@ fun NavGraph(startDestination: String = Screen.Login.route) {
                         scope.launch {
                             chatHistoryStore.clear()
                             tokenManager.clearSession()
-                            navController.navigate(Screen.Login.route) {
+                            navController.navigate(Screen.Welcome.route) {
                                 popUpTo(0) { inclusive = true }
                             }
                         }

@@ -16,7 +16,12 @@ class User(BaseModel):
     selfie_url = db.Column(db.String(500), nullable=True)
     
     role = db.Column(db.String(20), default='buyer')
+    kyc_status = db.Column(db.String(20), default='not_started', nullable=False)
     kyc_verified = db.Column(db.Boolean, default=False)
+    terms_accepted = db.Column(db.Boolean, default=False, nullable=False)
+    terms_url = db.Column(db.String(500), nullable=True)
+    terms_version = db.Column(db.String(50), nullable=True)
+    terms_accepted_at = db.Column(db.DateTime, nullable=True)
     rating = db.Column(db.Float, default=0.0)
     total_transactions = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
@@ -44,7 +49,12 @@ class User(BaseModel):
             'full_name': self.full_name,
             'phone': self.phone,
             'role': self.role,
+            'kyc_status': self.kyc_status,
             'kyc_verified': self.kyc_verified,
+            'terms_accepted': self.terms_accepted,
+            'terms_url': self.terms_url,
+            'terms_version': self.terms_version,
+            'terms_accepted_at': self.terms_accepted_at.isoformat() if self.terms_accepted_at else None,
             'rating': self.rating,
             'total_transactions': self.completed_transactions_count(),
             'avatar_url': self.avatar_url,

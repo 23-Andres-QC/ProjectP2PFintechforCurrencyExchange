@@ -6,6 +6,7 @@ from app.models import Transaction
 from app.models.dispute import Dispute
 from app.models.user import User
 from app.repositories.dispute_repository import DisputeRepository
+from app.repositories.offer_repository import OfferRepository
 
 
 class DisputeService:
@@ -105,16 +106,27 @@ class DisputeService:
 
         txn: Transaction = dispute.transaction
         if txn:
-            txn.status = 'completed' if resolution == 'favour_buyer' else 'cancelled'
-
             if resolution == 'favour_buyer':
+                txn.status = 'completed'
                 buyer: User | None = db.session.get(User, txn.buyer_id)
                 vendor: User | None = db.session.get(User, txn.vendor_id)
                 if buyer:
                     buyer.total_transactions = (buyer.total_transactions or 0) + 1
                 if vendor:
                     vendor.total_transactions = (vendor.total_transactions or 0) + 1
+            else:
+                DisputeService._restore_offer_amount(txn)
+                txn.status = 'cancelled'
 
         DisputeRepository.resolve(dispute, admin_id, resolution, resolution_note)
         db.session.commit()
         return dispute
+
+    @staticmethod
+    def _restore_offer_amount(txn: Transaction) -> None:
+        offer = OfferRepository.get_by_id_for_update(txn.offer_id)
+        if not offer:
+            return
+        offer.available_amount = min((offer.available_amount or 0) + txn.amount_from, offer.amount)
+        if offer.status == 'closed' and offer.available_amount > 0:
+            offer.status = 'active'

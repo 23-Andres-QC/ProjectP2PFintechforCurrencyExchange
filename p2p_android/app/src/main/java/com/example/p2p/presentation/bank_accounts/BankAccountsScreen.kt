@@ -403,7 +403,11 @@ fun BankAccountsScreen(
                 }
             } else {
                 items(uiState.accounts, key = { it.id }) { account ->
-                    BankAccountCard(account = account, onDelete = { viewModel?.deleteBankAccount(account.id) })
+                    BankAccountCard(
+                        account = account,
+                        onSetDefault = { viewModel?.setDefaultAccount(account.id) },
+                        onDelete = { viewModel?.deleteBankAccount(account.id) }
+                    )
                 }
             }
 
@@ -413,7 +417,7 @@ fun BankAccountsScreen(
 }
 
 @Composable
-private fun BankAccountCard(account: BankAccount, onDelete: () -> Unit) {
+private fun BankAccountCard(account: BankAccount, onSetDefault: () -> Unit, onDelete: () -> Unit) {
     val bankColor = when (account.bank_name.lowercase()) {
         "bcp"       -> BcpColor
         "interbank" -> InterbankColor
@@ -464,6 +468,21 @@ private fun BankAccountCard(account: BankAccount, onDelete: () -> Unit) {
                 if (account.account_holder.isNotBlank()) {
                     Spacer(Modifier.height(2.dp))
                     Text("Titular: ${account.account_holder}", fontSize = 11.sp, color = TextMuted.copy(alpha = 0.7f))
+                }
+                Spacer(Modifier.height(6.dp))
+                if (account.is_primary) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(Icons.Filled.CheckCircle, contentDescription = "Cuenta principal", tint = SuccessColor, modifier = Modifier.size(14.dp))
+                        Text("Principal", fontSize = 11.sp, color = SuccessColor, fontWeight = FontWeight.SemiBold)
+                    }
+                } else {
+                    Text(
+                        "Marcar como principal",
+                        fontSize = 11.sp,
+                        color = Primary,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable { onSetDefault() }
+                    )
                 }
             }
 

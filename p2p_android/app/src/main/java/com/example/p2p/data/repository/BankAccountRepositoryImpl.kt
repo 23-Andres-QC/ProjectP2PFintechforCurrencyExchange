@@ -50,4 +50,17 @@ class BankAccountRepositoryImpl(
             NetworkResult.Error(-1, e.message ?: "An error occurred")
         }
     }
+
+    override suspend fun setDefault(id: String): NetworkResult<Unit> {
+        return try {
+            val response = api.setDefault(id)
+            if (response.isSuccessful) {
+                NetworkResult.Success(Unit)
+            } else {
+                NetworkResult.Error(response.code(), response.message())
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(-1, e.message ?: "An error occurred")
+        }
+    }
 }

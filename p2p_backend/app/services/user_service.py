@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask_jwt_extended import create_access_token, create_refresh_token
 from app.core.database import db
 from app.core.exceptions import ConflictError, AuthenticationError, NotFoundError
@@ -11,10 +12,14 @@ class UserService:
     @staticmethod
     def register(email: str, password: str, full_name: str,
                  role: str = 'buyer', phone: str | None = None,
-                 dni: str | None = None) -> User:
+                 dni: str | None = None, terms_accepted: bool = False,
+                 terms_url: str | None = None, terms_version: str | None = None) -> User:
         if not email or not password:
             from app.core.exceptions import ValidationError
             raise ValidationError('Email and password required')
+        if not terms_accepted:
+            from app.core.exceptions import ValidationError
+            raise ValidationError('Terms and conditions must be accepted')
 
         if UserRepository.get_by_email(email):
             raise ConflictError('Email already registered')
@@ -29,6 +34,10 @@ class UserService:
             role=role,
             phone=phone,
             dni=dni,
+            terms_accepted=True,
+            terms_url=terms_url,
+            terms_version=terms_version or '2026-07-02',
+            terms_accepted_at=datetime.utcnow(),
         )
         db.session.commit()
         return user
@@ -61,6 +70,7 @@ class UserService:
             'email': user.email,
             'full_name': user.full_name,
             'role': user.role,
+            'kyc_status': user.kyc_status,
             'kyc_verified': user.kyc_verified,
             'rating': user.rating,
             'avatar_url': user.avatar_url,
@@ -102,12 +112,13 @@ class UserService:
         if document_urls.get('signature_url'):
             user.signature_url = document_urls['signature_url']
 
-        user.kyc_verified = True
+        user.kyc_status = 'submitted'
+        user.kyc_verified = False
         notify(
             user_id=user.id,
             type='kyc',
-            title='Verificación KYC aprobada',
-            body='Tu identidad ha sido verificada exitosamente.',
+            title='KYC recibido',
+            body='Tus documentos fueron recibidos y estan en revision.',
         )
         db.session.commit()
         return user
@@ -123,6 +134,27 @@ class UserService:
         return user
 
     @staticmethod
+    def review_kyc(user_id: str, approved: bool, note: str | None = None) -> User:
+        user = UserRepository.get_by_id(user_id)
+        if not user:
+            raise NotFoundError('User not found')
+
+        user.kyc_status = 'approved' if approved else 'rejected'
+        user.kyc_verified = approved
+        notify(
+            user_id=user.id,
+            type='kyc',
+            title='KYC aprobado' if approved else 'KYC rechazado',
+            body=(
+                'Tu identidad fue verificada. Ya puedes operar en la plataforma.'
+                if approved else
+                f'Tu verificacion fue rechazada.{(" Nota: " + note) if note else ""}'
+            ),
+        )
+        db.session.commit()
+        return user
+
+    @staticmethod
     def get_public_profile(user_id: str) -> dict:
         user = UserRepository.get_by_id(user_id)
         if not user:
@@ -134,5 +166,6 @@ class UserService:
             'rating': user.rating,
             'total_transactions': user.completed_transactions_count(),
             'role': user.role,
+            'kyc_status': user.kyc_status,
             'kyc_verified': user.kyc_verified,
         }

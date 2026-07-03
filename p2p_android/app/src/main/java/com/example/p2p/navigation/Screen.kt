@@ -1,6 +1,8 @@
 package com.example.p2p.navigation
 
 sealed class Screen(val route: String) {
+    object AuthGate      : Screen("auth_gate")
+    object Welcome       : Screen("welcome")
     object Login         : Screen("login")
     object Register      : Screen("register")
     object ForgotPass    : Screen("forgot_pass")

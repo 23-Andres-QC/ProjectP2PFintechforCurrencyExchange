@@ -98,6 +98,22 @@ class BankAccountsViewModel(
         }
     }
 
+    fun setDefaultAccount(id: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null, successMessage = null)
+            when (val result = repository.setDefault(id)) {
+                is NetworkResult.Success -> {
+                    _uiState.value = _uiState.value.copy(successMessage = "Cuenta principal actualizada")
+                    loadBankAccounts()
+                }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
     fun clearMessages() {
         _uiState.value = _uiState.value.copy(error = null, successMessage = null)
     }

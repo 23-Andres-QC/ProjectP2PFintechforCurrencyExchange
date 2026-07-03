@@ -25,13 +25,19 @@ class UserRepository:
     @staticmethod
     def create(email: str, full_name: str, password: str,
                role: str = 'buyer', phone: str | None = None,
-               dni: str | None = None) -> User:
+               dni: str | None = None, terms_accepted: bool = False,
+               terms_url: str | None = None, terms_version: str | None = None,
+               terms_accepted_at=None) -> User:
         user = User(
             email=email,
             full_name=full_name,
             role=role,
             phone=phone,
             dni=dni,
+            terms_accepted=terms_accepted,
+            terms_url=terms_url,
+            terms_version=terms_version,
+            terms_accepted_at=terms_accepted_at,
         )
         user.set_password(password)
         db.session.add(user)

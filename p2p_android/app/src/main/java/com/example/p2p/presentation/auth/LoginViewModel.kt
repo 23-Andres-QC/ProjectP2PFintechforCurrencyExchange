@@ -86,7 +86,10 @@ class LoginViewModel(
     private suspend fun registerFcmToken() {
         try {
             val token = FirebaseMessaging.getInstance().token.await()
-            ApiClient.notificationApi.registerFcmToken(mapOf("fcm_token" to token))
+            val response = ApiClient.notificationApi.registerFcmToken(mapOf("fcm_token" to token))
+            if (!response.isSuccessful) {
+                Log.w("LoginViewModel", "FCM token no registrado: HTTP ${response.code()}")
+            }
         } catch (e: Exception) {
             Log.w("LoginViewModel", "No se pudo registrar el token FCM", e)
         }

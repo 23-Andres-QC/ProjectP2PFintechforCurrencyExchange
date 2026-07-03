@@ -57,6 +57,16 @@ def ban_user(user_id):
     return AdminService.ban_user(user_id, bool(banned)), 200
 
 
+@admin_bp.route('/users/<user_id>/kyc', methods=['PATCH'])
+@jwt_required()
+def review_user_kyc(user_id):
+    _require_admin()
+    data = request.get_json() or {}
+    if 'approved' not in data:
+        raise AppException('MISSING_FIELD', '"approved" field is required', 400)
+    return AdminService.review_user_kyc(user_id, bool(data.get('approved')), data.get('note')), 200
+
+
 @admin_bp.route('/disputes', methods=['GET'])
 @jwt_required()
 def list_disputes():

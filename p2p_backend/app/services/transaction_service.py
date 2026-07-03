@@ -1,4 +1,5 @@
 import threading
+from datetime import datetime
 
 from app.core.database import db
 from app.core.email import send_voucher_email
@@ -41,9 +42,14 @@ class TransactionService:
             raise AppException('OFFER_UNAVAILABLE', 'Offer not available', 400)
         if offer.vendor_id == user_id:
             raise AppException('OWN_OFFER', 'Cannot buy your own offer', 400)
+        buyer = UserRepository.get_by_id(user_id)
+        if not buyer or not buyer.is_active or buyer.is_banned:
+            raise AuthorizationError('Buyer is not active')
+        if not buyer.kyc_verified:
+            raise AuthorizationError('KYC approval is required to buy')
 
-        amount_from = data.get('amount_from', 0)
-        amount_to = data.get('amount_to', 0)
+        amount_from = float(data.get('amount_from') or 0)
+        amount_to = round(amount_from * offer.price_per_unit, 2)
 
         is_complete = offer.offer_type in ('full', 'complete')
         if is_complete:
@@ -202,6 +208,7 @@ class TransactionService:
             raise AppException('MISSING_SELLER_VOUCHER', 'Seller voucher is required before confirmation', 400)
 
         txn.status = 'completed'
+        txn.confirmed_at = datetime.utcnow()
         vendor = UserRepository.get_by_id(txn.vendor_id)
         buyer = UserRepository.get_by_id(txn.buyer_id)
         if vendor:
@@ -270,6 +277,23 @@ class TransactionService:
         if txn.buyer_id != user_id and txn.vendor_id != user_id:
             raise AuthorizationError('Not your transaction')
 
+        if new_status == 'accepted':
+            if txn.vendor_id != user_id:
+                raise AuthorizationError('Only vendor can accept the transaction')
+            if txn.status != 'pending':
+                raise AppException('INVALID_STATE', f'Cannot accept from {txn.status}', 400)
+            txn.status = 'accepted'
+            txn.accepted_at = datetime.utcnow()
+            notify(
+                user_id=txn.buyer_id,
+                type='transaction',
+                title='Orden aceptada',
+                body='El vendedor acepto tu orden. Ya puedes realizar el pago y subir tu comprobante.',
+                resource_id=txn.id,
+            )
+            db.session.commit()
+            return TransactionService._to_dict(txn)
+
         if new_status == 'closed':
             if txn.status not in ('completed', 'closed'):
                 raise AppException('INVALID_STATE', 'Can only close completed transactions', 400)
@@ -278,16 +302,24 @@ class TransactionService:
         elif new_status not in ('cancelled', 'paused'):
             raise AppException('INVALID_STATUS', 'Status must be cancelled or paused', 400)
 
-        if new_status == 'cancelled' and txn.status in ('pending', 'voucher_uploaded'):
-            offer = OfferRepository.get_by_id_for_update(txn.offer_id)
-            if offer:
-                offer.available_amount += txn.amount_from
-                if offer.status == 'closed' and offer.available_amount > 0:
-                    offer.status = 'active'
+        if new_status == 'cancelled':
+            TransactionService._restore_offer_amount(txn)
 
         txn.status = new_status
         db.session.commit()
         return TransactionService._to_dict(txn)
+
+    @staticmethod
+    def _restore_offer_amount(txn: Transaction) -> None:
+        if txn.status not in ('pending', 'accepted', 'voucher_uploaded', 'disputed'):
+            return
+        offer = OfferRepository.get_by_id_for_update(txn.offer_id)
+        if not offer:
+            return
+        restored = min((offer.available_amount or 0) + txn.amount_from, offer.amount)
+        offer.available_amount = restored
+        if offer.status == 'closed' and offer.available_amount > 0:
+            offer.status = 'active'
 
     @staticmethod
     def list_disputes(user_id: str) -> list[dict]:
@@ -382,5 +414,7 @@ class TransactionService:
             'seller_voucher_url': seller_voucher.image_url if seller_voucher else t.vendor_voucher_url,
             'vendor_voucher_url': t.vendor_voucher_url,
             'receipt_pdf_url': t.receipt_pdf_url,
+            'accepted_at': t.accepted_at.isoformat() if getattr(t, 'accepted_at', None) else None,
+            'confirmed_at': t.confirmed_at.isoformat() if getattr(t, 'confirmed_at', None) else None,
         }
     

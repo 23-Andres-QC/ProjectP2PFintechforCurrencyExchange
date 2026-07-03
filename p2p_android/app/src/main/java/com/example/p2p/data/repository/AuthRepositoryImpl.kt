@@ -40,9 +40,27 @@ class AuthRepositoryImpl(
         }
     }
 
-    override suspend fun register(email: String, password: String, fullName: String, dni: String?): NetworkResult<LoginResponse> {
+    override suspend fun register(
+        email: String,
+        password: String,
+        fullName: String,
+        dni: String?,
+        termsAccepted: Boolean,
+        termsUrl: String?,
+        termsVersion: String?
+    ): NetworkResult<LoginResponse> {
         return try {
-            val response = api.register(RegisterRequest(email, password, fullName, dni = dni?.ifBlank { null }))
+            val response = api.register(
+                RegisterRequest(
+                    email = email,
+                    password = password,
+                    fullName = fullName,
+                    dni = dni?.ifBlank { null },
+                    termsAccepted = termsAccepted,
+                    termsUrl = termsUrl,
+                    termsVersion = termsVersion
+                )
+            )
             val body = response.body()
             if (response.isSuccessful && body != null) {
                 tokenManager.saveSession(

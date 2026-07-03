@@ -1,11 +1,14 @@
 package com.example.p2p.presentation.auth
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.p2p.core.network.ApiClient
 import com.example.p2p.core.network.NetworkResult
 import com.example.p2p.domain.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,10 +29,16 @@ class RegisterViewModel(
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
     private val firebaseAuth = FirebaseAuth.getInstance()
+    private val termsUrl = "https://www.termsfeed.com/live/29f4bfac-d43c-456f-ba32-3e6282624b01"
+    private val termsVersion = "2026-07-02"
 
-    fun register(email: String, password: String, fullName: String, dni: String = "") {
+    fun register(email: String, password: String, fullName: String, dni: String = "", termsAccepted: Boolean = false) {
         if (email.isBlank() || password.isBlank() || fullName.isBlank()) {
             _uiState.value = _uiState.value.copy(error = "Todos los campos son requeridos")
+            return
+        }
+        if (!termsAccepted) {
+            _uiState.value = _uiState.value.copy(error = "Debes aceptar los terminos y condiciones")
             return
         }
         if (password.length < 8) {
@@ -45,8 +54,17 @@ class RegisterViewModel(
                 firebaseAuth.createUserWithEmailAndPassword(email.trim(), password).await()
 
                 // 2. Guardar perfil en el backend (nombre, DNI, etc.)
-                when (val result = authRepository.register(email.trim(), password, fullName.trim(), cleanDni)) {
+                when (val result = authRepository.register(
+                    email = email.trim(),
+                    password = password,
+                    fullName = fullName.trim(),
+                    dni = cleanDni,
+                    termsAccepted = true,
+                    termsUrl = termsUrl,
+                    termsVersion = termsVersion
+                )) {
                     is NetworkResult.Success -> {
+                        registerFcmToken()
                         _uiState.value = RegisterUiState(isSuccess = true)
                     }
                     is NetworkResult.Error -> {
@@ -70,6 +88,18 @@ class RegisterViewModel(
                 }
                 _uiState.value = RegisterUiState(error = msg)
             }
+        }
+    }
+
+    private suspend fun registerFcmToken() {
+        try {
+            val token = FirebaseMessaging.getInstance().token.await()
+            val response = ApiClient.notificationApi.registerFcmToken(mapOf("fcm_token" to token))
+            if (!response.isSuccessful) {
+                Log.w("RegisterViewModel", "FCM token no registrado: HTTP ${response.code()}")
+            }
+        } catch (e: Exception) {
+            Log.w("RegisterViewModel", "No se pudo registrar el token FCM", e)
         }
     }
 

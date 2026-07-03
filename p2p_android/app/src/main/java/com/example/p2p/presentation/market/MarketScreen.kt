@@ -5,15 +5,18 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
@@ -38,6 +41,7 @@ import com.example.p2p.data.remote.model.Offer
 import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -280,23 +284,37 @@ private fun MarketTopBar(
     unreadCount: Int = 0,
     onNavigateToNotifications: () -> Unit = {}
 ) {
-    val targetPairs = listOf("USD", "EUR", "USDT", "COP", "MXN", "ARS")
-    val rateMap = exchangeRates.associateBy { "${it.from_currency}_${it.to_currency}" }
-
-    fun getRateToPen(from: String): Double? {
-        rateMap["${from}_PEN"]?.let { return it.rate }
-        val fromToUsd = rateMap["${from}_USD"]?.rate
-        val usdToPen  = rateMap["USD_PEN"]?.rate
-        if (fromToUsd != null && usdToPen != null) return fromToUsd * usdToPen
-        return null
-    }
-
     val tickerItems: List<Pair<String, String>> = run {
-        val fromApi = targetPairs.mapNotNull { from ->
-            val rate = getRateToPen(from) ?: return@mapNotNull null
-            from to "S/${String.format("%.3f", rate)}"
+        val rateMap = exchangeRates.associateBy { "${it.from_currency}_${it.to_currency}" }
+        val targetPairs = listOf("USD", "EUR", "USDT", "COP", "MXN", "ARS", "GBP", "BRL", "CAD", "AUD", "JPY", "CLP")
+
+        fun rateToPen(from: String): Double? {
+            rateMap["${from}_PEN"]?.let { return it.rate }
+            rateMap["PEN_${from}"]?.rate?.takeIf { it != 0.0 }?.let { return 1.0 / it }
+            val fromToUsd = rateMap["${from}_USD"]?.rate
+            val usdToPen = rateMap["USD_PEN"]?.rate
+            if (fromToUsd != null && usdToPen != null) return fromToUsd * usdToPen
+            val usdToFrom = rateMap["USD_${from}"]?.rate
+            if (usdToFrom != null && usdToFrom != 0.0 && usdToPen != null) return usdToPen / usdToFrom
+            return null
         }
-        fromApi.ifEmpty { listOf("USD" to "Cargando...", "EUR" to "Cargando...") }
+
+        val fromApi = exchangeRates
+            .map { it.from_currency }
+            .plus(targetPairs)
+            .distinct()
+            .filter { it != "PEN" }
+            .mapNotNull { from ->
+                val rate = rateToPen(from) ?: return@mapNotNull null
+                "$from/PEN" to "S/${formatTickerNumber(rate)}"
+            }
+        fromApi.ifEmpty {
+            listOf(
+                "USD/PEN" to "Cargando...",
+                "EUR/PEN" to "Cargando...",
+                "USDT/PEN" to "Cargando..."
+            )
+        }
     }
 
     Column(
@@ -352,36 +370,90 @@ private fun MarketTopBar(
                 }
             }
         }
-        Row(
+        ExchangeRateMarquee(
+            tickerItems = tickerItems,
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            tickerItems.forEach { (currency, rate) ->
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50.dp))
-                        .background(Color.White.copy(alpha = 0.14f))
-                        .border(1.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(50.dp))
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(5.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(5.dp)
-                            .clip(CircleShape)
-                            .background(PrimaryMint)
-                    )
-                    Text(currency, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                    Text(rate, color = Color.White.copy(alpha = 0.85f), fontSize = 11.sp)
-                }
+                .padding(vertical = 10.dp)
+        )
+    }
+}
+
+@Composable
+private fun ExchangeRateMarquee(
+    tickerItems: List<Pair<String, String>>,
+    modifier: Modifier = Modifier
+) {
+    val virtualCount = 100_000
+    val startIndex = remember(tickerItems) {
+        val middle = virtualCount / 2
+        middle - (middle % tickerItems.size.coerceAtLeast(1))
+    }
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = startIndex)
+
+    LaunchedEffect(tickerItems) {
+        if (tickerItems.isEmpty()) return@LaunchedEffect
+        while (true) {
+            listState.scrollBy(1.2f)
+            delay(16L)
+            if (listState.firstVisibleItemIndex < 1_000 || listState.firstVisibleItemIndex > virtualCount - 1_000) {
+                listState.scrollToItem(startIndex, listState.firstVisibleItemScrollOffset)
             }
         }
     }
+
+    Box(
+        modifier = modifier
+            .height(34.dp)
+            .clip(RoundedCornerShape(50.dp))
+    ) {
+        LazyRow(
+            state = listState,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            userScrollEnabled = false,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items(virtualCount) { index ->
+                val (pair, rate) = tickerItems[index % tickerItems.size]
+                ExchangeRatePill(pair = pair, rate = rate)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExchangeRatePill(pair: String, rate: String) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50.dp))
+            .background(Color.White.copy(alpha = 0.14f))
+            .border(1.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(50.dp))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(5.dp)
+                .clip(CircleShape)
+                .background(PrimaryMint)
+        )
+        Text(pair, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+        Text(rate, color = Color.White.copy(alpha = 0.85f), fontSize = 11.sp)
+    }
+}
+
+private fun formatTickerRate(rate: ExchangeRate): String {
+    val value = formatTickerNumber(rate.rate)
+    return if (rate.to_currency == "PEN") "S/$value" else value
+}
+
+private fun formatTickerNumber(value: Double): String = when {
+    value >= 100 -> String.format("%.2f", value)
+    value >= 1 -> String.format("%.3f", value)
+    else -> String.format("%.5f", value)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -445,6 +517,7 @@ private fun FilterDropdown(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
@@ -475,19 +548,29 @@ private fun FilterDropdown(
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            containerColor = SurfaceColor
+            containerColor = SurfaceColor,
+            modifier = Modifier.heightIn(max = 320.dp)
         ) {
-            options.forEach { opt ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            opt,
-                            fontWeight = if (opt == selected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (opt == selected) Primary else TextMain
+            Column(modifier = Modifier.widthIn(min = 176.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 240.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    options.forEach { opt ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    opt,
+                                    fontWeight = if (opt == selected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (opt == selected) Primary else TextMain
+                                )
+                            },
+                            onClick = { onSelect(opt); expanded = false }
                         )
-                    },
-                    onClick = { onSelect(opt); expanded = false }
-                )
+                    }
+                }
             }
         }
     }
