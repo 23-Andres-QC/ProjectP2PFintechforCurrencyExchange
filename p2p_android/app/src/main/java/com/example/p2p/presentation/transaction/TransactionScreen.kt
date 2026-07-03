@@ -900,6 +900,9 @@ fun TransactionScreen(
                             {
                                 isSubmittingRating = false
                                 showRatingDialog = false
+                                if (transactionId != null) {
+                                    viewModel?.updateStatus(transactionId, "closed")
+                                }
                                 Toast.makeText(context, "Calificacion enviada", Toast.LENGTH_SHORT).show()
                                 onNavigateBack()
                             },

@@ -264,25 +264,29 @@ class TransactionService:
         }
 
     @staticmethod
-    def open_dispute(user_id: str, txn_id: str, data: dict) -> dict:
+    def open_dispute(user_id: str, txn_id: str, data: dict,
+                     image_bytes: bytes | None = None, uploader=None) -> dict:
+        evidence_url = None
+        if image_bytes is not None and uploader is not None:
+            user = UserRepository.get_by_id(user_id)
+            user_email = user.email if user else user_id
+            evidence_url = uploader(image_bytes, user_email, txn_id)
+
         dispute = DisputeService.open_dispute(
             user_id=user_id,
             transaction_id=txn_id,
             reason=data.get('reason', 'payment_not_received'),
             description=data.get('description'),
+            evidence_url=evidence_url,
         )
 
-        txn = TransactionRepository.get_by_id(txn_id)
-        other_id = txn.vendor_id if user_id == txn.buyer_id else txn.buyer_id
-        notify(
-            user_id=other_id,
-            type='dispute',
-            title='Disputa abierta en tu transacción',
-            body=f'Se abrió una disputa por motivo: {dispute.reason}. Un administrador revisará el caso.',
-            resource_id=dispute.id,
-        )
         db.session.commit()
-        return {'id': dispute.id, 'status': 'open', 'transaction_status': 'disputed'}
+        return {
+            'id': dispute.id,
+            'status': 'open',
+            'transaction_status': 'disputed',
+            'evidence_url': evidence_url,
+        }
 
     @staticmethod
     def update_status(user_id: str, txn_id: str, new_status: str) -> dict:
@@ -299,13 +303,6 @@ class TransactionService:
                 raise AppException('INVALID_STATE', f'Cannot accept from {txn.status}', 400)
             txn.status = 'accepted'
             txn.accepted_at = datetime.utcnow()
-            notify(
-                user_id=txn.buyer_id,
-                type='transaction',
-                title='Orden aceptada',
-                body='El vendedor acepto tu orden. Ya puedes realizar el pago y subir tu comprobante.',
-                resource_id=txn.id,
-            )
             db.session.commit()
             return TransactionService._to_dict(txn)
 

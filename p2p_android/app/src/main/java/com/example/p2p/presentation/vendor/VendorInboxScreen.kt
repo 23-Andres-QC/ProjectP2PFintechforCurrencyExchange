@@ -963,18 +963,9 @@ private fun VendorTransactionCard(
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
             // Header
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column {
-                    Text(statusLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = statusColor, letterSpacing = 0.8.sp)
-                    Text(transaction.id.take(8).uppercase(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextMain, modifier = Modifier.padding(top = 2.dp))
-                }
-                Box(
-                    modifier = Modifier.clip(RoundedCornerShape(50.dp)).background(statusColor.copy(alpha = 0.12f))
-                        .border(1.dp, statusColor.copy(alpha = 0.3f), RoundedCornerShape(50.dp))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(transaction.status.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = statusColor)
-                }
+            Column {
+                Text(statusLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = statusColor, letterSpacing = 0.8.sp)
+                Text(transaction.id.take(8).uppercase(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextMain, modifier = Modifier.padding(top = 2.dp))
             }
 
             // Banner nueva orden

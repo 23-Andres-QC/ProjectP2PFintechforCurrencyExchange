@@ -1,7 +1,6 @@
 from app.core.database import db
 from app.core.audit import log_action
 from app.core.exceptions import NotFoundError, AppException
-from app.core.notifications import notify
 from app.models.user import User
 from app.repositories.admin_repository import AdminRepository
 from app.repositories.user_repository import UserRepository
@@ -69,21 +68,6 @@ class AdminService:
         user.is_banned = banned
         user.is_active = not banned
 
-        if user.is_banned:
-            notify(
-                user_id=user.id,
-                type='security',
-                title='Cuenta suspendida',
-                body='Tu cuenta ha sido suspendida por el administrador. Contacta soporte si crees que es un error.',
-            )
-        else:
-            notify(
-                user_id=user.id,
-                type='security',
-                title='Cuenta reactivada',
-                body='Tu cuenta ha sido reactivada. Ya puedes operar con normalidad en la plataforma.',
-            )
-
         log_action(
             admin_id=admin_id,
             action='ban_user' if banned else 'unban_user',
@@ -128,16 +112,6 @@ class AdminService:
     @staticmethod
     def take_dispute(admin_id: str, dispute_id: str) -> dict:
         dispute = DisputeService.take_dispute(admin_id, dispute_id)
-
-        if dispute.transaction:
-            for uid in {dispute.transaction.buyer_id, dispute.transaction.vendor_id}:
-                notify(
-                    user_id=uid,
-                    type='dispute',
-                    title='Disputa en revisión',
-                    body='Un administrador ha tomado tu disputa y está revisando el caso. Te notificaremos con la resolución.',
-                    resource_id=dispute.id,
-                )
         db.session.commit()
 
         return {
@@ -156,32 +130,6 @@ class AdminService:
             resolution=resolution,
             resolution_note=resolution_note,
         )
-
-        if dispute.transaction:
-            txn = dispute.transaction
-            favour_buyer = resolution == 'favour_buyer'
-            notify(
-                user_id=txn.buyer_id,
-                type='dispute',
-                title='Disputa resuelta' + (' — A tu favor ✓' if favour_buyer else ' — En contra'),
-                body=(
-                    'La disputa fue resuelta a tu favor. La transacción fue completada.'
-                    if favour_buyer else
-                    'La disputa fue resuelta en favor del vendedor. La transacción fue cancelada.'
-                ) + (f' Nota: {resolution_note}' if resolution_note else ''),
-                resource_id=dispute.id,
-            )
-            notify(
-                user_id=txn.vendor_id,
-                type='dispute',
-                title='Disputa resuelta' + (' — En contra' if favour_buyer else ' — A tu favor ✓'),
-                body=(
-                    'La disputa fue resuelta en favor del comprador. La transacción fue completada.'
-                    if favour_buyer else
-                    'La disputa fue resuelta a tu favor. La transacción fue cancelada.'
-                ) + (f' Nota: {resolution_note}' if resolution_note else ''),
-                resource_id=dispute.id,
-            )
 
         log_action(
             admin_id=admin_id,

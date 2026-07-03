@@ -8,8 +8,15 @@ Estados: `pending` -> `accepted` -> `voucher_uploaded` -> `completed`. En cualqu
 
 - **Debe hacer:** validar oferta/limites/disponibilidad/KYC del comprador, calcular el monto final, evitar una segunda compra activa duplicada sobre la misma oferta, crear la transaccion `pending`, descontar disponibilidad, avisar al vendedor.
 - **Debe ver:** confirmacion antes de comprar, monto a pagar, moneda, vendedor, tasa.
-- **Debe llenar:** monto a comprar.
+- **Debe llenar:** monto a comprar. **El comprador NO necesita tener una cuenta bancaria registrada para comprar** (la cuenta bancaria solo es obligatoria del lado del vendedor al publicar, porque ahi es donde se deposita el dinero). Si el comprador no tiene ninguna cuenta guardada, la compra debe seguir funcionando igual, sin avisos de "falta cuenta bancaria".
 - **Se espera:** una compra crea una sola transaccion y descuenta el monto exacto.
+
+## Pendientes (lista de compras y ventas activas)
+
+- **Debe hacer:** mostrar en pestanas separadas "Comprar" y "Ventas" las transacciones activas de cada lado, con un numerito (badge) en cada pestana que indique cuantas hay pendientes ahi.
+- **Debe ver:** en cada tarjeta, un solo texto de estado legible (ej. "PAGO RECIBIDO · SUBE TU COMPROBANTE"); no debe repetirse el mismo estado en crudo (ej. "VOUCHER_UPLOADED") como una etiqueta aparte, porque no entra bien y se corta feo.
+- **Debe llenar:** nada, solo navegacion.
+- **Se espera:** el usuario ve de un vistazo cuantas operaciones tiene pendientes en cada lado sin entrar a cada pestana.
 
 ## Aceptar orden (vendedor)
 
@@ -34,10 +41,10 @@ Estados: `pending` -> `accepted` -> `voucher_uploaded` -> `completed`. En cualqu
 
 ## Cancelar / pausar / cerrar
 
-- **Debe hacer:** cancelar o pausar solo desde un estado que no sea `completed` ni `closed`, restaurando el monto disponible de la oferta cuando corresponda.
+- **Debe hacer:** cancelar o pausar solo desde un estado que no sea `completed` ni `closed`, restaurando el monto disponible de la oferta cuando corresponda. **El boton "Cerrar y Calificar" (comprador, tras liberar fondos) debe cambiar la transaccion a `closed` ademas de enviar la calificacion** — si solo califica y no cierra, la operacion se queda para siempre en `completed` y sigue apareciendo en la lista de Pendientes aunque ya se resolvio.
 - **Debe ver:** accion destructiva con confirmacion, estado actualizado visible.
 - **Debe llenar:** nada (solo confirmar / motivo si aplica).
-- **Se espera:** cancelar restaura correctamente el saldo de la oferta; no se puede cancelar/pausar una transaccion ya completada o cerrada.
+- **Se espera:** cancelar restaura correctamente el saldo de la oferta; no se puede cancelar/pausar una transaccion ya completada o cerrada; despues de "Cerrar y Calificar", la operacion desaparece de Pendientes (solo `pending`/`accepted`/`voucher_uploaded`/`completed` se muestran ahi, `closed` ya no).
 
 ## Recibo e historial
 

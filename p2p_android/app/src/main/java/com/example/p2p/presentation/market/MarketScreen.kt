@@ -52,7 +52,8 @@ fun MarketScreen(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToTransaction: (String) -> Unit = {},
     onNavigateToPending: () -> Unit = {},
-    onNavigateToAddBankAccount: () -> Unit = {}
+    onNavigateToAddBankAccount: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showBuyDialog by remember { mutableStateOf<Offer?>(null) }
@@ -87,12 +88,14 @@ fun MarketScreen(
         containerColor = BackgroundApp,
         topBar = {
             MarketTopBar(
+                userName = userName,
                 exchangeRates = uiState.exchangeRates,
                 unreadCount = uiState.unreadCount,
                 onNavigateToNotifications = {
                     viewModel.loadUnreadCount()
                     onNavigateToNotifications()
-                }
+                },
+                onNavigateToProfile = onNavigateToProfile
             )
         }
     ) { innerPadding ->
@@ -105,7 +108,7 @@ fun MarketScreen(
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             item {
-                FilterSection(
+                FilterAndMatchingRow(
                     fiatOptions      = allCurrencies.filter { it != selectedCurrency },
                     currencyOptions  = allCurrencies.filter { it != selectedFiat },
                     selectedFiat     = selectedFiat,
@@ -116,16 +119,9 @@ fun MarketScreen(
                         val tmp = selectedFiat
                         selectedFiat = selectedCurrency
                         selectedCurrency = tmp
-                    }
-                )
-            }
-
-
-            item {
-                ActionRow(
-                    isLoading = uiState.isLoading,
+                    },
                     marketRate = marketRate,
-                    fiatCurrency = selectedFiat,
+                    isLoading = uiState.isLoading,
                     onMatchingClick = {
                         viewModel.matchOffer(
                             currency      = selectedCurrency,
@@ -280,10 +276,19 @@ fun MarketScreen(
 
 @Composable
 private fun MarketTopBar(
+    userName: String = "Usuario",
     exchangeRates: List<ExchangeRate> = emptyList(),
     unreadCount: Int = 0,
-    onNavigateToNotifications: () -> Unit = {}
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
+    val initials = userName.trim().split(" ")
+        .filter { it.isNotEmpty() }
+        .take(2)
+        .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+        .joinToString("")
+        .ifEmpty { "?" }
+
     val tickerItems: List<Pair<String, String>> = run {
         val rateMap = exchangeRates.associateBy { "${it.from_currency}_${it.to_currency}" }
         val targetPairs = listOf("USD", "EUR", "USDT", "COP", "MXN", "ARS", "GBP", "BRL", "CAD", "AUD", "JPY", "CLP")
@@ -338,6 +343,18 @@ private fun MarketTopBar(
             Text("Peru", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
             Text("Exchange", color = PrimaryMint, fontWeight = FontWeight.Black, fontSize = 18.sp)
             Spacer(Modifier.weight(1f))
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(Color.White.copy(alpha = 0.30f), Color.White.copy(alpha = 0.12f))))
+                    .border(1.5.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                    .clickable { onNavigateToProfile() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(initials, color = Color.White, fontWeight = FontWeight.Black, fontSize = 14.sp)
+            }
+            Spacer(Modifier.width(10.dp))
             Box(
                 modifier = Modifier
                     .size(38.dp)
@@ -458,52 +475,123 @@ private fun formatTickerNumber(value: Double): String = when {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FilterSection(
+private fun FilterAndMatchingRow(
     fiatOptions: List<String>,
     currencyOptions: List<String>,
     selectedFiat: String,
     selectedCurrency: String,
     onFiatChange: (String) -> Unit,
     onCurrencyChange: (String) -> Unit,
-    onSwap: () -> Unit
+    onSwap: () -> Unit,
+    marketRate: Double?,
+    isLoading: Boolean,
+    onMatchingClick: () -> Unit
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         shape = RoundedCornerShape(16.dp),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
-        elevation = 3.dp,
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+        elevation = 2.dp,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            FilterDropdown(
-                label = "Tengo",
-                selected = selectedFiat,
-                options = fiatOptions,
-                onSelect = onFiatChange,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(
-                onClick = onSwap,
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(Primary.copy(alpha = 0.1f))
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.Start
             ) {
-                Icon(Icons.Default.SwapHoriz, contentDescription = "Intercambiar", tint = Primary, modifier = Modifier.size(18.dp))
+                Text("$selectedCurrency → $selectedFiat", fontSize = 10.sp, color = TextMuted, fontWeight = FontWeight.Medium)
+                Text(
+                    marketRate?.let { "$selectedFiat ${String.format("%.3f", it)}" } ?: "—",
+                    fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = TextMain, maxLines = 1
+                )
             }
-            FilterDropdown(
-                label = "Quiero",
-                selected = selectedCurrency,
-                options = currencyOptions,
-                onSelect = onCurrencyChange,
-                modifier = Modifier.weight(1f)
-            )
+
+            TextButton(
+                onClick = { showDialog = true },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.textButtonColors(contentColor = Primary),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(15.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Filtro", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
+
+            Button(
+                onClick = onMatchingClick,
+                enabled = !isLoading,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = WarningColor),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
+            ) {
+                Icon(Icons.Default.Bolt, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Matching", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            }
         }
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = {
+                Text(
+                    "Filtrar por moneda",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 16.sp,
+                    color = TextMain,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            },
+            text = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    FilterDropdown(
+                        label = "Tengo",
+                        selected = selectedFiat,
+                        options = fiatOptions,
+                        onSelect = onFiatChange,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(
+                        onClick = onSwap,
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(Primary.copy(alpha = 0.1f))
+                    ) {
+                        Icon(Icons.Default.SwapHoriz, contentDescription = "Intercambiar", tint = Primary, modifier = Modifier.size(18.dp))
+                    }
+                    FilterDropdown(
+                        label = "Quiero",
+                        selected = selectedCurrency,
+                        options = currencyOptions,
+                        onSelect = onCurrencyChange,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showDialog = false },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                ) {
+                    Text("Aplicar filtro", fontWeight = FontWeight.SemiBold)
+                }
+            }
+        )
     }
 }
 
@@ -577,49 +665,6 @@ private fun FilterDropdown(
 }
 
 @Composable
-private fun ActionRow(
-    isLoading: Boolean,
-    marketRate: Double?,
-    fiatCurrency: String,
-    onMatchingClick: () -> Unit
-) {
-    GlassCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        shape = RoundedCornerShape(14.dp),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
-        elevation = 2.dp,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text("Tipo de cambio", fontSize = 10.sp, color = TextMuted, fontWeight = FontWeight.Medium)
-                Text(
-                    marketRate?.let { "$fiatCurrency ${String.format("%.3f", it)}" } ?: "—",
-                    fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = TextMain
-                )
-            }
-            OutlinedButton(
-                onClick = onMatchingClick,
-                enabled = !isLoading,
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = WarningColor),
-                border = androidx.compose.foundation.BorderStroke(1.dp, WarningColor),
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-            ) {
-                Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(15.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("Matching Automático", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-            }
-        }
-    }
-}
-
-@Composable
 private fun OffersHeader(count: Int, from: String, to: String) {
     Row(
         modifier = Modifier
@@ -647,24 +692,10 @@ fun BankAccountSelector(
     onSelect: (String) -> Unit,
     onNavigateToAddBankAccount: () -> Unit = {}
 ) {
+    // El comprador no necesita tener una cuenta bancaria registrada (eso solo aplica
+    // al vendedor al publicar, que es donde se deposita el dinero). Si no tiene ninguna,
+    // simplemente no se muestra selector ni aviso: la compra sigue funcionando igual.
     if (bankAccounts.isEmpty()) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(WarningColor.copy(alpha = 0.08f))
-                .border(1.dp, WarningColor.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-                .clickable { onNavigateToAddBankAccount() }
-                .padding(10.dp)
-        ) {
-            Icon(Icons.Default.Warning, contentDescription = null, tint = WarningColor, modifier = Modifier.size(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Sin cuentas bancarias registradas.", fontSize = 11.sp, color = WarningColor, fontWeight = FontWeight.SemiBold)
-                Text("Toca aquí para agregar una cuenta →", fontSize = 11.sp, color = WarningColor.copy(alpha = 0.8f))
-            }
-        }
         return
     }
 

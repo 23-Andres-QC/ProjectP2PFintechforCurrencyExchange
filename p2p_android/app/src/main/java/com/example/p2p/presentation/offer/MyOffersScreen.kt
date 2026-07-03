@@ -134,6 +134,7 @@ fun MyOffersScreen(
                     totalCount = uiState.offers.size,
                     activeCount = uiState.offers.count { it.status == "active" },
                     pausedCount = uiState.offers.count { it.status == "paused" },
+                    closedCount = uiState.offers.count { it.status == "closed" },
                     onFilterChange = { viewModel?.setFilter(it) }
                 )
             }
@@ -158,6 +159,7 @@ fun MyOffersScreen(
                                 text = when (uiState.activeFilter) {
                                     OfferFilter.ACTIVE -> "No tienes ofertas activas"
                                     OfferFilter.PAUSED -> "No tienes ofertas pausadas"
+                                    OfferFilter.CLOSED -> "No tienes ofertas finalizadas"
                                     OfferFilter.ALL    -> "No tienes ofertas publicadas"
                                 },
                                 color = TextMuted,
@@ -187,12 +189,14 @@ private fun FilterBar(
     totalCount: Int,
     activeCount: Int,
     pausedCount: Int,
+    closedCount: Int,
     onFilterChange: (OfferFilter) -> Unit
 ) {
     val filters = listOf(
         Triple(OfferFilter.ALL,    "Todas",   totalCount),
         Triple(OfferFilter.ACTIVE, "Activas", activeCount),
-        Triple(OfferFilter.PAUSED, "Pausadas", pausedCount)
+        Triple(OfferFilter.PAUSED, "Pausadas", pausedCount),
+        Triple(OfferFilter.CLOSED, "Finalizadas", closedCount)
     )
 
     Row(
@@ -227,9 +231,11 @@ private fun FilterBar(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = label,
-                            fontSize = 12.sp,
+                            fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) Color.White else TextMuted
+                            color = if (isSelected) Color.White else TextMuted,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                         Text(
                             text = "$count",
@@ -251,11 +257,16 @@ private fun OfferCard(
     onDelete: () -> Unit = {}
 ) {
     val isActive = offer.status == "active"
+    val isClosed = offer.status == "closed"
 
     GlassCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        tint = if (isActive) SuccessColor else Primary,
+        tint = when {
+            isClosed -> TextMuted
+            isActive -> SuccessColor
+            else -> Primary
+        },
         elevation = 2.dp,
     ) {
         Column {
@@ -279,7 +290,11 @@ private fun OfferCard(
                     )
                 }
 
-                val statusColor = if (isActive) SuccessColor else WarningColor
+                val statusColor = when {
+                    isClosed -> TextMuted
+                    isActive -> SuccessColor
+                    else -> WarningColor
+                }
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50.dp))
@@ -288,7 +303,11 @@ private fun OfferCard(
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = if (isActive) "Activa" else "Pausada",
+                        text = when {
+                            isClosed -> "Finalizada"
+                            isActive -> "Activa"
+                            else -> "Pausada"
+                        },
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = statusColor
@@ -332,30 +351,32 @@ private fun OfferCard(
                 fontWeight = FontWeight.Medium
             )
 
-            Spacer(Modifier.height(14.dp))
+            if (!isClosed) {
+                Spacer(Modifier.height(14.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = onPauseResume,
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, WarningColor),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                    modifier = Modifier.height(36.dp)
-                ) {
-                    Text(
-                        text = if (isActive) "Pausar" else "Reanudar",
-                        fontSize = 12.sp,
-                        color = WarningColor
-                    )
-                }
-                OutlinedButton(
-                    onClick = onDelete,
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, DangerColor),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                    modifier = Modifier.height(36.dp)
-                ) {
-                    Text("Eliminar", fontSize = 12.sp, color = DangerColor)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = onPauseResume,
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, WarningColor),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Text(
+                            text = if (isActive) "Pausar" else "Reanudar",
+                            fontSize = 12.sp,
+                            color = WarningColor
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = onDelete,
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, DangerColor),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Text("Eliminar", fontSize = 12.sp, color = DangerColor)
+                    }
                 }
             }
         }

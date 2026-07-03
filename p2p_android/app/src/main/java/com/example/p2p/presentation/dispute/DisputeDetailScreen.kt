@@ -8,16 +8,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Brush
+import coil.compose.AsyncImage
 import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
@@ -125,6 +128,30 @@ fun DisputeDetailScreen(
                     DetailRow("Descripción:", dispute?.description ?: "Sin descripción")
                     DetailRow("Iniciada por:", dispute?.initiator_name ?: dispute?.initiator_id?.take(8)?.uppercase() ?: "--")
                     DetailRow("Fecha:", dispute?.created_at?.take(10) ?: "--")
+                }
+            }
+
+            if (dispute?.evidence_url != null) {
+                GlassCard(
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = 1.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(Icons.Default.Image, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
+                            Text("Evidencia adjunta", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextMain)
+                        }
+                        AsyncImage(
+                            model = dispute.evidence_url,
+                            contentDescription = "Evidencia de la disputa",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(220.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                 }
             }
 

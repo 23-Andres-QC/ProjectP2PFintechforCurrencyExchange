@@ -101,9 +101,23 @@ def confirm_transaction(txn_id):
 @transactions_bp.route('/<txn_id>/dispute', methods=['POST'])
 @jwt_required()
 def open_dispute(txn_id):
+    from app.core.storage import upload_dispute_evidence as supabase_upload
     user_id = get_jwt_identity()
     data = request.get_json() or {}
-    return TransactionService.open_dispute(user_id, txn_id, data), 201
+
+    image_bytes = None
+    image_b64 = data.get('evidence_base64', '')
+    if image_b64:
+        if ',' in image_b64:
+            image_b64 = image_b64.split(',', 1)[1]
+        try:
+            image_bytes = base64.b64decode(image_b64)
+        except Exception:
+            return {'error': {'code': 'INVALID_IMAGE', 'message': 'Imagen base64 inválida'}}, 400
+
+    return TransactionService.open_dispute(
+        user_id, txn_id, data, image_bytes=image_bytes, uploader=supabase_upload,
+    ), 201
 
 
 @transactions_bp.route('/<txn_id>/status', methods=['PATCH'])

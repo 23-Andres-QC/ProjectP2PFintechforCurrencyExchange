@@ -2,7 +2,6 @@ from datetime import datetime
 from flask_jwt_extended import create_access_token, create_refresh_token
 from app.core.database import db
 from app.core.exceptions import ConflictError, AuthenticationError, NotFoundError
-from app.core.notifications import notify
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 
@@ -54,12 +53,6 @@ class UserService:
         if not user.is_active:
             raise AuthenticationError('Account is inactive')
 
-        notify(
-            user_id=user.id,
-            type='login',
-            title='Inicio de sesión exitoso',
-            body='Se detectó un nuevo inicio de sesión en tu cuenta.',
-        )
         db.session.commit()
         return user
 
@@ -112,14 +105,8 @@ class UserService:
         if document_urls.get('signature_url'):
             user.signature_url = document_urls['signature_url']
 
-        user.kyc_status = 'submitted'
-        user.kyc_verified = False
-        notify(
-            user_id=user.id,
-            type='kyc',
-            title='KYC recibido',
-            body='Tus documentos fueron recibidos y estan en revision.',
-        )
+        user.kyc_status = 'approved'
+        user.kyc_verified = True
         db.session.commit()
         return user
 
@@ -141,16 +128,6 @@ class UserService:
 
         user.kyc_status = 'approved' if approved else 'rejected'
         user.kyc_verified = approved
-        notify(
-            user_id=user.id,
-            type='kyc',
-            title='KYC aprobado' if approved else 'KYC rechazado',
-            body=(
-                'Tu identidad fue verificada. Ya puedes operar en la plataforma.'
-                if approved else
-                f'Tu verificacion fue rechazada.{(" Nota: " + note) if note else ""}'
-            ),
-        )
         db.session.commit()
         return user
 

@@ -173,10 +173,11 @@ fun AdminScreen(
                                 onViewDetail = { disputeId ->
                                     onNavigate(Screen.DisputeDetail.createRoute(disputeId))
                                 },
-                                onResolve = { resolution ->
+                                onResolve = { resolution, note ->
                                     viewModel.resolveDispute(
                                         disputeId = dispute.id,
                                         resolution = resolution,
+                                        resolutionNote = note,
                                         onSuccess = {
                                             Toast.makeText(
                                                 context,
@@ -277,50 +278,29 @@ private fun AdminHeaderCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(
                 Brush.horizontalGradient(
                     colors = listOf(Color(0xFF1A2332), Color(0xFF0F172A)),
                 ),
             )
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
-        Column {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50.dp))
-                    .background(PrimaryMint)
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
-            ) {
-                Text(
-                    text = "CONTROL DE OPERACIONES",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0F172A),
-                    letterSpacing = 0.5.sp,
-                )
-            }
-
-            Spacer(Modifier.height(12.dp))
-
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
             Text(
                 text = "ADM · Perú Exchange",
-                fontSize = 16.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
             )
 
-            Spacer(Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 AdminStat(value = "S/ ${String.format(Locale.getDefault(), "%.1fK", volume / 1000)}", label = "Volumen", valueColor = Color.White)
-                StatDivider()
                 AdminStat(value = disputesCount.toString(), label = "Disputas", valueColor = DangerColor)
-                StatDivider()
                 AdminStat(value = usersCount.toString(), label = "Usuarios", valueColor = Color.White)
             }
         }
@@ -332,26 +312,16 @@ private fun AdminStat(value: String, label: String, valueColor: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,
-            fontSize = 22.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             color = valueColor,
         )
         Text(
             text = label,
-            fontSize = 11.sp,
-            color = Color.White.copy(alpha = 0.86f),
+            fontSize = 9.sp,
+            color = Color.White.copy(alpha = 0.7f),
         )
     }
-}
-
-@Composable
-private fun StatDivider() {
-    Box(
-        modifier = Modifier
-            .width(1.dp)
-            .height(38.dp)
-            .background(Color.White.copy(alpha = 0.2f)),
-    )
 }
 
 @Composable
@@ -429,9 +399,58 @@ private fun FilterTabsRow(
 private fun DisputeCard(
     dispute: Dispute,
     onViewDetail: (String) -> Unit = {},
-    onResolve: (String) -> Unit,
+    onResolve: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var pendingResolution by remember { mutableStateOf<String?>(null) }
+    var resolutionNote by remember { mutableStateOf("") }
+
+    pendingResolution?.let { resolution ->
+        AlertDialog(
+            onDismissRequest = { pendingResolution = null; resolutionNote = "" },
+            title = {
+                Text(
+                    if (resolution == "favour_buyer") "Resolver a favor del comprador" else "Resolver a favor del vendedor",
+                    fontWeight = FontWeight.Bold, fontSize = 15.sp
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Escribe una nota explicando el motivo de la resolución:", fontSize = 13.sp, color = TextMuted)
+                    OutlinedTextField(
+                        value = resolutionNote,
+                        onValueChange = { resolutionNote = it },
+                        placeholder = { Text("Nota de resolución...", fontSize = 13.sp) },
+                        modifier = Modifier.fillMaxWidth().height(100.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        maxLines = 4,
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (resolutionNote.isNotBlank()) {
+                            onResolve(resolution, resolutionNote)
+                            pendingResolution = null
+                            resolutionNote = ""
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (resolution == "favour_buyer") SuccessColor else WarningColor
+                    )
+                ) {
+                    Text("Resolver", color = Color.White)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { pendingResolution = null; resolutionNote = "" }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     val cardTint = when (dispute.status) {
         "resolved" -> SuccessColor
         else -> DangerColor
@@ -481,7 +500,7 @@ private fun DisputeCard(
                     modifier = Modifier.padding(top = 4.dp).fillMaxWidth()
                 ) {
                     Button(
-                        onClick = { onResolve("favour_buyer") },
+                        onClick = { pendingResolution = "favour_buyer" },
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = SuccessColor),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
@@ -490,7 +509,7 @@ private fun DisputeCard(
                         Text("Favor Comprador", fontSize = 11.sp, color = Color.White)
                     }
                     Button(
-                        onClick = { onResolve("favour_vendor") },
+                        onClick = { pendingResolution = "favour_vendor" },
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = WarningColor),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),

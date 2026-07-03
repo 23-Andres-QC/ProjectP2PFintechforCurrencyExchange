@@ -1,6 +1,5 @@
 from app.core.database import db
 from app.core.exceptions import NotFoundError, AppException
-from app.core.notifications import notify
 from app.models.complaint import Complaint
 from app.repositories.complaint_repository import ComplaintRepository
 
@@ -77,14 +76,6 @@ class ComplaintService:
             raise AppException('MISSING_FIELD', 'admin_note is required', 400)
 
         ComplaintRepository.resolve(complaint, admin_note.strip())
-
-        notify(
-            user_id=complaint.user_id,
-            type='admin',
-            title='Reclamo resuelto',
-            body=f'Tu reclamo fue revisado y resuelto por el administrador. Respuesta: {admin_note.strip()}',
-            resource_id=complaint.id,
-        )
 
         db.session.commit()
         return complaint.to_dict()

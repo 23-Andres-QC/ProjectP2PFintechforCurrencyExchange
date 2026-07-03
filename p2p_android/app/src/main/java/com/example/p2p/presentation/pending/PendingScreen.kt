@@ -49,6 +49,7 @@ fun PendingScreen(
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     val buyerTransactions by viewModel.buyerTransactions.collectAsState()
+    val vendorPendingTransactions by viewModel.pendingTransactions.collectAsState()
 
     RefreshOnResume {
         viewModel.loadBuyerTransactions(currentUserId)
@@ -94,7 +95,9 @@ fun PendingScreen(
         ) {
             PendingTabSelector(
                 selectedTab = selectedTab,
-                onSelectTab = { selectedTab = it }
+                onSelectTab = { selectedTab = it },
+                buyCount = buyerTransactions.count { it.status != "completed" },
+                sellCount = vendorPendingTransactions.size
             )
 
             when (selectedTab) {
@@ -112,7 +115,12 @@ fun PendingScreen(
 }
 
 @Composable
-private fun PendingTabSelector(selectedTab: Int, onSelectTab: (Int) -> Unit) {
+private fun PendingTabSelector(
+    selectedTab: Int,
+    onSelectTab: (Int) -> Unit,
+    buyCount: Int,
+    sellCount: Int
+) {
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -126,6 +134,7 @@ private fun PendingTabSelector(selectedTab: Int, onSelectTab: (Int) -> Unit) {
                 label = "Comprar",
                 icon = Icons.Default.ShoppingCart,
                 selected = selectedTab == 0,
+                count = buyCount,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelectTab(0) }
             )
@@ -133,6 +142,7 @@ private fun PendingTabSelector(selectedTab: Int, onSelectTab: (Int) -> Unit) {
                 label = "Ventas",
                 icon = Icons.Default.Store,
                 selected = selectedTab == 1,
+                count = sellCount,
                 modifier = Modifier.weight(1f),
                 onClick = { onSelectTab(1) }
             )
@@ -145,6 +155,7 @@ private fun PendingTabChip(
     label: String,
     icon: ImageVector,
     selected: Boolean,
+    count: Int,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -176,6 +187,23 @@ private fun PendingTabChip(
             fontSize = 13.sp,
             color = if (selected) Color.White else TextMuted
         )
+        if (count > 0) {
+            Spacer(Modifier.width(6.dp))
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(if (selected) Color.White.copy(alpha = 0.28f) else DangerColor)
+                    .padding(horizontal = 6.dp, vertical = 1.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    if (count > 99) "99+" else count.toString(),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        }
     }
 }
 

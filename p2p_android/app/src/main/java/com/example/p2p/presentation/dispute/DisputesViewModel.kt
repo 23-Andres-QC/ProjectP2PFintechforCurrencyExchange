@@ -86,6 +86,7 @@ class DisputesViewModel(
         transactionId: String,
         reason: String,
         description: String?,
+        evidenceBase64: String? = null,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
@@ -94,7 +95,8 @@ class DisputesViewModel(
 
             val request = CreateDisputeRequest(
                 reason = reason,
-                description = description?.takeIf { it.isNotBlank() }
+                description = description?.takeIf { it.isNotBlank() },
+                evidence_base64 = evidenceBase64
             )
 
             when (val result = disputeRepository.createDispute(transactionId, request)) {

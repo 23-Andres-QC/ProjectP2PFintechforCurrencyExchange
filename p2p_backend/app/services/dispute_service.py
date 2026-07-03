@@ -2,6 +2,7 @@ from app.core.database import db
 from app.core.exceptions import (
     AppException, NotFoundError, AuthorizationError, ConflictError
 )
+from app.core.notifications import notify
 from app.models import Transaction
 from app.models.dispute import Dispute
 from app.models.user import User
@@ -13,7 +14,8 @@ class DisputeService:
 
     @staticmethod
     def open_dispute(user_id: str, transaction_id: str,
-                     reason: str, description: str | None = None) -> Dispute:
+                     reason: str, description: str | None = None,
+                     evidence_url: str | None = None) -> Dispute:
         txn: Transaction | None = db.session.get(Transaction, transaction_id)
         if not txn:
             raise NotFoundError('Transaction not found')
@@ -42,6 +44,7 @@ class DisputeService:
             initiator_id=user_id,
             reason=reason,
             description=description,
+            evidence_url=evidence_url,
         )
         txn.status = 'disputed'
         db.session.commit()
@@ -110,16 +113,65 @@ class DisputeService:
         txn: Transaction = dispute.transaction
         if txn:
             if resolution == 'favour_buyer':
-                txn.status = 'completed'
-                buyer: User | None = db.session.get(User, txn.buyer_id)
-                vendor: User | None = db.session.get(User, txn.vendor_id)
-                if buyer:
-                    buyer.total_transactions = (buyer.total_transactions or 0) + 1
-                if vendor:
-                    vendor.total_transactions = (vendor.total_transactions or 0) + 1
+                # El comprador tiene la razon: no se completa solo, se presiona al
+                # vendedor a liberar el pago el mismo (por el flujo normal de confirmar,
+                # que ademas genera el recibo). Se deja la transaccion lista para que
+                # el vendedor solo tenga que confirmar.
+                txn.status = 'voucher_uploaded'
+                notify(
+                    user_id=txn.vendor_id,
+                    type='dispute',
+                    title='⚠️ Debes liberar esta operación con urgencia',
+                    body=(
+                        'Un administrador revisó la disputa y confirmó que el comprador '
+                        'cumplió con el pago. Revisa tu bandeja de pendientes y confirma '
+                        f'la operación de inmediato. Nota del admin: {resolution_note}'
+                    ),
+                    resource_id=txn.id,
+                )
             else:
-                DisputeService._restore_offer_amount(txn)
-                txn.status = 'cancelled'
+                prior_favour_vendor = DisputeRepository.count_resolved_favour_vendor(txn.id)
+                if prior_favour_vendor == 0:
+                    # Primera vez que el vendedor gana: se le da al comprador una
+                    # segunda oportunidad de subir el comprobante correcto, en vez
+                    # de cancelar de una.
+                    txn.status = 'accepted'
+                    notify(
+                        user_id=txn.buyer_id,
+                        type='dispute',
+                        title='⚠️ Tu comprobante no fue validado — última oportunidad',
+                        body=(
+                            'Un administrador revisó tu disputa y no pudo confirmar tu pago. '
+                            'Tienes una segunda oportunidad para subir el comprobante correcto '
+                            f'antes de que la operación se cancele. Nota del admin: {resolution_note}'
+                        ),
+                        resource_id=txn.id,
+                    )
+                else:
+                    # Segunda vez que el vendedor gana en la misma transaccion:
+                    # se cancela de verdad y se restaura el saldo de la oferta.
+                    DisputeService._restore_offer_amount(txn)
+                    txn.status = 'cancelled'
+                    notify(
+                        user_id=txn.buyer_id,
+                        type='dispute',
+                        title='Operación cancelada',
+                        body=(
+                            'Tras dos intentos, no se pudo validar tu comprobante de pago. '
+                            f'La operación fue cancelada. Nota del admin: {resolution_note}'
+                        ),
+                        resource_id=txn.id,
+                    )
+                    notify(
+                        user_id=txn.vendor_id,
+                        type='dispute',
+                        title='Operación cancelada a tu favor',
+                        body=(
+                            'La disputa se resolvió a tu favor tras dos intentos fallidos del '
+                            f'comprador. La operación fue cancelada. Nota del admin: {resolution_note}'
+                        ),
+                        resource_id=txn.id,
+                    )
 
         DisputeRepository.resolve(dispute, admin_id, resolution, resolution_note)
         db.session.commit()

@@ -49,16 +49,24 @@ class DisputeRepository:
 
     @staticmethod
     def create(transaction_id: str, initiator_id: str,
-               reason: str, description: str | None = None) -> Dispute:
+               reason: str, description: str | None = None,
+               evidence_url: str | None = None) -> Dispute:
         dispute = Dispute(
             transaction_id=transaction_id,
             initiator_id=initiator_id,
             reason=reason,
             description=description,
+            evidence_url=evidence_url,
             status='open',
         )
         db.session.add(dispute)
         return dispute
+
+    @staticmethod
+    def count_resolved_favour_vendor(transaction_id: str) -> int:
+        return Dispute.query.filter_by(
+            transaction_id=transaction_id, status='resolved', resolution='favour_vendor'
+        ).count()
 
     @staticmethod
     def resolve(dispute: Dispute, admin_id: str,

@@ -10,6 +10,7 @@ class Dispute(BaseModel):
                                 nullable=False)
     reason          = db.Column(db.String(255), nullable=False)
     description     = db.Column(db.Text)
+    evidence_url    = db.Column(db.String(500), nullable=True)
     status          = db.Column(db.String(20), default='open', index=True)
 
     resolved_by     = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
@@ -44,6 +45,7 @@ class Dispute(BaseModel):
             'initiator_name':  self.initiator.full_name if self.initiator else None,
             'reason':          self.reason,
             'description':     self.description,
+            'evidence_url':    self.evidence_url,
             'status':          self.status,
             'resolved_by':     self.resolved_by,
             'resolution':      self.resolution,

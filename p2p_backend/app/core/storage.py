@@ -42,6 +42,16 @@ def upload_voucher(image_bytes: bytes, user_email: str, transaction_id: str, rol
     return upload_file(image_bytes, path, "image/jpeg")
 
 
+def upload_dispute_evidence(image_bytes: bytes, user_email: str, transaction_id: str) -> str:
+    """
+    Sube evidencia de una disputa al bucket 'vouchers' en Supabase.
+    Estructura: disputes/{email_sanitizado}/{transaction_id}/{uuid}.jpg
+    Retorna la URL publica de la imagen.
+    """
+    path = f"disputes/{_safe_name(user_email)}/{transaction_id}/{uuid.uuid4()}.jpg"
+    return upload_file(image_bytes, path, "image/jpeg")
+
+
 def upload_kyc_document(file_bytes: bytes, user_email: str, document_type: str) -> str:
     safe_type = document_type if document_type in ('dni_front', 'dni_back', 'selfie', 'signature') else 'document'
     path = f"kyc/{_safe_name(user_email)}/{safe_type}/{uuid.uuid4()}.jpg"

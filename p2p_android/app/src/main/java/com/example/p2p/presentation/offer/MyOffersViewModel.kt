@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-enum class OfferFilter { ALL, ACTIVE, PAUSED }
+enum class OfferFilter { ALL, ACTIVE, PAUSED, CLOSED }
 
 data class MyOffersUiState(
     val isLoading: Boolean = false,
@@ -35,7 +35,7 @@ class MyOffersViewModel(
             }
             when (val result = offerRepository.getMyOffers()) {
                 is NetworkResult.Success -> {
-                    val offers = result.data.filter { it.status != "closed" }
+                    val offers = result.data
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         offers = offers,
@@ -65,6 +65,7 @@ class MyOffersViewModel(
         OfferFilter.ALL    -> offers
         OfferFilter.ACTIVE -> offers.filter { it.status == "active" }
         OfferFilter.PAUSED -> offers.filter { it.status == "paused" }
+        OfferFilter.CLOSED -> offers.filter { it.status == "closed" }
     }
 
     fun pauseOffer(offerId: String) {

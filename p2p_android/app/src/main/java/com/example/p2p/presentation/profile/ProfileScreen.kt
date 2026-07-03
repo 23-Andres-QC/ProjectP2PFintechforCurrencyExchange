@@ -60,47 +60,41 @@ fun ProfileScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(bottomStart = 22.dp, bottomEnd = 22.dp))
-                .background(Brush.verticalGradient(listOf(Primary.copy(alpha = 0.96f), PrimaryDark)))
-                .padding(top = 24.dp, bottom = 20.dp, start = 18.dp, end = 18.dp)
-        ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(92.dp)
+                    .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
+                    .background(Brush.verticalGradient(listOf(Primary, PrimaryDark)))
+            )
+
             Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 68.dp)
+                    .shadow(elevation = 10.dp, shape = RoundedCornerShape(24.dp), ambientColor = Color.Black.copy(alpha = 0.18f), spotColor = Color.Black.copy(alpha = 0.18f))
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color.White)
+                    .padding(top = 80.dp, bottom = 18.dp, start = 16.dp, end = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(74.dp)
-                        .shadow(elevation = 12.dp, shape = CircleShape, ambientColor = Color.Black.copy(alpha = 0.24f), spotColor = Color.Black.copy(alpha = 0.24f))
-                        .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(Color.White.copy(alpha = 0.30f), Color.White.copy(alpha = 0.12f))))
-                        .border(2.dp, Color.White.copy(alpha = 0.72f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(initials, color = Color.White, fontWeight = FontWeight.Black, fontSize = 23.sp)
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(fullName, color = TextMain, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp)
+                    Text(email, color = TextMuted, fontSize = 12.sp)
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(fullName, color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
-                    Text(email, color = Color.White.copy(alpha = 0.78f), fontSize = 11.sp)
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    ProfileBadge(ratingStr, Color.White.copy(alpha = 0.96f), WarningColor, icon = Icons.Default.Star)
-                    ProfileBadge(roleStr, Color.White.copy(alpha = 0.96f), Primary)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    ProfileBadge(ratingStr, WarningColor, icon = Icons.Default.Star)
+                    ProfileBadge(roleStr, Primary)
                     if (isVerified) {
-                        ProfileBadge("Verificado", Color.White.copy(alpha = 0.96f), SuccessColor, icon = Icons.Default.CheckCircle)
+                        ProfileBadge("Verificado", SuccessColor, icon = Icons.Default.CheckCircle)
                     }
                 }
+                HorizontalDivider(color = BorderColor, thickness = 1.dp, modifier = Modifier.fillMaxWidth())
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(elevation = 10.dp, shape = RoundedCornerShape(18.dp), ambientColor = Color.Black.copy(alpha = 0.16f), spotColor = Color.Black.copy(alpha = 0.16f))
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(Color.White)
-                        .padding(horizontal = 10.dp, vertical = 12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
@@ -108,6 +102,20 @@ fun ProfileScreen(
                     VerticalDividerLine()
                     StatColumn(ratingStr, "Calificación")
                 }
+            }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = 50.dp)
+                    .size(84.dp)
+                    .shadow(elevation = 14.dp, shape = CircleShape, ambientColor = Color.Black.copy(alpha = 0.3f), spotColor = Color.Black.copy(alpha = 0.3f))
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(Primary, PrimaryDark)))
+                    .border(3.dp, Color.White, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(initials, color = Color.White, fontWeight = FontWeight.Black, fontSize = 26.sp)
             }
         }
 
@@ -144,15 +152,8 @@ fun ProfileScreen(
         }
 
         if (isAdmin) {
-
-            MenuSection(title = "ADMINISTRACIÓN") {
-                MenuItem(
-                    icon = Icons.Default.AdminPanelSettings, iconTint = DangerColor,
-                    label = "Panel Administrador",
-                    onClick = { onNavigate(Screen.Admin.route) },
-                    showDivider = false
-                )
-            }
+            // El acceso al Panel Administrador ya vive en la barra inferior (pestana "Admin"),
+            // no hace falta repetirlo aqui.
         } else {
 
             Row(
@@ -267,19 +268,19 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileBadge(text: String, bg: Color, textColor: Color, icon: ImageVector? = null) {
+private fun ProfileBadge(text: String, tint: Color, icon: ImageVector? = null) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(50.dp))
-            .background(bg)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+            .background(Color.White)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(3.dp)
+        horizontalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         if (icon != null) {
-            Icon(icon, contentDescription = null, tint = textColor, modifier = Modifier.size(10.dp))
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(13.dp))
         }
-        Text(text, color = textColor, fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
+        Text(text, color = TextMain, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }
 

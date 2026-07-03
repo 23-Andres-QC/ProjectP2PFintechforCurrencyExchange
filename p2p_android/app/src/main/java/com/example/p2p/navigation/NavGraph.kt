@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
@@ -111,6 +112,7 @@ import com.example.p2p.presentation.transaction.TransactionDetailScreen
 import com.example.p2p.presentation.transaction.TransactionScreen
 import com.example.p2p.presentation.transaction.TransactionViewModel
 import com.example.p2p.ui.theme.BackgroundApp
+import com.example.p2p.ui.theme.DangerColor
 import com.example.p2p.ui.theme.InfoColor
 import com.example.p2p.ui.theme.Primary
 import com.example.p2p.ui.theme.SuccessColor
@@ -311,7 +313,8 @@ fun NavGraph(startDestination: String = Screen.AuthGate.route) {
                     },
                     onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) },
                     onNavigateToPending = { navController.navigate(Screen.Pending.route) },
-                    onNavigateToAddBankAccount = { navController.navigate(Screen.BankAccounts.route) }
+                    onNavigateToAddBankAccount = { navController.navigate(Screen.BankAccounts.route) },
+                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
                 )
             }
 
@@ -625,10 +628,12 @@ private fun AppBottomBar(
     onNavigate: (String) -> Unit
 ) {
     var isVendor by remember { mutableStateOf(false) }
+    var isAdmin by remember { mutableStateOf(false) }
     var pendingCount by remember { mutableStateOf(0) }
     LaunchedEffect(Unit) {
         val role = tokenManager.getUserRole() ?: ""
         isVendor = role != "admin"
+        isAdmin = role == "admin"
     }
 
     LaunchedEffect(Unit) {
@@ -746,6 +751,27 @@ private fun AppBottomBar(
                         unselectedIconColor = TextMuted,
                         unselectedTextColor = TextMuted,
                         indicatorColor = SuccessColor.copy(alpha = 0.16f)
+                    )
+                )
+            }
+            if (isAdmin) {
+                NavigationBarItem(
+                    selected = currentRoute == Screen.Admin.route,
+                    onClick = { onNavigate(Screen.Admin.route) },
+                    icon = { Icon(Icons.Default.AdminPanelSettings, contentDescription = "Admin") },
+                    label = {
+                        Text(
+                            "Admin",
+                            fontSize = 11.sp,
+                            fontWeight = if (currentRoute == Screen.Admin.route) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = DangerColor,
+                        selectedTextColor = DangerColor,
+                        unselectedIconColor = TextMuted,
+                        unselectedTextColor = TextMuted,
+                        indicatorColor = DangerColor.copy(alpha = 0.16f)
                     )
                 )
             }

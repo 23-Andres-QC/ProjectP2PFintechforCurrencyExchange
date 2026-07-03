@@ -25,10 +25,10 @@ Welcome, Login, Registro, Terminos, KYC, Recuperar password, Perfil.
 
 ## KYC
 
-- **Debe hacer:** recibir documentos, dejarlos en revision (nunca auto-aprobar), bloquear publicar/comprar hasta aprobacion de un admin.
-- **Debe ver:** estado de cada foto (pendiente/cargada/error), opcion de reemplazar, mensaje de revision/aprobado/rechazado.
+- **Debe hacer:** recibir documentos y aprobar el KYC automaticamente al subirlos (sin esperar revision de un admin). El admin conserva la opcion de revisar/rechazar despues si hace falta.
+- **Debe ver:** estado de cada foto (pendiente/cargada/error), opcion de reemplazar, confirmacion de que la cuenta ya quedo verificada.
 - **Debe llenar:** foto DNI frente, foto DNI reverso, selfie, firma (si aplica).
-- **Se espera:** subir documentos no aprueba solo; sin KYC aprobado no se puede publicar ni comprar.
+- **Se espera:** al terminar de subir los documentos, el usuario ya puede publicar y comprar sin limites, sin pasos adicionales.
 
 ## Recuperar password
 
@@ -40,6 +40,6 @@ Welcome, Login, Registro, Terminos, KYC, Recuperar password, Perfil.
 ## Perfil
 
 - **Debe hacer:** mostrar datos reales del usuario (nombre, rol, KYC, reputacion), permitir editar datos permitidos, cerrar sesion.
-- **Debe ver:** estado de KYC visible, accesos agrupados (cuenta, seguridad, soporte, legal, admin si aplica).
+- **Debe ver:** banner azul corto (mismo estilo que el header del Mercado) con una **tarjeta blanca flotante** que se superpone al banner — el avatar (circulo solido con la inicial, borde blanco) queda mitad sobre el azul, mitad sobre la tarjeta. Dentro de la tarjeta: nombre, correo, insignias (calificacion/rol/verificado) como chips legibles (no diminutos ni amontonados), un separador, y las estadisticas Operaciones/Calificacion. Estado de KYC visible, accesos agrupados (cuenta, seguridad, soporte, legal, admin si aplica).
 - **Debe llenar:** campos editables de perfil (no rol ni KYC).
 - **Se espera:** perfil siempre con datos actuales del servidor; logout borra token y datos sensibles.

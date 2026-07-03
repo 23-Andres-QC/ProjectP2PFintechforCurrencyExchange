@@ -17,6 +17,7 @@ data class Dispute(
     val initiator_name: String?,
     val reason: String,
     val description: String?,
+    val evidence_url: String? = null,
     val status: String,
     val resolved_by: String?,
     val resolution: String?,
@@ -43,7 +44,8 @@ data class PaginationMeta(
 
 data class CreateDisputeRequest(
     val reason: String,
-    val description: String?
+    val description: String?,
+    val evidence_base64: String? = null
 )
 
 data class ResolveDisputeRequest(
