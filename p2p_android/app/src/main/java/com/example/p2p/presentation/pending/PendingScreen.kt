@@ -45,7 +45,8 @@ import kotlinx.coroutines.delay
 fun PendingScreen(
     viewModel: TransactionViewModel,
     currentUserId: String,
-    onNavigateToTransaction: (String) -> Unit = {}
+    onNavigateToTransaction: (String) -> Unit = {},
+    onNavigateToDispute: (String) -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     val buyerTransactions by viewModel.buyerTransactions.collectAsState()
@@ -107,7 +108,8 @@ fun PendingScreen(
                 )
                 else -> VendorInboxScreen(
                     viewModel = viewModel,
-                    showTopBar = false
+                    showTopBar = false,
+                    onNavigateToDispute = onNavigateToDispute
                 )
             }
         }

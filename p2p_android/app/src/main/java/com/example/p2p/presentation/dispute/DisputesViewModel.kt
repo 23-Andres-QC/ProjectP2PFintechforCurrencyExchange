@@ -90,6 +90,8 @@ class DisputesViewModel(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
+        if (_uiState.value.isSubmitting) return
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSubmitting = true, submitSuccess = false)
 

@@ -6,6 +6,7 @@ import com.example.p2p.data.remote.model.CreateDisputeRequest
 import com.example.p2p.data.remote.model.Dispute
 import com.example.p2p.data.remote.model.DisputesResponse
 import com.example.p2p.domain.repository.DisputeRepository
+import org.json.JSONObject
 
 class DisputeRepositoryImpl(
     private val api: DisputeApi
@@ -30,9 +31,41 @@ class DisputeRepositoryImpl(
             if (response.isSuccessful && body != null) {
                 NetworkResult.Success(body)
             } else {
-                NetworkResult.Error(response.code(), response.message())
+                val errorMsg = parseBackendError(response.errorBody()?.string(), response.code())
+                NetworkResult.Error(response.code(), errorMsg)
             }
         } catch (e: Exception) {
             NetworkResult.Error(-1, e.message ?: "Error de conexión")
         }
+
+    private fun parseBackendError(errorBody: String?, code: Int): String {
+        if (!errorBody.isNullOrBlank()) {
+            return try {
+                val json = JSONObject(errorBody)
+                val errorObj = json.optJSONObject("error")
+                val errorCode = errorObj?.optString("code", "") ?: ""
+                val message = errorObj?.optString("message", "") ?: ""
+                when (errorCode) {
+                    "CONFLICT" -> "Ya existe una disputa abierta para esta transaccion"
+                    "INVALID_STATE" -> "Esta transaccion no permite abrir disputa"
+                    "INVALID_REASON" -> "Selecciona un motivo valido"
+                    "NOT_FOUND" -> "Transaccion no encontrada"
+                    "FORBIDDEN" -> "No tienes permiso para disputar esta transaccion"
+                    else -> if (message.isNotBlank()) message else httpMessage(code)
+                }
+            } catch (e: Exception) {
+                httpMessage(code)
+            }
+        }
+        return httpMessage(code)
+    }
+
+    private fun httpMessage(code: Int) = when (code) {
+        400 -> "Datos invalidos"
+        401 -> "Sesion expirada, vuelve a iniciar sesion"
+        403 -> "No tienes permiso para esta accion"
+        404 -> "Transaccion no encontrada"
+        409 -> "Ya existe una disputa abierta para esta transaccion"
+        else -> "Error $code"
+    }
 }

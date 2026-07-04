@@ -23,17 +23,16 @@ class DisputeService:
         if txn.buyer_id != user_id and txn.vendor_id != user_id:
             raise AuthorizationError('Not your transaction')
 
-        if txn.status == 'completed':
-            raise AppException('INVALID_STATE',
-                               'Cannot dispute a completed transaction', 400)
-
-        if txn.status == 'cancelled':
-            raise AppException('INVALID_STATE',
-                               'Cannot dispute a cancelled transaction', 400)
-
         existing = DisputeRepository.get_by_transaction(transaction_id)
         if existing:
             raise ConflictError('There is already an open dispute for this transaction')
+
+        if txn.status not in ('pending', 'accepted', 'voucher_uploaded'):
+            raise AppException(
+                'INVALID_STATE',
+                f'Cannot dispute a transaction with status {txn.status}',
+                400,
+            )
 
         if reason not in Dispute.VALID_REASONS:
             raise AppException('INVALID_REASON',

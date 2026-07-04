@@ -688,7 +688,11 @@ fun TransactionScreen(
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "El cambio de divisas se completó. Puedes cerrar la operación o abrir una disputa si hay algún problema.",
+                            text = if (txn?.status == "closed") {
+                                "La operacion ya fue cerrada."
+                            } else {
+                                "El cambio de divisas se completo. Puedes cerrar la operacion y calificar tu experiencia."
+                            },
                             fontSize = 12.sp,
                             color = TextMuted,
                             textAlign = TextAlign.Center
@@ -705,26 +709,17 @@ fun TransactionScreen(
                     Spacer(Modifier.width(8.dp))
                     Text("Ver y descargar voucher PDF", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
-                Button(
-                    onClick = { showRatingDialog = true },
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = SuccessColor)
-                ) {
-                    Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color.White)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Cerrar y Calificar", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                }
-                OutlinedButton(
-                    onClick = { onNavigateToDispute(transactionId ?: "") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerColor),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, DangerColor)
-                ) {
-                    Icon(Icons.Filled.Warning, contentDescription = null, tint = DangerColor, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("Abrir Disputa", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                if (txn?.status == "completed") {
+                    Button(
+                        onClick = { showRatingDialog = true },
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SuccessColor)
+                    ) {
+                        Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color.White)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Cerrar y Calificar", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    }
                 }
             }
 

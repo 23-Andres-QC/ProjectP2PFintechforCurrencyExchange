@@ -9,6 +9,16 @@ Disputas del usuario, panel de administracion, calificaciones (ratings), reclamo
 - **Debe llenar:** motivo, descripcion, evidencia (foto opcional).
 - **Se espera:** la disputa congela el flujo (no se puede confirmar) y aparece para el admin; si se adjunto evidencia, el admin la ve en el detalle de la disputa antes de resolver.
 
+### Nueva logica aplicada: vendedor no recibio el dinero
+
+- **Desde donde:** `Pendientes > Ventas`, dentro de una orden en estado `voucher_uploaded` donde el comprador ya subio voucher/comprobante.
+- **Debe hacer:** mostrar al vendedor el boton **"Abrir disputa: no recibi el dinero"** debajo de la accion de liberar fondos. Al tocarlo, la app abre `Registrar Disputa` con la transaccion ya seleccionada.
+- **Debe permitir:** que el vendedor abra disputa cuando reviso su cuenta bancaria y el dinero no llego, aun si el comprador adjunto voucher.
+- **Debe bloquear:** no debe permitir una segunda disputa abierta para la misma transaccion; si ya existe una disputa en `open` o `under_review`, la app debe mostrar un mensaje claro: "Ya existe una disputa abierta para esta transaccion".
+- **Estados permitidos para abrir disputa:** `pending`, `accepted`, `voucher_uploaded`.
+- **Estados no permitidos:** `completed`, `closed`, `cancelled`, `disputed`.
+- **Se espera:** si el vendedor abre disputa desde Ventas, la transaccion pasa a `disputed`, queda congelada, el admin puede verla en su panel y revisar el voucher/evidencia antes de resolver.
+
 ## Panel de administracion
 
 - **Debe hacer:** exigir rol admin en todo, dejar ver dashboard/usuarios/disputas/reclamos, resolver disputas con nota obligatoria, banear usuarios cortando su sesion, dejar rastro auditable de cada accion. El acceso al panel es una **pestana propia en la barra inferior** (visible solo para admin, junto a Mercado y Perfil), no una opcion escondida dentro del menu de Perfil.

@@ -58,7 +58,8 @@ private const val MAX_VOUCHER_FILE_BYTES = 50L * 1024 * 1024
 fun VendorInboxScreen(
     viewModel: TransactionViewModel,
     onBack: () -> Unit = {},
-    showTopBar: Boolean = true
+    showTopBar: Boolean = true,
+    onNavigateToDispute: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val pendingTransactions by viewModel.pendingTransactions.collectAsState()
@@ -214,7 +215,8 @@ fun VendorInboxScreen(
                                     },
                                     onError = onError
                                 )
-                            }
+                            },
+                            onOpenDispute = { onNavigateToDispute(txn.id) }
                         )
                     }
                 }
@@ -869,7 +871,8 @@ private fun VendorTransactionCard(
     onAccept: () -> Unit,
     onCancel: () -> Unit = {},
     onUploadVendorVoucher: (String, () -> Unit, (String) -> Unit) -> Unit,
-    onConfirm: (Boolean) -> Unit
+    onConfirm: (Boolean) -> Unit,
+    onOpenDispute: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -1206,6 +1209,18 @@ private fun VendorTransactionCard(
                             text = if (vendorVoucherReady) "Confirmar y Liberar Fondos" else "Sube tu comprobante para liberar",
                             color = Color.White, fontWeight = FontWeight.Bold
                         )
+                    }
+
+                    OutlinedButton(
+                        onClick = onOpenDispute,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerColor),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, DangerColor),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Gavel, contentDescription = null, tint = DangerColor, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Abrir disputa: no recibi el dinero", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

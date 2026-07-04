@@ -63,6 +63,7 @@ fun RegisterDisputeScreen(
     var evidenceBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var evidenceBase64 by remember { mutableStateOf<String?>(null) }
     var isProcessingEvidence by remember { mutableStateOf(false) }
+    val isSubmitting = uiState.isSubmitting
 
     val evidencePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -318,9 +319,9 @@ fun RegisterDisputeScreen(
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DangerColor),
-                enabled = !uiState.isLoading
+                enabled = !isSubmitting && !isProcessingEvidence
             ) {
-                if (uiState.isLoading) {
+                if (isSubmitting) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
                     Icon(

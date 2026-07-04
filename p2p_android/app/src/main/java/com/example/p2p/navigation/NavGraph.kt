@@ -326,7 +326,8 @@ fun NavGraph(startDestination: String = Screen.AuthGate.route) {
                 PendingScreen(
                     viewModel = vm,
                     currentUserId = pendingUserId,
-                    onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) }
+                    onNavigateToTransaction = { txnId -> navController.navigate(Screen.Transaction.createRoute(txnId)) },
+                    onNavigateToDispute = { txnId -> navController.navigate(Screen.RegisterDispute.createRoute(txnId)) }
                 )
             }
 
