@@ -14,11 +14,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.p2p.navigation.Screen
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -52,7 +56,17 @@ fun AdminScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
+    var disputeStatusFilter by remember { mutableStateOf("open") }
     val tabs = listOf("Disputas", "Reclamos")
+    val filteredDisputes = remember(uiState.disputes, disputeStatusFilter) {
+        uiState.disputes.filter { it.status == disputeStatusFilter }
+    }
+    val disputeTitle = when (disputeStatusFilter) {
+        "open" -> "Disputas en arbitraje"
+        "under_review" -> "Disputas en revision"
+        "resolved" -> "Disputas resueltas"
+        else -> "Disputas"
+    }
 
     RefreshOnResume {
         viewModel.loadData()
@@ -117,6 +131,11 @@ fun AdminScreen(
                     openCount = uiState.disputes.count { it.status == "open" },
                     reviewCount = uiState.disputes.count { it.status == "under_review" },
                     resolvedCount = uiState.disputes.count { it.status == "resolved" },
+                    selectedStatus = disputeStatusFilter,
+                    onStatusSelected = {
+                        disputeStatusFilter = it
+                        selectedTab = 0
+                    },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
@@ -137,7 +156,7 @@ fun AdminScreen(
                     item {
                         Spacer(Modifier.height(20.dp))
                         Text(
-                            text = "Disputas Activas",
+                            text = disputeTitle,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                             color = TextMain,
@@ -146,7 +165,7 @@ fun AdminScreen(
                         Spacer(Modifier.height(12.dp))
                     }
 
-                    if (uiState.isLoading && uiState.disputes.isEmpty()) {
+                    if (uiState.isLoading && filteredDisputes.isEmpty()) {
                         item {
                             Box(
                                 modifier = Modifier.fillMaxWidth().padding(32.dp),
@@ -155,21 +174,40 @@ fun AdminScreen(
                                 CircularProgressIndicator(color = Primary)
                             }
                         }
-                    } else if (uiState.disputes.isEmpty()) {
+                    } else if (filteredDisputes.isEmpty()) {
                         item {
                             Box(
                                 modifier = Modifier.fillMaxWidth().padding(32.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("No hay disputas registradas", color = TextMuted)
+                                Text("No hay disputas en esta categoria", color = TextMuted)
                             }
                         }
                     } else {
-                        items(uiState.disputes, key = { it.id }) { dispute ->
+                        items(filteredDisputes, key = { it.id }) { dispute ->
                             DisputeCard(
                                 dispute = dispute,
                                 onViewDetail = { disputeId ->
                                     onNavigate(Screen.DisputeDetail.createRoute(disputeId))
+                                },
+                                onTakeReview = {
+                                    viewModel.takeDispute(
+                                        disputeId = dispute.id,
+                                        onSuccess = {
+                                            Toast.makeText(
+                                                context,
+                                                "Disputa en revision",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        },
+                                        onError = { err ->
+                                            Toast.makeText(
+                                                context,
+                                                "Error: $err",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                    )
                                 },
                                 onResolve = { resolution, note ->
                                     viewModel.resolveDispute(
@@ -179,7 +217,7 @@ fun AdminScreen(
                                         onSuccess = {
                                             Toast.makeText(
                                                 context,
-                                                "Disputa resuelta :3",
+                                                "Disputa resuelta",
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                         },
@@ -357,6 +395,79 @@ private fun StatusPill(label: String, bgColor: Color) {
 }
 
 @Composable
+private fun StatusPillsRow(
+    openCount: Int,
+    reviewCount: Int,
+    resolvedCount: Int,
+    selectedStatus: String,
+    onStatusSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        StatusPillButton(
+            label = "$openCount En arbitraje",
+            icon = Icons.Default.Gavel,
+            bgColor = DangerColor,
+            selected = selectedStatus == "open",
+            onClick = { onStatusSelected("open") },
+        )
+        StatusPillButton(
+            label = "$reviewCount En revision",
+            icon = Icons.Default.Search,
+            bgColor = WarningColor,
+            selected = selectedStatus == "under_review",
+            onClick = { onStatusSelected("under_review") },
+        )
+        StatusPillButton(
+            label = "$resolvedCount Resueltas",
+            icon = Icons.Default.CheckCircle,
+            bgColor = SuccessColor,
+            selected = selectedStatus == "resolved",
+            onClick = { onStatusSelected("resolved") },
+        )
+    }
+}
+
+@Composable
+private fun StatusPillButton(
+    label: String,
+    icon: ImageVector,
+    bgColor: Color,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50.dp))
+            .background(if (selected) bgColor else bgColor.copy(alpha = 0.12f))
+            .border(1.dp, bgColor.copy(alpha = if (selected) 0f else 0.35f), RoundedCornerShape(50.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (selected) Color.White else bgColor,
+                modifier = Modifier.size(15.dp),
+            )
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (selected) Color.White else bgColor,
+            )
+        }
+    }
+}
+
+@Composable
 private fun FilterTabsRow(
     tabs: List<String>,
     selectedIndex: Int,
@@ -397,6 +508,7 @@ private fun FilterTabsRow(
 private fun DisputeCard(
     dispute: Dispute,
     onViewDetail: (String) -> Unit = {},
+    onTakeReview: () -> Unit,
     onResolve: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -492,7 +604,17 @@ private fun DisputeCard(
                 color = TextMuted
             )
 
-            if (dispute.status == "open" || dispute.status == "under_review") {
+            if (dispute.status == "open") {
+                Button(
+                    onClick = onTakeReview,
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = WarningColor),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                    modifier = Modifier.padding(top = 4.dp).fillMaxWidth().height(36.dp),
+                ) {
+                    Text("Tomar revision", fontSize = 12.sp, color = Color.White)
+                }
+            } else if (dispute.status == "under_review") {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(top = 4.dp).fillMaxWidth()

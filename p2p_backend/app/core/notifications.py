@@ -1,7 +1,10 @@
+import logging
 import threading
 
 from app.core.database import db
 from app.models import Notification
+
+logger = logging.getLogger(__name__)
 
 
 def notify(user_id: str, type: str, title: str, body: str, resource_id: str = None):
@@ -28,7 +31,10 @@ def notify(user_id: str, type: str, title: str, body: str, resource_id: str = No
                 args=(fcm_token, title, body, {'type': type, 'resource_id': resource_id or ''}),
                 daemon=True,
             ).start()
+        elif user:
+            logger.info('Push skipped: user %s has no FCM token', user_id)
     except Exception:
+        logger.exception('Push scheduling failed for user %s', user_id)
         pass  # Push falla silenciosamente, la notificación interna siempre se guarda
 
     return notif
@@ -39,4 +45,5 @@ def _send_push_safe(fcm_token: str, title: str, body: str, data: dict):
         from app.core.push import send_push
         send_push(fcm_token=fcm_token, title=title, body=body, data=data)
     except Exception:
+        logger.exception('Push send failed')
         pass

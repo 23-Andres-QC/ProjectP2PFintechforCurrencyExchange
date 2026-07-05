@@ -40,6 +40,7 @@ def send_push(fcm_token: str, title: str, body: str, data: dict = None):
             token=fcm_token,
             android=messaging.AndroidConfig(priority='high'),
         )
-        messaging.send(message)
+        message_id = messaging.send(message)
+        logger.info('Push notification sent: %s', message_id)
     except Exception as e:
         logger.warning(f'Push notification failed: {e}')

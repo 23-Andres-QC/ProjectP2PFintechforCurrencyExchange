@@ -5,12 +5,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.p2p.MainActivity
 import com.example.p2p.R
-import com.example.p2p.core.network.ApiClient
-import com.example.p2p.core.security.TokenManager
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
@@ -18,8 +15,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-
-private const val TAG = "P2PFirebaseMsgService"
 
 class P2PFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -43,14 +38,7 @@ class P2PFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         serviceScope.launch {
-            try {
-                val tokenManager = TokenManager.getInstance(applicationContext)
-                if (tokenManager.getAccessToken() != null) {
-                    ApiClient.notificationApi.registerFcmToken(mapOf("fcm_token" to token))
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "No se pudo registrar el token FCM", e)
-            }
+            FcmTokenRegistrar.registerIfLoggedIn(applicationContext)
         }
     }
 
