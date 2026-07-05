@@ -405,7 +405,8 @@ class TransactionService:
         vendor = UserRepository.get_by_id(t.vendor_id)
         buyer_voucher = TransactionRepository.get_latest_voucher(t.id, t.buyer_id)
         seller_voucher = TransactionRepository.get_latest_voucher(t.id, t.vendor_id)
-        return TransactionService._transaction_dict(t, buyer, vendor, buyer_voucher, seller_voucher)
+        offer = OfferRepository.get_by_id(t.offer_id)
+        return TransactionService._transaction_dict(t, buyer, vendor, buyer_voucher, seller_voucher, offer)
 
     @staticmethod
     def _to_dict_many(transactions: list[Transaction]) -> list[dict]:
@@ -415,6 +416,7 @@ class TransactionService:
         user_ids = {t.buyer_id for t in transactions} | {t.vendor_id for t in transactions}
         users = {u.id: u for u in UserRepository.get_by_ids(list(user_ids))}
         vouchers = TransactionRepository.get_latest_vouchers_for_transactions([t.id for t in transactions])
+        offers = {o.id: o for o in OfferRepository.get_by_ids(list({t.offer_id for t in transactions}))}
 
         return [
             TransactionService._transaction_dict(
@@ -423,12 +425,13 @@ class TransactionService:
                 users.get(t.vendor_id),
                 vouchers.get((t.id, t.buyer_id)),
                 vouchers.get((t.id, t.vendor_id)),
+                offers.get(t.offer_id),
             )
             for t in transactions
         ]
 
     @staticmethod
-    def _transaction_dict(t: Transaction, buyer, vendor, buyer_voucher, seller_voucher) -> dict:
+    def _transaction_dict(t: Transaction, buyer, vendor, buyer_voucher, seller_voucher, offer=None) -> dict:
         return {
             'id': t.id,
             'offer_id': t.offer_id,
@@ -439,6 +442,8 @@ class TransactionService:
             'amount_from': t.amount_from,
             'amount_to': t.amount_to,
             'exchange_rate': t.exchange_rate,
+            'from_currency': offer.from_currency if offer else None,
+            'to_currency': offer.to_currency if offer else None,
             'status': t.status,
             'buyer_payment_account': t.buyer_payment_account,
             'vendor_payment_account': t.vendor_payment_account,

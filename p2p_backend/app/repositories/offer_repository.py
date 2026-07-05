@@ -15,6 +15,12 @@ class OfferRepository:
         return db.session.get(Offer, offer_id, with_for_update=True)
 
     @staticmethod
+    def get_by_ids(offer_ids: list[str]) -> list[Offer]:
+        if not offer_ids:
+            return []
+        return Offer.query.filter(Offer.id.in_(offer_ids)).all()
+
+    @staticmethod
     def get_active(currency: str | None = None, fiat: str | None = None,
                    offer_type: str | None = None, exclude_vendor: str | None = None,
                    limit: int = 200):

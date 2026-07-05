@@ -1,8 +1,10 @@
 package com.example.p2p.presentation.notifications
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,6 +38,7 @@ private enum class NotifFilter { ALL, UNREAD }
 fun NotificationsScreen(
     viewModel: NotificationsViewModel,
     onBack: () -> Unit = {},
+    onNotificationClick: (Notification) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
     var filter by remember { mutableStateOf(NotifFilter.ALL) }
@@ -272,6 +275,7 @@ fun NotificationsScreen(
                                 NotificationCard(
                                     item = notif,
                                     onDelete = { viewModel.deleteNotification(notif.id) },
+                                    onClick = { onNotificationClick(notif) },
                                 )
                                 Spacer(Modifier.height(6.dp))
                             }
@@ -302,7 +306,11 @@ private fun StatChip(label: String, value: String, icon: ImageVector, highlight:
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
+private fun NotificationCard(
+    item: Notification,
+    onDelete: () -> Unit,
+    onClick: () -> Unit
+) {
     val dismissState = rememberSwipeToDismissBoxState()
 
     LaunchedEffect(dismissState.currentValue) {
@@ -339,13 +347,16 @@ private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
         },
     ) {
         val (icon, accentColor) = notifIconAndColor(item.type)
+        var expanded by remember { mutableStateOf(false) }
 
         GlassCard(
             shape = RoundedCornerShape(14.dp),
             tint = Primary,
             elevation = if (!item.is_read) 4.dp else 1.dp,
             contentPadding = PaddingValues(0.dp),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded },
         ) {
             Row(modifier = Modifier.fillMaxWidth()) {
 
@@ -368,7 +379,10 @@ private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
                     com.example.p2p.ui.components.GlassIconBadge(icon = icon, tint = accentColor, size = 40.dp, iconSize = 20.dp)
 
                     // Text content
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(
+                        modifier = Modifier.weight(1f).animateContentSize(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
                                 text = item.title,
@@ -376,7 +390,7 @@ private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
                                 fontSize = 14.sp,
                                 color = TextMain,
                                 modifier = Modifier.weight(1f),
-                                maxLines = 1,
+                                maxLines = if (expanded) Int.MAX_VALUE else 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
                             Text(
@@ -390,9 +404,34 @@ private fun NotificationCard(item: Notification, onDelete: () -> Unit) {
                             fontSize = 13.sp,
                             color = TextMuted,
                             lineHeight = 18.sp,
-                            maxLines = 2,
+                            maxLines = if (expanded) Int.MAX_VALUE else 2,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        if (expanded && !item.resource_id.isNullOrBlank()) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                modifier = Modifier
+                                    .padding(top = 4.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(accentColor.copy(alpha = 0.1f))
+                                    .clickable { onClick() }
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                            ) {
+                                Text(
+                                    if (item.type == "admin") "Ir al panel" else "Ver operación",
+                                    fontSize = 12.sp,
+                                    color = accentColor,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Icon(
+                                    Icons.Default.ChevronRight,
+                                    contentDescription = null,
+                                    tint = accentColor,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        }
                         if (!item.is_read) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,

@@ -1,5 +1,10 @@
 package com.example.p2p.presentation.transaction
 
+import android.app.DownloadManager
+import android.content.Context
+import android.net.Uri
+import android.os.Environment
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -15,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +39,7 @@ fun TransactionDetailScreen(
 ) {
     val uiState by viewModel?.uiState?.collectAsState(initial = TransactionUiState())
         ?: remember { mutableStateOf(TransactionUiState()) }
+    val context = LocalContext.current
 
     RefreshOnResume {
         if (transactionId != null) {
@@ -132,8 +139,27 @@ fun TransactionDetailScreen(
             }
 
             // Download PDF button
+            val receiptPdfUrl = txn?.receipt_pdf_url
             Button(
-                onClick = {},
+                onClick = {
+                    if (receiptPdfUrl.isNullOrBlank()) {
+                        val reason = if (txn?.status in listOf("completed", "closed"))
+                            "El PDF aún no está disponible. Intenta de nuevo en unos segundos."
+                        else
+                            "El PDF se genera cuando la transacción se completa."
+                        Toast.makeText(context, reason, Toast.LENGTH_SHORT).show()
+                    } else {
+                        val fileName = "voucher-${(txn?.id ?: transactionId ?: "peruexchange").take(8)}.pdf"
+                        val request = DownloadManager.Request(Uri.parse(receiptPdfUrl))
+                            .setTitle(fileName)
+                            .setDescription("Comprobante PeruExchange")
+                            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+                        val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                        manager.enqueue(request)
+                        Toast.makeText(context, "Descargando PDF...", Toast.LENGTH_SHORT).show()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Primary)

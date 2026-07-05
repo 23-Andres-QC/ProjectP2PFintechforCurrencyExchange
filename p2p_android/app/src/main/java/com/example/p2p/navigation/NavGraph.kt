@@ -523,6 +523,17 @@ fun NavGraph(startDestination: String = Screen.AuthGate.route) {
                 NotificationsScreen(
                     viewModel = vm,
                     onBack = { navController.popBackStack() },
+                    onNotificationClick = { notif ->
+                        val resourceId = notif.resource_id
+                        if (!resourceId.isNullOrBlank()) {
+                            when (notif.type) {
+                                "transaction", "voucher", "dispute" ->
+                                    navController.navigate(Screen.Transaction.createRoute(resourceId))
+                                "admin" ->
+                                    navController.navigate(Screen.Admin.route)
+                            }
+                        }
+                    },
                 )
             }
 

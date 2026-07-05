@@ -190,7 +190,9 @@ class DisputeService:
         for admin in admins:
             notify(
                 user_id=admin.id,
-                type='dispute',
+                # 'admin' y no 'dispute': el resource_id es el id de la disputa
+                # (no de la transaccion) y el cliente lo enruta al panel admin.
+                type='admin',
                 title='Nueva disputa abierta',
                 body=(
                     f'Se abrio una disputa para la transaccion {txn.id[:8].upper()}. '
