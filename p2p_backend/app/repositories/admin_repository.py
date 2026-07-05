@@ -1,6 +1,7 @@
 from sqlalchemy import func
 from app.core.database import db
 from app.models import Transaction, Dispute
+from app.models.complaint import Complaint
 from app.models.user import User
 
 
@@ -16,6 +17,9 @@ class AdminRepository:
             Dispute.status.in_(('open', 'under_review'))
         ).count()
         resolved_disputes = Dispute.query.filter_by(status='resolved').count()
+        pending_complaints = Complaint.query.filter(
+            Complaint.status.in_(('pending', 'under_review'))
+        ).count()
         total_volume = db.session.query(
             func.sum(Transaction.amount_to)
         ).filter_by(status='completed').scalar() or 0
@@ -32,6 +36,9 @@ class AdminRepository:
             'disputes': {
                 'pending': pending_disputes,
                 'resolved': resolved_disputes,
+            },
+            'complaints': {
+                'pending': pending_complaints,
             },
             'total_volume': float(total_volume),
         }

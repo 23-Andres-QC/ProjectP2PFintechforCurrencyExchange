@@ -1,6 +1,8 @@
 from app.core.database import db
 from app.core.exceptions import NotFoundError, AppException
+from app.core.notifications import notify
 from app.models.complaint import Complaint
+from app.models.user import User
 from app.repositories.complaint_repository import ComplaintRepository
 
 
@@ -22,8 +24,29 @@ class ComplaintService:
             complaint_type=complaint_type,
             description=description.strip(),
         )
+        db.session.flush()
+        ComplaintService._notify_admins_new_complaint(complaint)
         db.session.commit()
         return complaint.to_dict()
+
+    @staticmethod
+    def _notify_admins_new_complaint(complaint: Complaint) -> None:
+        admins = User.query.filter_by(
+            role='admin',
+            is_active=True,
+            is_banned=False,
+        ).all()
+        for admin in admins:
+            notify(
+                user_id=admin.id,
+                type='admin',
+                title='Nuevo reclamo recibido',
+                body=(
+                    f'Un usuario registro un reclamo ({complaint.type}): '
+                    f'{complaint.description[:120]}'
+                ),
+                resource_id=complaint.id,
+            )
 
     @staticmethod
     def my_complaints(user_id: str, page: int = 1, per_page: int = 20) -> dict:
@@ -76,6 +99,17 @@ class ComplaintService:
             raise AppException('MISSING_FIELD', 'admin_note is required', 400)
 
         ComplaintRepository.resolve(complaint, admin_note.strip())
+
+        notify(
+            user_id=complaint.user_id,
+            type='complaint',
+            title='Tu reclamo fue resuelto',
+            body=(
+                'Un administrador respondio tu reclamo. '
+                f'Respuesta: {admin_note.strip()}'
+            ),
+            resource_id=complaint.id,
+        )
 
         db.session.commit()
         return complaint.to_dict()

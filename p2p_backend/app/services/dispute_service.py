@@ -114,15 +114,18 @@ class DisputeService:
         txn: Transaction = dispute.transaction
         if txn:
             if resolution == 'favour_buyer':
+                # El pago del comprador es valido: la operacion vuelve al turno
+                # del vendedor, que debe depositar al comprador y confirmar.
                 txn.status = 'voucher_uploaded'
                 notify(
                     user_id=txn.vendor_id,
                     type='dispute',
-                    title='Debes subir el voucher correcto',
+                    title='Deposita al comprador cuanto antes',
                     body=(
-                        'Un administrador resolvio la disputa a favor del comprador. '
-                        'Revisa la operacion y sube un voucher correcto antes de liberar '
-                        f'los fondos. Nota del admin: {resolution_note}'
+                        'Un administrador resolvio la disputa a favor del comprador: '
+                        'su pago es valido. Apresurate a realizar el deposito al comprador, '
+                        'sube tu comprobante y confirma la operacion. '
+                        f'Nota del admin: {resolution_note}'
                     ),
                     resource_id=txn.id,
                 )
@@ -131,22 +134,27 @@ class DisputeService:
                     type='dispute',
                     title='Disputa resuelta a tu favor',
                     body=(
-                        'El vendedor fue notificado para subir un voucher correcto. '
-                        'Revisa la operacion cuando recibas la actualizacion. '
+                        'El vendedor fue notificado para realizar tu deposito lo antes posible. '
+                        'Recibiras una notificacion cuando suba su comprobante. '
                         f'Nota del admin: {resolution_note}'
                     ),
                     resource_id=txn.id,
                 )
             else:
-                txn.status = 'voucher_uploaded'
+                # El voucher del comprador no es valido o el dinero no llego:
+                # la operacion vuelve a 'accepted' para que el comprador pueda
+                # subir un nuevo comprobante (segunda oportunidad).
+                txn.status = 'accepted'
                 notify(
                     user_id=txn.buyer_id,
                     type='dispute',
-                    title='Espera un poco mas de tiempo',
+                    title='Tu comprobante no es valido',
                     body=(
-                        'Un administrador resolvio la disputa a favor del vendedor. '
-                        'La operacion sigue en revision operativa; espera un poco mas '
-                        f'a que el dinero se refleje. Nota del admin: {resolution_note}'
+                        'Un administrador resolvio la disputa a favor del vendedor: '
+                        'el voucher enviado no es valido o el dinero no llego. '
+                        'Tienes una segunda oportunidad: realiza el pago correctamente '
+                        'y sube un nuevo comprobante desde la operacion. '
+                        f'Nota del admin: {resolution_note}'
                     ),
                     resource_id=txn.id,
                 )
@@ -155,7 +163,8 @@ class DisputeService:
                     type='dispute',
                     title='Disputa resuelta a tu favor',
                     body=(
-                        'El comprador fue notificado para esperar un poco mas de tiempo. '
+                        'El comprador fue notificado de que su comprobante no es valido '
+                        'y debe intentar el pago de nuevo. Espera su nuevo voucher. '
                         f'Nota del admin: {resolution_note}'
                     ),
                     resource_id=txn.id,

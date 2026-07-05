@@ -29,10 +29,15 @@ data class AdminDisputesStats(
     val resolved: Int
 )
 
+data class AdminComplaintsStats(
+    val pending: Int
+)
+
 data class AdminDashboardResponse(
     val users: AdminUsersStats,
     val transactions: AdminTransactionsStats,
     val disputes: AdminDisputesStats,
+    val complaints: AdminComplaintsStats? = null,
     val total_volume: Double
 ) {
 

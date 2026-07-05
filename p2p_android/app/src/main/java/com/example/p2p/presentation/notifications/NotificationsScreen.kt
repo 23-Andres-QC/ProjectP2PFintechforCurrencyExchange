@@ -457,6 +457,7 @@ private fun notifIconAndColor(type: String): Pair<ImageVector, Color> = when (ty
     "voucher"     -> Icons.Default.Description        to WarningColor
     "dispute"     -> Icons.Default.Gavel              to DangerColor
     "offer"       -> Icons.Default.Campaign           to PrimaryLight
+    "complaint"   -> Icons.Default.SupportAgent       to WarningColor
     "admin"       -> Icons.Default.AdminPanelSettings to Color(0xFF7C3AED)
     "security"    -> Icons.Default.Lock               to DangerColor
     "kyc"         -> Icons.Default.VerifiedUser       to SuccessColor

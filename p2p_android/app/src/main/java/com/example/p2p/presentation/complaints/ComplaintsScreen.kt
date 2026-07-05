@@ -273,31 +273,65 @@ private fun ComplaintItem(complaint: Complaint) {
         elevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("#${complaint.id}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextMain)
-                Text(
-                    ComplaintType.label(complaint.type),
-                    fontSize = 12.sp,
-                    color = TextMuted
-                )
-                Text(complaint.created_at.take(10), fontSize = 11.sp, color = TextMuted)
-            }
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = statusColor.copy(alpha = 0.15f)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    statusLabel,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = statusColor
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("#${complaint.id.take(8).uppercase()}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextMain)
+                    Text(
+                        ComplaintType.label(complaint.type),
+                        fontSize = 12.sp,
+                        color = TextMuted
+                    )
+                    Text(complaint.created_at.take(10), fontSize = 11.sp, color = TextMuted)
+                }
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = statusColor.copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        statusLabel,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = statusColor
+                    )
+                }
+            }
+
+            Text(
+                complaint.description,
+                fontSize = 12.sp,
+                color = TextMuted,
+                lineHeight = 17.sp,
+                maxLines = 3,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+
+            if (!complaint.admin_note.isNullOrBlank()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(SuccessColor.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
+                        .padding(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        "Respuesta del administrador",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SuccessColor
+                    )
+                    Text(
+                        complaint.admin_note,
+                        fontSize = 12.sp,
+                        color = TextMain,
+                        lineHeight = 17.sp
+                    )
+                }
             }
         }
     }

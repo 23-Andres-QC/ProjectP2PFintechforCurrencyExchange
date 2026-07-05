@@ -529,6 +529,8 @@ fun NavGraph(startDestination: String = Screen.AuthGate.route) {
                             when (notif.type) {
                                 "transaction", "voucher", "dispute" ->
                                     navController.navigate(Screen.Transaction.createRoute(resourceId))
+                                "complaint" ->
+                                    navController.navigate(Screen.Complaints.route)
                                 "admin" ->
                                     navController.navigate(Screen.Admin.route)
                             }
@@ -643,10 +645,26 @@ private fun AppBottomBar(
     var isVendor by remember { mutableStateOf(false) }
     var isAdmin by remember { mutableStateOf(false) }
     var pendingCount by remember { mutableStateOf(0) }
+    var adminPendingCount by remember { mutableStateOf(0) }
     LaunchedEffect(Unit) {
         val role = tokenManager.getUserRole() ?: ""
         isVendor = role != "admin"
         isAdmin = role == "admin"
+    }
+
+    // Badge del panel admin: disputas + reclamos sin resolver
+    LaunchedEffect(isAdmin) {
+        if (!isAdmin) return@LaunchedEffect
+        while (true) {
+            try {
+                val response = ApiClient.adminApi.getDashboardStats()
+                val stats = response.body()
+                if (response.isSuccessful && stats != null) {
+                    adminPendingCount = stats.disputes.pending + (stats.complaints?.pending ?: 0)
+                }
+            } catch (_: Exception) { }
+            delay(15000L)
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -771,7 +789,23 @@ private fun AppBottomBar(
                 NavigationBarItem(
                     selected = currentRoute == Screen.Admin.route,
                     onClick = { onNavigate(Screen.Admin.route) },
-                    icon = { Icon(Icons.Default.AdminPanelSettings, contentDescription = "Admin") },
+                    icon = {
+                        BadgedBox(
+                            badge = {
+                                if (adminPendingCount > 0) {
+                                    Badge {
+                                        Text(
+                                            text = if (adminPendingCount > 99) "99+" else adminPendingCount.toString(),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.AdminPanelSettings, contentDescription = "Admin")
+                        }
+                    },
                     label = {
                         Text(
                             "Admin",
