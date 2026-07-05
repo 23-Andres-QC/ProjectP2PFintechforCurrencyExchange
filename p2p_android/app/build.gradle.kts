@@ -49,9 +49,9 @@ android {
     }
 
     val baseUrlDebug: String = project.findProperty("BASE_URL_DEBUG") as? String
-        ?: "http://10.0.2.2:5000/api/v1/"
+        ?: "http://157.137.189.178/api/v1/"
     val baseUrlRelease: String = project.findProperty("BASE_URL_RELEASE") as? String
-        ?: "http://10.0.2.2:5000/api/v1/"
+        ?: "http://157.137.189.178/api/v1/"
     val groqApiKey: String = readLocalEnv("GROQ_API_KEY")
 
     buildTypes {
@@ -85,7 +85,7 @@ tasks.whenTaskAdded {
         doLast {
             val apkDir = file("build/outputs/apk/debug")
             apkDir.listFiles()?.filter { it.extension == "apk" }?.forEach { apk ->
-                apk.renameTo(File(apkDir, "p2p-debug.apk"))
+                apk.renameTo(File(apkDir, "P2PFINAL.apk"))
             }
         }
     }
