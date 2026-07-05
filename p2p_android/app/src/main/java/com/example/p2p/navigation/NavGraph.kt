@@ -150,7 +150,7 @@ fun NavGraph(startDestination: String = Screen.AuthGate.route) {
                 val pulse = rememberInfiniteTransition(label = "chatbot_pulse")
                 val scale by pulse.animateFloat(
                     initialValue = 1f,
-                    targetValue = 1.20f,
+                    targetValue = 1.08f,
                     animationSpec = infiniteRepeatable(
                         animation = tween(durationMillis = 900, easing = FastOutSlowInEasing),
                         repeatMode = RepeatMode.Reverse
@@ -159,14 +159,14 @@ fun NavGraph(startDestination: String = Screen.AuthGate.route) {
                 )
                 Box(
                     modifier = Modifier
-                        .size(93.dp)
+                        .size(68.dp)
                         .scale(scale)
                         .clickable { navController.navigate(Screen.ChatBot.route) }
                 ) {
                     Image(
                         painter = painterResource(R.drawable.ic_chatbot),
                         contentDescription = "Asistente virtual",
-                        modifier = Modifier.size(93.dp)
+                        modifier = Modifier.size(68.dp)
                     )
                 }
             }

@@ -73,7 +73,7 @@ fun TermsScreen(onBack: () -> Unit = {}) {
             )
             LegalSection(
                 title = "2. Descripción del Servicio",
-                body = "PeruExchange P2P es una plataforma de intermediación para el intercambio de divisas entre personas naturales y jurídicas. Facilitamos operaciones de compra y venta de moneda extranjera de manera directa entre usuarios, cumpliendo con todas las normativas del Banco Central de Reserva del Perú (BCRP) y la Superintendencia de Banca, Seguros y AFP (SBS)."
+                body = "PeruExchange P2P es una plataforma de intermediación para el intercambio de divisas entre usuarios. Facilitamos operaciones de compra y venta de moneda extranjera de manera directa, con controles de identidad, registro de operaciones, comprobantes, calificaciones, reclamos y disputas dentro de la aplicación."
             )
             LegalSection(
                 title = "3. Elegibilidad",
@@ -85,7 +85,7 @@ fun TermsScreen(onBack: () -> Unit = {}) {
             )
             LegalSection(
                 title = "5. Limitación de Responsabilidad",
-                body = "PeruExchange P2P actúa exclusivamente como intermediario entre compradores y vendedores. La plataforma no es responsable por demoras, incumplimientos o pérdidas derivadas de acciones de terceros, fallas en servicios bancarios externos, eventos de fuerza mayor o problemas técnicos fuera de nuestro control. El límite máximo de responsabilidad de la plataforma no excederá el monto de las comisiones cobradas."
+                body = "PeruExchange P2P actúa como intermediario tecnológico entre compradores y vendedores. La plataforma no controla los sistemas bancarios externos ni puede garantizar tiempos de procesamiento de terceros. Ante incidencias, el usuario puede usar los flujos de reclamo y disputa disponibles en la aplicación."
             )
             LegalSection(
                 title = "6. Prohibiciones",
@@ -93,11 +93,11 @@ fun TermsScreen(onBack: () -> Unit = {}) {
             )
             LegalSection(
                 title = "7. Resolución de Disputas",
-                body = "En caso de disputa entre usuarios, PeruExchange P2P actuará como mediador imparcial. El proceso de resolución tiene un plazo máximo de 5 días hábiles desde la apertura del caso. Durante este período, los fondos en custodia permanecerán bloqueados. La decisión del equipo de resolución es vinculante para ambas partes. En casos de fraude comprobado, la cuenta infractora será suspendida de forma definitiva."
+                body = "En caso de disputa entre usuarios, PeruExchange P2P puede revisar la transacción, los comprobantes disponibles y los comentarios enviados. La operación permanecerá en estado de revisión hasta que el administrador registre una resolución. Según el resultado, la app notificará al comprador o al vendedor con la acción que corresponda."
             )
             LegalSection(
                 title = "8. Contacto",
-                body = "Para consultas relacionadas con estos Términos de Servicio, puede contactarnos a través de nuestro correo oficial: legal@peruexchange.com. Nuestro equipo legal responderá en un plazo máximo de 3 días hábiles. También puede escribirnos al Departamento Legal de PeruExchange S.A.C., Av. Javier Prado Este 1234, San Isidro, Lima, Perú."
+                body = "Para consultas relacionadas con estos Términos de Servicio, puede contactarnos a través de los canales de soporte disponibles en la aplicación o escribir al correo legal@peruexchange.com."
             )
 
             Spacer(Modifier.height(16.dp))

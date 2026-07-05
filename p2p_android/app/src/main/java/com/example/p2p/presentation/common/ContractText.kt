@@ -8,7 +8,7 @@ Fecha de entrada en vigor: al momento del registro.
 El presente contrato se celebra entre P2P Exchange Platform (en adelante "la Plataforma") y el usuario que procede a registrarse (en adelante "el Usuario").
 
 2. OBJETO
-La Plataforma ofrece un servicio de intermediación para el intercambio de divisas entre particulares (peer-to-peer), facilitando transacciones de compra y venta de moneda extranjera conforme a la normativa vigente.
+La Plataforma ofrece un servicio de intermediacion para el intercambio de divisas entre usuarios (peer-to-peer), facilitando transacciones de compra y venta de moneda extranjera mediante ofertas, comprobantes, notificaciones, calificaciones, reclamos y disputas.
 
 3. OBLIGACIONES DEL USUARIO
 - Proporcionar información veraz y actualizada durante el registro.
@@ -18,13 +18,13 @@ La Plataforma ofrece un servicio de intermediación para el intercambio de divis
 - Cumplir con los procesos de verificación KYC (Conoce a tu Cliente).
 
 4. VERIFICACIÓN DE IDENTIDAD (KYC)
-El Usuario acepta que la Plataforma podrá solicitar documentación adicional para verificar su identidad conforme a las regulaciones de la SBS (Superintendencia de Banca, Seguros y AFP del Perú).
+El Usuario acepta que la Plataforma podra solicitar documentacion adicional para verificar su identidad y prevenir usos indebidos del servicio.
 
 5. OPERACIONES P2P
 Las transacciones se realizan entre usuarios. La Plataforma actúa como facilitador y no es parte de la operación de cambio. El Usuario asume la responsabilidad de verificar la información de su contraparte.
 
 6. COMISIONES Y TARIFAS
-El uso de la plataforma puede estar sujeto a comisiones según la tabla de tarifas vigente, disponible en la sección de ayuda.
+El uso de la plataforma puede estar sujeto a condiciones comerciales informadas dentro de la aplicacion cuando correspondan.
 
 7. DISPUTAS
 En caso de conflicto entre usuarios, la Plataforma podrá intervenir como mediador. Las decisiones del equipo de soporte son definitivas dentro del ámbito de la plataforma.

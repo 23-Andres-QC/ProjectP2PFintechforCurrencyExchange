@@ -2,24 +2,29 @@ package com.example.p2p.data.remote.model
 
 import com.google.gson.annotations.SerializedName
 
-enum class ComplaintType(val label: String) {
-    PLATFORM_ERROR("Error en plataforma"),
-    TRANSACTION_ISSUE("Problema con transacción"),
-    ACCOUNT_ISSUE("Problema con mi cuenta"),
-    PAYMENT_ISSUE("Problema con pago"),
-    OTHER("Otro");
+enum class ComplaintType(val apiValue: String, val label: String) {
+    PLATFORM_ERROR("platform_error", "Error en plataforma"),
+    TRANSACTION_ISSUE("transaction_issue", "Problema con transaccion"),
+    ACCOUNT_ISSUE("account_issue", "Problema con mi cuenta"),
+    PAYMENT_ISSUE("payment_issue", "Problema con pago"),
+    OTHER("other", "Otro");
 
     companion object {
         fun label(type: String): String =
-            entries.firstOrNull { it.name == type }?.label ?: type
+            entries.firstOrNull { it.apiValue == type || it.name == type }?.label ?: type
     }
 }
 
-enum class ComplaintStatus(val label: String) {
-    PENDING("Pendiente"),
-    IN_REVIEW("En revisión"),
-    RESOLVED("Resuelto"),
-    CLOSED("Cerrado")
+enum class ComplaintStatus(val apiValue: String, val label: String) {
+    PENDING("pending", "Pendiente"),
+    UNDER_REVIEW("under_review", "En revision"),
+    RESOLVED("resolved", "Resuelto"),
+    CLOSED("closed", "Cerrado");
+
+    companion object {
+        fun label(status: String): String =
+            entries.firstOrNull { it.apiValue == status || it.name == status }?.label ?: status
+    }
 }
 
 data class Complaint(

@@ -256,16 +256,15 @@ fun ComplaintsScreen(
 @Composable
 private fun ComplaintItem(complaint: Complaint) {
     val statusColor = when (complaint.status) {
-        ComplaintStatus.IN_REVIEW.name  -> WarningColor
-        ComplaintStatus.RESOLVED.name   -> SuccessColor
-        ComplaintStatus.CLOSED.name     -> TextMuted
-        else                            -> WarningColor
+        ComplaintStatus.UNDER_REVIEW.apiValue -> WarningColor
+        ComplaintStatus.RESOLVED.apiValue     -> SuccessColor
+        ComplaintStatus.CLOSED.apiValue       -> TextMuted
+        else                                  -> WarningColor
     }
-    val statusLabel = ComplaintStatus.entries
-        .firstOrNull { it.name == complaint.status }?.label ?: complaint.status
+    val statusLabel = ComplaintStatus.label(complaint.status)
 
     val cardTint = when (complaint.status) {
-        ComplaintStatus.RESOLVED.name -> SuccessColor
+        ComplaintStatus.RESOLVED.apiValue -> SuccessColor
         else -> Primary
     }
     GlassCard(
@@ -282,7 +281,7 @@ private fun ComplaintItem(complaint: Complaint) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("#${complaint.id}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextMain)
                 Text(
-                    ComplaintType.entries.firstOrNull { it.name == complaint.type }?.label ?: complaint.type,
+                    ComplaintType.label(complaint.type),
                     fontSize = 12.sp,
                     color = TextMuted
                 )

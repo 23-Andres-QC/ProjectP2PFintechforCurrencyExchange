@@ -107,7 +107,7 @@ fun HelpScreen(onBack: () -> Unit = {}) {
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color.White
                                 )
-                                Text("24/7", fontSize = 10.sp, color = Color.White.copy(alpha = 0.85f))
+                                Text("Consulta", fontSize = 10.sp, color = Color.White.copy(alpha = 0.85f))
                             }
                         }
 
@@ -154,12 +154,21 @@ fun HelpScreen(onBack: () -> Unit = {}) {
 
             FaqItemExpanded(
                 question = "¿Cómo funciona el sistema P2P?",
-                answer = "El sistema P2P (Peer-to-Peer) conecta directamente a compradores y vendedores de divisas. El comprador publica una oferta o acepta una existente, transfiere los soles al vendedor y sube el comprobante. Nuestro sistema OCR verifica automáticamente el comprobante y libera los dólares al comprador. Todo el proceso es supervisado por nuestra plataforma para garantizar la seguridad de ambas partes."
+                answer = "El sistema P2P conecta compradores y vendedores de divisas. El comprador acepta una oferta, transfiere a la cuenta bancaria indicada por el vendedor y sube su comprobante. El vendedor revisa el pago recibido y libera la operación desde la app."
             )
 
-            FaqItemCollapsed("¿Cuáles son los límites de operación diarios?")
-            FaqItemCollapsed("¿Cómo verifico mi identidad (KYC)?")
-            FaqItemCollapsed("¿Qué hago si hay un problema con mi transacción?")
+            FaqItemExpanded(
+                question = "¿Cuáles son los límites de operación?",
+                answer = "Cada oferta define su monto disponible y, si es una venta parcial, sus montos mínimo y máximo. La app valida esos límites antes de crear la transacción."
+            )
+            FaqItemExpanded(
+                question = "¿Cómo verifico mi identidad (KYC)?",
+                answer = "Desde tu perfil puedes iniciar la verificación KYC. Debes completar los datos solicitados y subir los documentos requeridos para que el equipo administrador los revise."
+            )
+            FaqItemExpanded(
+                question = "¿Qué hago si hay un problema con mi transacción?",
+                answer = "Si el comprobante no corresponde, el pago no llega o hay otra incidencia, abre una disputa desde la transacción. Para problemas generales de cuenta o plataforma, registra un reclamo desde Soporte."
+            )
 
             Spacer(Modifier.height(12.dp))
         }

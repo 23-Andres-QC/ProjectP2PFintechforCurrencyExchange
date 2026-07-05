@@ -73,11 +73,11 @@ fun PrivacyScreen(onBack: () -> Unit = {}) {
             )
             PrivacySection(
                 title = "2. Uso de la Información",
-                body = "Los datos recopilados son utilizados exclusivamente para: verificar su identidad y cumplir con las obligaciones legales AML/KYC; procesar y gestionar sus transacciones de cambio de divisas; enviar notificaciones transaccionales y alertas de seguridad; mejorar la experiencia de usuario en la plataforma; cumplir con requerimientos de las autoridades regulatorias (SBS, BCRP, UIF-Perú); detectar y prevenir actividades fraudulentas."
+                body = "Los datos recopilados se utilizan para verificar identidad, gestionar cuentas, ofertas, transacciones, comprobantes, calificaciones, reclamos, disputas y notificaciones dentro de la plataforma. También pueden usarse para seguridad, auditoría interna y prevención de uso indebido."
             )
             PrivacySection(
                 title = "3. Almacenamiento y Seguridad",
-                body = "Su información es almacenada en servidores seguros con cifrado AES-256 y protección TLS 1.3 en tránsito. Implementamos controles de acceso estrictos, autenticación de doble factor para administradores y auditorías de seguridad periódicas. Los datos de transacciones son conservados por un mínimo de 5 años conforme a la normativa de prevención de lavado de activos. Los documentos KYC se almacenan con cifrado adicional en repositorios aislados."
+                body = "La información se almacena en servicios protegidos y con controles de acceso de acuerdo con la configuración técnica de la plataforma. Los documentos, comprobantes y datos de operación se usan solo para los flujos necesarios de verificación, transacción, soporte, auditoría interna y administración."
             )
             PrivacySection(
                 title = "4. Derechos del Usuario",
@@ -85,7 +85,7 @@ fun PrivacyScreen(onBack: () -> Unit = {}) {
             )
             PrivacySection(
                 title = "5. Compartición con Terceros",
-                body = "No vendemos, alquilamos ni cedemos sus datos personales a terceros con fines comerciales. Solo compartimos información con: entidades financieras participantes en sus transacciones; autoridades regulatorias cuando sea legalmente requerido (SBS, UIF-Perú, Poder Judicial); proveedores de servicios tecnológicos bajo estrictos acuerdos de confidencialidad; servicios de verificación de identidad acreditados."
+                body = "No vendemos ni alquilamos sus datos personales con fines comerciales. Podemos compartir información cuando sea necesario para operar servicios tecnológicos de la plataforma, cumplir obligaciones legales o atender requerimientos válidos de una autoridad competente."
             )
             PrivacySection(
                 title = "6. Cookies y Tecnologías de Seguimiento",
@@ -93,11 +93,11 @@ fun PrivacyScreen(onBack: () -> Unit = {}) {
             )
             PrivacySection(
                 title = "7. Modificaciones a esta Política",
-                body = "PeruExchange S.A.C. se reserva el derecho de actualizar esta Política de Privacidad cuando sea necesario. Le notificaremos sobre cambios significativos mediante correo electrónico o aviso prominente en la plataforma con al menos 15 días de anticipación. El uso continuado de la plataforma tras la entrada en vigencia de los cambios constituye su aceptación de la nueva política."
+                body = "PeruExchange se reserva el derecho de actualizar esta Política de Privacidad cuando sea necesario. Los cambios relevantes podrán informarse mediante aviso dentro de la plataforma o por los canales de contacto disponibles."
             )
             PrivacySection(
                 title = "8. Contacto",
-                body = "Para consultas, solicitudes o reclamos relacionados con el tratamiento de sus datos personales, puede comunicarse con nuestro Responsable de Protección de Datos: privacidad@peruexchange.com. También puede contactarnos en nuestras oficinas: Av. Javier Prado Este 1234, San Isidro, Lima, Perú. Plazo de respuesta: máximo 5 días hábiles."
+                body = "Para consultas, solicitudes o reclamos relacionados con el tratamiento de sus datos personales, puede comunicarse por los canales de soporte de la app o escribir a privacidad@peruexchange.com."
             )
 
             Spacer(Modifier.height(16.dp))
