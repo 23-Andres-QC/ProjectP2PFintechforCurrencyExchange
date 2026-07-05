@@ -121,18 +121,6 @@ fun AdminScreen(
                 )
             }
 
-            item {
-                Spacer(Modifier.height(20.dp))
-                Text(
-                    text = "Disputas Activas",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = TextMain,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-                Spacer(Modifier.height(12.dp))
-            }
-
             when (selectedTab) {
                 0 -> {
 

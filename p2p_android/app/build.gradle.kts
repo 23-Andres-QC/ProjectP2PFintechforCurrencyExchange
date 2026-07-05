@@ -84,8 +84,13 @@ tasks.whenTaskAdded {
     if (name == "assembleDebug") {
         doLast {
             val apkDir = file("build/outputs/apk/debug")
-            apkDir.listFiles()?.filter { it.extension == "apk" }?.forEach { apk ->
-                apk.renameTo(File(apkDir, "P2PFINAL.apk"))
+            val sourceApk = File(apkDir, "app-debug.apk")
+            val targetApk = File(apkDir, "P2PFINAL.apk")
+            if (sourceApk.exists()) {
+                if (targetApk.exists()) {
+                    targetApk.delete()
+                }
+                sourceApk.renameTo(targetApk)
             }
         }
     }
