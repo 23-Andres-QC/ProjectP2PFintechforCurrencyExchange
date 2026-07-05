@@ -126,6 +126,7 @@ private val bottomBarRoutes = setOf(
     Screen.Market.route,
     Screen.Pending.route,
     Screen.Publish.route,
+    Screen.Admin.route,
     Screen.Profile.route
 )
 

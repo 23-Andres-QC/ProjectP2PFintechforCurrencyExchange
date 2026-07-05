@@ -35,7 +35,7 @@ class TransactionRepository:
         return Transaction.query.filter(
             Transaction.buyer_id == buyer_id,
             Transaction.offer_id == offer_id,
-            Transaction.status.in_(('pending', 'accepted', 'voucher_uploaded'))
+            Transaction.status.in_(('pending', 'accepted', 'voucher_uploaded', 'disputed'))
         ).first()
 
     @staticmethod

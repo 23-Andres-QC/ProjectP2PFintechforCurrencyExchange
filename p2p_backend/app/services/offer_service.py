@@ -44,12 +44,40 @@ class OfferService:
             raise AuthorizationError('KYC approval is required to publish offers')
         if user.role == 'admin':
             raise AuthorizationError('Admins cannot publish market offers')
-        if not BankAccountRepository.get_by_user(user_id):
+        accounts = BankAccountRepository.get_by_user(user_id)
+        if not accounts:
             raise AppException(
                 'BANK_ACCOUNT_REQUIRED',
                 'Debes registrar una cuenta bancaria antes de publicar una oferta',
                 400,
             )
+
+        to_currency = data.get('fiat_currency', 'PEN')
+        eligible_accounts = [a for a in accounts if a.currency == to_currency]
+        if not eligible_accounts:
+            raise AppException(
+                'BANK_ACCOUNT_REQUIRED',
+                f'Debes registrar una cuenta bancaria en {to_currency} para recibir el pago',
+                400,
+            )
+
+        requested_methods = data.get('payment_methods') or []
+        valid_methods = {
+            BankAccountRepository.format_label(account): account
+            for account in eligible_accounts
+        }
+        if requested_methods:
+            invalid_methods = [m for m in requested_methods if m not in valid_methods]
+            if invalid_methods:
+                raise AppException(
+                    'INVALID_PAYMENT_METHOD',
+                    'La cuenta de pago seleccionada no pertenece al usuario o no coincide con la moneda',
+                    400,
+                )
+            payment_methods = requested_methods
+        else:
+            default_account = next((a for a in eligible_accounts if a.is_primary), eligible_accounts[0])
+            payment_methods = [BankAccountRepository.format_label(default_account)]
 
         amount = float(data.get('amount') or 0)
         price_per_unit = float(data.get('price_per_unit') or 0)
@@ -74,13 +102,13 @@ class OfferService:
         offer = OfferRepository.create(
             vendor_id=user_id,
             from_currency=data.get('currency', 'USD'),
-            to_currency=data.get('fiat_currency', 'PEN'),
+            to_currency=to_currency,
             amount=amount,
             price_per_unit=price_per_unit,
             offer_type=data.get('offer_type', 'sell'),
             min_transaction=min_transaction,
             max_transaction=max_transaction,
-            payment_methods=data.get('payment_methods', []),
+            payment_methods=payment_methods,
         )
         db.session.commit()
         return OfferService._to_dict(offer)

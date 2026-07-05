@@ -13,24 +13,32 @@ class BankAccountService:
 
     @staticmethod
     def create(user_id: str, data: dict) -> dict:
+        bank_name = (data.get('bank_name') or '').strip()
+        account_number = (data.get('account_number') or '').strip()
+        account_holder = (data.get('account_holder') or '').strip()
+        currency = (data.get('currency') or 'PEN').strip().upper()
+
         existing = BankAccountRepository.find_duplicate(
             user_id=user_id,
-            account_number=data.get('account_number', ''),
+            account_number=account_number,
         )
         if existing:
             raise ConflictError('Ya tienes una cuenta con ese número registrada')
 
-        if data.get('is_primary'):
+        is_first_account = not BankAccountRepository.get_by_user(user_id)
+        is_primary = bool(data.get('is_primary')) or is_first_account
+
+        if is_primary:
             BankAccountRepository.clear_primary(user_id)
 
         account = BankAccountRepository.create(
             user_id=user_id,
-            bank_name=data.get('bank_name', ''),
-            account_number=data.get('account_number', ''),
-            account_holder=data.get('account_holder', ''),
+            bank_name=bank_name,
+            account_number=account_number,
+            account_holder=account_holder,
             account_type=data.get('account_type', 'savings'),
-            currency=data.get('currency', 'PEN'),
-            is_primary=data.get('is_primary', False),
+            currency=currency,
+            is_primary=is_primary,
         )
         db.session.commit()
         return BankAccountService._to_dict(account)

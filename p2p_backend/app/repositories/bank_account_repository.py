@@ -5,6 +5,10 @@ from app.models import BankAccount, Transaction
 class BankAccountRepository:
 
     @staticmethod
+    def format_label(account: BankAccount) -> str:
+        return f"{account.bank_name} \u00b7 {account.account_number}"
+
+    @staticmethod
     def get_by_id(account_id: str) -> BankAccount | None:
         return db.session.get(BankAccount, account_id)
 
@@ -44,7 +48,7 @@ class BankAccountRepository:
 
     @staticmethod
     def has_active_transaction(account: BankAccount) -> bool:
-        label = f"{account.bank_name} · {account.account_number}"
+        label = BankAccountRepository.format_label(account)
         return Transaction.query.filter(
             (Transaction.buyer_payment_account == label) |
             (Transaction.vendor_payment_account == label),

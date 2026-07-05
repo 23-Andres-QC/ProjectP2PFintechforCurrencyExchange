@@ -128,15 +128,6 @@ fun TransactionDetailScreen(
                     DetailRow("Tasa:", "S/ ${txn?.exchange_rate ?: "--"}", showDivider = true)
                     DetailRow("Método de pago:", txn?.vendor_payment_account ?: "--", showDivider = true)
                     DetailRow("Fecha:", txn?.created_at?.take(10) ?: "--", showDivider = true)
-                    // OCR row
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Estado OCR:", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextMain)
-                        Text("✓ Auténtico", fontSize = 13.sp, color = SuccessColor, fontWeight = FontWeight.SemiBold)
-                    }
                 }
             }
 

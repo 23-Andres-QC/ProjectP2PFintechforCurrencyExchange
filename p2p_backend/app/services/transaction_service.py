@@ -1,3 +1,4 @@
+import json
 import threading
 from datetime import datetime
 
@@ -55,7 +56,17 @@ class TransactionService:
             )
 
         amount_from = float(data.get('amount_from') or 0)
+        if amount_from <= 0:
+            raise AppException('INVALID_AMOUNT', 'El monto debe ser mayor a 0', 400)
         amount_to = round(amount_from * offer.price_per_unit, 2)
+        payment_methods = json.loads(offer.payment_methods) if offer.payment_methods else []
+        vendor_payment_account = next((m for m in payment_methods if m), None)
+        if not vendor_payment_account:
+            raise AppException(
+                'PAYMENT_METHOD_REQUIRED',
+                'La oferta no tiene una cuenta de pago configurada',
+                400,
+            )
 
         is_complete = offer.offer_type in ('full', 'complete')
         if is_complete:
@@ -85,7 +96,7 @@ class TransactionService:
             amount_to=amount_to,
             exchange_rate=offer.price_per_unit,
             buyer_payment_account=data.get('buyer_payment_account'),
-            vendor_payment_account=data.get('vendor_payment_account'),
+            vendor_payment_account=vendor_payment_account,
         )
 
         db.session.flush()

@@ -42,7 +42,7 @@ class RatingService:
         txn = TransactionRepository.get_by_id(data.get('transaction_id'))
         if not txn:
             raise NotFoundError('Transaction not found')
-        if txn.status != 'completed':
+        if txn.status not in ('completed', 'closed'):
             raise AppException('INVALID_STATE', 'Can only rate completed transactions', 400)
         if txn.buyer_id != user_id and txn.vendor_id != user_id:
             raise AuthorizationError('Not your transaction')
@@ -69,6 +69,9 @@ class RatingService:
         if ratee:
             avg = RatingRepository.average_for_user(ratee_id)
             ratee.rating = round(float(avg if avg is not None else score), 2)
+
+        if txn.buyer_id == user_id and txn.status == 'completed':
+            txn.status = 'closed'
 
         db.session.commit()
         return {'id': rating.id, 'score': rating.score, 'message': 'Rating submitted'}

@@ -16,9 +16,23 @@ class UserService:
         if not email or not password:
             from app.core.exceptions import ValidationError
             raise ValidationError('Email and password required')
+        if not full_name or not full_name.strip():
+            from app.core.exceptions import ValidationError
+            raise ValidationError('Full name is required')
+        if len(password) < 8:
+            from app.core.exceptions import ValidationError
+            raise ValidationError('Password must have at least 8 characters')
+        if dni and (not dni.isdigit() or len(dni) != 8):
+            from app.core.exceptions import ValidationError
+            raise ValidationError('DNI must have exactly 8 digits')
         if not terms_accepted:
             from app.core.exceptions import ValidationError
             raise ValidationError('Terms and conditions must be accepted')
+        if role == 'admin':
+            from app.core.exceptions import ValidationError
+            raise ValidationError('Admin accounts cannot be created from public registration')
+        if role not in ('buyer', 'vendor'):
+            role = 'buyer'
 
         if UserRepository.get_by_email(email):
             raise ConflictError('Email already registered')
@@ -28,7 +42,7 @@ class UserService:
 
         user = UserRepository.create(
             email=email,
-            full_name=full_name,
+            full_name=full_name.strip(),
             password=password,
             role=role,
             phone=phone,

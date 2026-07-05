@@ -97,7 +97,7 @@ fun PendingScreen(
             PendingTabSelector(
                 selectedTab = selectedTab,
                 onSelectTab = { selectedTab = it },
-                buyCount = buyerTransactions.count { it.status != "completed" },
+                buyCount = buyerTransactions.size,
                 sellCount = vendorPendingTransactions.size
             )
 

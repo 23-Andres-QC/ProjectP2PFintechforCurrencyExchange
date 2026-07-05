@@ -52,15 +52,10 @@ fun ForgotPasswordScreen(
                 firebaseAuth.sendPasswordResetEmail(email.trim()).await()
                 sent = true
             } catch (e: Exception) {
-                error = when {
-                    e.message?.contains("no user record") == true ||
-                    e.message?.contains("user-not-found") == true ->
-                        "No existe una cuenta con ese correo"
-                    e.message?.contains("invalid-email") == true ->
-                        "El correo electrónico no es válido"
-                    e.message?.contains("network") == true ->
-                        "Sin conexión a internet"
-                    else -> "Error al enviar el correo. Intenta de nuevo."
+                if (e.message?.contains("invalid-email") == true) {
+                    error = "El correo electronico no es valido"
+                } else {
+                    sent = true
                 }
             } finally {
                 isLoading = false
