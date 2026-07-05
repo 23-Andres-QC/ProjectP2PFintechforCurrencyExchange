@@ -34,7 +34,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.p2p.R
-import com.example.p2p.data.remote.model.BankAccount
 import com.example.p2p.data.remote.model.CreateTransactionRequest
 import com.example.p2p.data.remote.model.ExchangeRate
 import com.example.p2p.data.remote.model.Offer
@@ -42,6 +41,12 @@ import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.components.GlassCard
 import com.example.p2p.ui.theme.*
 import kotlinx.coroutines.delay
+
+private const val BUYER_PAYMENT_PLACEHOLDER = "Mi cuenta"
+private const val PAYMENT_METHOD_NOT_CONFIGURED = "Cuenta bancaria no configurada"
+
+private fun offerPaymentMethod(offer: Offer): String? =
+    offer.payment_methods?.firstOrNull { it.isNotBlank() }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -218,17 +223,13 @@ fun MarketScreen(
                             offer = offer,
                             isBestRate = index == 0,
                             isQuickSale = isQuickSale(offer),
-                            bankAccounts = uiState.bankAccounts,
-                            selectedBankAccountId = uiState.selectedBankAccountId,
-                            onSelectBankAccount = { viewModel.selectBankAccount(it) },
-                            onNavigateToAddBankAccount = onNavigateToAddBankAccount,
                             onConfirmBuy = { amount, buyerAccount ->
                                 val req = CreateTransactionRequest(
                                     offer_id = offer.id,
                                     amount_from = amount,
                                     amount_to = amount * offer.price_per_unit,
                                     buyer_payment_account = buyerAccount,
-                                    vendor_payment_account = offer.payment_methods?.firstOrNull() ?: "BCP"
+                                    vendor_payment_account = offerPaymentMethod(offer) ?: PAYMENT_METHOD_NOT_CONFIGURED
                                 )
                                 viewModel.createTransaction(req,
                                     onSuccess = { txnId ->
@@ -248,17 +249,13 @@ fun MarketScreen(
     showBuyDialog?.let { offer ->
         MatchingDialog(
             offer = offer,
-            bankAccounts = uiState.bankAccounts,
-            selectedBankAccountId = uiState.selectedBankAccountId,
-            onSelectBankAccount = { viewModel.selectBankAccount(it) },
-            onNavigateToAddBankAccount = onNavigateToAddBankAccount,
             onConfirm = { amount, buyerAccount ->
                 val req = CreateTransactionRequest(
                     offer_id = offer.id,
                     amount_from = amount,
                     amount_to = amount * offer.price_per_unit,
                     buyer_payment_account = buyerAccount,
-                    vendor_payment_account = offer.payment_methods?.firstOrNull() ?: "BCP"
+                    vendor_payment_account = offerPaymentMethod(offer) ?: PAYMENT_METHOD_NOT_CONFIGURED
                 )
                 viewModel.createTransaction(req,
                     onSuccess = { txnId ->
@@ -686,65 +683,28 @@ private fun OffersHeader(count: Int, from: String, to: String) {
 }
 
 @Composable
-fun BankAccountSelector(
-    bankAccounts: List<BankAccount>,
-    selectedId: String?,
-    onSelect: (String) -> Unit,
-    onNavigateToAddBankAccount: () -> Unit = {}
-) {
-    // El comprador no necesita tener una cuenta bancaria registrada (eso solo aplica
-    // al vendedor al publicar, que es donde se deposita el dinero). Si no tiene ninguna,
-    // simplemente no se muestra selector ni aviso: la compra sigue funcionando igual.
-    if (bankAccounts.isEmpty()) {
-        return
-    }
-
-    var expanded by remember { mutableStateOf(false) }
-    val selected = bankAccounts.firstOrNull { it.id == selectedId } ?: bankAccounts.first()
-
+private fun OfferPaymentMethodCard(offer: Offer) {
+    val method = offerPaymentMethod(offer)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Pagar desde mi cuenta:", fontSize = 11.sp, color = TextMuted, fontWeight = FontWeight.Medium)
-        Box {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .border(1.dp, Primary.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                    .background(Primary.copy(alpha = 0.04f))
-                    .clickable { expanded = true }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(selected.bank_name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextMain)
-                    Text("${selected.account_number} · ${selected.currency}", fontSize = 11.sp, color = TextMuted)
-                }
-                Icon(
-                    if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = null, tint = Primary, modifier = Modifier.size(18.dp)
+        Text("Cuenta de la oferta:", fontSize = 11.sp, color = TextMuted, fontWeight = FontWeight.Medium)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .border(
+                    1.dp,
+                    if (method == null) DangerColor.copy(alpha = 0.35f) else Primary.copy(alpha = 0.4f),
+                    RoundedCornerShape(8.dp)
                 )
-            }
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                containerColor = SurfaceColor
-            ) {
-                bankAccounts.forEach { account ->
-                    DropdownMenuItem(
-                        text = {
-                            Column {
-                                Text(account.bank_name, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                                Text("${account.account_number} · ${account.currency}", fontSize = 11.sp, color = TextMuted)
-                            }
-                        },
-                        onClick = { onSelect(account.id); expanded = false },
-                        leadingIcon = if (account.id == selectedId) ({
-                            Icon(Icons.Default.Check, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
-                        }) else null
-                    )
-                }
-            }
+                .background(if (method == null) DangerColor.copy(alpha = 0.05f) else Primary.copy(alpha = 0.04f))
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+        ) {
+            Text(
+                text = method ?: PAYMENT_METHOD_NOT_CONFIGURED,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (method == null) DangerColor else TextMain
+            )
         }
     }
 }
@@ -752,10 +712,6 @@ fun BankAccountSelector(
 @Composable
 private fun MatchingDialog(
     offer: Offer,
-    bankAccounts: List<BankAccount>,
-    selectedBankAccountId: String?,
-    onSelectBankAccount: (String) -> Unit,
-    onNavigateToAddBankAccount: () -> Unit = {},
     onConfirm: (Double, String) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -764,7 +720,7 @@ private fun MatchingDialog(
         mutableStateOf(if (isPartial) "" else offer.available_amount.toString())
     }
     val amount = amountText.toDoubleOrNull() ?: 0.0
-    val selectedAccount = bankAccounts.firstOrNull { it.id == selectedBankAccountId } ?: bankAccounts.firstOrNull()
+    val destinationAccount = offerPaymentMethod(offer)
 
     val isAmountValid = if (isPartial) {
         amount >= offer.min_transaction &&
@@ -773,7 +729,7 @@ private fun MatchingDialog(
     } else {
         amount == offer.available_amount
     }
-    val canConfirm = isAmountValid && (selectedAccount != null || bankAccounts.isEmpty())
+    val canConfirm = isAmountValid && destinationAccount != null
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -817,19 +773,13 @@ private fun MatchingDialog(
                     }
                 }
 
-                BankAccountSelector(
-                    bankAccounts = bankAccounts,
-                    selectedId = selectedBankAccountId,
-                    onSelect = onSelectBankAccount,
-                    onNavigateToAddBankAccount = onNavigateToAddBankAccount
-                )
+                OfferPaymentMethodCard(offer = offer)
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val account = selectedAccount?.let { "${it.bank_name} · ${it.account_number}" } ?: "Mi cuenta"
-                    onConfirm(amount, account)
+                    onConfirm(amount, BUYER_PAYMENT_PLACEHOLDER)
                 },
                 enabled = canConfirm,
                 colors = ButtonDefaults.buttonColors(containerColor = SuccessColor)
@@ -848,10 +798,6 @@ private fun OfferCard(
     offer: Offer,
     isBestRate: Boolean = false,
     isQuickSale: Boolean = false,
-    bankAccounts: List<BankAccount>,
-    selectedBankAccountId: String?,
-    onSelectBankAccount: (String) -> Unit,
-    onNavigateToAddBankAccount: () -> Unit = {},
     onConfirmBuy: (Double, String) -> Unit
 ) {
     val isPartial = offer.offer_type == "partial"
@@ -859,6 +805,7 @@ private fun OfferCard(
     var buyAmountText by remember { mutableStateOf("") }
     var showBuyAllDialog by remember { mutableStateOf(false) }
     val buyAmount = buyAmountText.toDoubleOrNull() ?: 0.0
+    val destinationAccount = offerPaymentMethod(offer)
 
     val isAmountValid = if (isPartial) {
         buyAmount >= offer.min_transaction &&
@@ -866,7 +813,6 @@ private fun OfferCard(
             buyAmount <= offer.available_amount
     } else true
 
-    val selectedAccount = bankAccounts.firstOrNull { it.id == selectedBankAccountId } ?: bankAccounts.firstOrNull()
     val initials = offer.vendor?.full_name?.trim()?.split(" ")
         ?.filter { it.isNotEmpty() }?.take(2)?.map { it.first().uppercaseChar() }?.joinToString("") ?: "??"
     val verified = offer.vendor?.kyc_verified ?: false
@@ -1006,17 +952,27 @@ private fun OfferCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        offer.payment_methods?.take(2)?.forEach { method ->
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(Primary.copy(alpha = 0.08f))
-                                    .border(1.dp, Primary.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text(method, color = Primary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-                            }
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (destinationAccount == null) DangerColor.copy(alpha = 0.08f) else Primary.copy(alpha = 0.08f))
+                                .border(
+                                    1.dp,
+                                    if (destinationAccount == null) DangerColor.copy(alpha = 0.2f) else Primary.copy(alpha = 0.2f),
+                                    RoundedCornerShape(6.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                destinationAccount ?: PAYMENT_METHOD_NOT_CONFIGURED,
+                                color = if (destinationAccount == null) DangerColor else Primary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                     if (isPartial) {
@@ -1100,21 +1056,16 @@ private fun OfferCard(
                                         }
                                     }
                                 }
-                                BankAccountSelector(
-                                    bankAccounts = bankAccounts,
-                                    selectedId = selectedBankAccountId,
-                                    onSelect = onSelectBankAccount,
-                                    onNavigateToAddBankAccount = onNavigateToAddBankAccount
-                                )
+                                OfferPaymentMethodCard(offer = offer)
                             }
                         },
                         confirmButton = {
                             Button(
                                 onClick = {
                                     showBuyAllDialog = false
-                                    val account = selectedAccount?.let { "${it.bank_name} · ${it.account_number}" } ?: "Mi cuenta"
-                                    onConfirmBuy(offer.available_amount, account)
+                                    onConfirmBuy(offer.available_amount, BUYER_PAYMENT_PLACEHOLDER)
                                 },
+                                enabled = destinationAccount != null,
                                 colors = ButtonDefaults.buttonColors(containerColor = SuccessColor)
                             ) {
                                 Text("Confirmar compra", fontWeight = FontWeight.Bold)
@@ -1191,22 +1142,16 @@ private fun OfferCard(
                             }
                         }
 
-                        BankAccountSelector(
-                            bankAccounts = bankAccounts,
-                            selectedId = selectedBankAccountId,
-                            onSelect = onSelectBankAccount,
-                            onNavigateToAddBankAccount = onNavigateToAddBankAccount
-                        )
+                        OfferPaymentMethodCard(offer = offer)
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(
                                 onClick = {
-                                    val account = selectedAccount?.let { "${it.bank_name} · ${it.account_number}" } ?: "Mi cuenta"
-                                    onConfirmBuy(buyAmount, account)
+                                    onConfirmBuy(buyAmount, BUYER_PAYMENT_PLACEHOLDER)
                                     isExpanded = false
                                     buyAmountText = ""
                                 },
-                                enabled = isAmountValid && buyAmount > 0,
+                                enabled = isAmountValid && buyAmount > 0 && destinationAccount != null,
                                 colors = ButtonDefaults.buttonColors(containerColor = SuccessColor),
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.weight(1f)

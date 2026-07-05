@@ -163,9 +163,9 @@ fun TransactionScreen(
 
     val txn = uiState.transaction
     val vendorName = txn?.vendor_name ?: "Vendedor"
-    val vendorPayment = txn?.vendor_payment_account ?: "BCP"
-    val vendorBankParts = vendorPayment.split(" · ")
-    val vendorBank = vendorBankParts[0]
+    val vendorPayment = txn?.vendor_payment_account?.takeIf { it.isNotBlank() } ?: "Cuenta bancaria no configurada"
+    val vendorBankParts = vendorPayment.split(" · ", limit = 2)
+    val vendorBank = vendorBankParts.firstOrNull().orEmpty()
     val vendorAccountNumber = vendorBankParts.getOrNull(1)
     val statusText = when (txn?.status) {
         "pending" -> "ORDEN P2P EN CURSO"
@@ -435,7 +435,7 @@ fun TransactionScreen(
                     }
                 }
                 Text(
-                    text = "Cuenta destino: $vendorBank",
+                    text = "Cuenta destino: $vendorPayment",
                     fontSize = 12.sp,
                     color = TextMuted
                 )

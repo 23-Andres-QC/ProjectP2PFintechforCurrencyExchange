@@ -139,8 +139,10 @@ fun BankAccountsScreen(
 ) {
     var selectedBank     by remember { mutableStateOf("BCP") }
     var accountNumber    by remember { mutableStateOf("") }
+    var holderName       by remember { mutableStateOf("") }
     var selectedCurrency by remember { mutableStateOf("PEN") }
     var accountTouched   by remember { mutableStateOf(false) }
+    var holderTouched    by remember { mutableStateOf(false) }
 
     val uiState by viewModel?.uiState?.collectAsState(initial = BankAccountsUiState())
         ?: remember { mutableStateOf(BankAccountsUiState()) }
@@ -149,7 +151,10 @@ fun BankAccountsScreen(
     val isYapeOrPlin   = selectedBank.lowercase() in mobileWalletBanks
     val isInternational = selectedBank.lowercase() !in (mobileWalletBanks + strictDigitBanks)
     val accountError   = if (accountTouched) validateAccountNumber(accountNumber, selectedBank) else null
-    val canAdd         = validateAccountNumber(accountNumber, selectedBank) == null && accountNumber.isNotBlank()
+    val holderError    = if (holderTouched && holderName.isBlank()) "El titular es obligatorio" else null
+    val canAdd         = validateAccountNumber(accountNumber, selectedBank) == null &&
+        accountNumber.isNotBlank() &&
+        holderName.isNotBlank()
 
     RefreshOnResume {
         viewModel?.loadBankAccounts()
@@ -162,7 +167,9 @@ fun BankAccountsScreen(
             android.widget.Toast.makeText(context, uiState.successMessage, android.widget.Toast.LENGTH_SHORT).show()
             viewModel?.clearMessages()
             accountNumber  = ""
+            holderName = ""
             accountTouched = false
+            holderTouched = false
         }
     }
 
@@ -226,6 +233,42 @@ fun BankAccountsScreen(
                                 )
                             }
                         }
+                    }
+                }
+            }
+
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    OutlinedTextField(
+                        value = holderName,
+                        onValueChange = {
+                            holderName = it
+                            holderTouched = true
+                        },
+                        label = { Text("Nombre del titular", fontSize = 13.sp) },
+                        placeholder = {
+                            Text(
+                                uiState.currentUserName?.takeIf { it.isNotBlank() } ?: "Ej. Juan Perez",
+                                fontSize = 13.sp,
+                                color = TextMuted.copy(alpha = 0.6f),
+                            )
+                        },
+                        isError = holderError != null,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor  = Primary,
+                            unfocusedBorderColor = BorderColor,
+                            errorBorderColor    = DangerColor,
+                            focusedLabelColor   = Primary,
+                            unfocusedLabelColor = TextMuted,
+                            errorLabelColor     = DangerColor,
+                            cursorColor         = Primary,
+                        ),
+                    )
+                    if (holderError != null) {
+                        Text(holderError, fontSize = 11.sp, color = DangerColor, modifier = Modifier.padding(start = 4.dp))
                     }
                 }
             }
@@ -337,12 +380,12 @@ fun BankAccountsScreen(
                 Button(
                     onClick = {
                         accountTouched = true
+                        holderTouched = true
                         if (canAdd) {
-                            val holder = uiState.currentUserName?.takeIf { it.isNotBlank() } ?: selectedBank
                             viewModel?.addBankAccount(
                                 bankName      = selectedBank,
                                 accountNumber = accountNumber,
-                                accountHolder = holder,
+                                accountHolder = holderName.trim(),
                                 currency      = selectedCurrency
                             )
                         }
