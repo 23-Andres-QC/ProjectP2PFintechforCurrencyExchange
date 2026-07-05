@@ -258,7 +258,7 @@ internal fun ActiveTransactionBanner(
 ) {
     val (statusLabel, statusIcon, statusColor) = if (isVendor) {
         when (transaction.status) {
-            "pending"          -> Triple("Nueva orden de compra · Acepta o rechaza", Icons.Default.Store, Primary)
+            "pending"          -> Triple("Esperando pago del comprador", Icons.Default.Schedule, WarningColor)
             "accepted"         -> Triple("Esperando pago del comprador", Icons.Default.Schedule, WarningColor)
             "voucher_uploaded" -> Triple("Comprobante recibido · Confirma el pago", Icons.Default.CheckCircle, Primary)
             "completed"        -> Triple("Fondos liberados · Cierra o disputa", Icons.Default.CheckCircle, SuccessColor)
@@ -266,8 +266,8 @@ internal fun ActiveTransactionBanner(
         }
     } else {
         when (transaction.status) {
-            "pending"          -> Triple("Esperando al vendedor", Icons.Default.Schedule, WarningColor)
-            "accepted"         -> Triple("Vendedor aceptó · Sube tu comprobante", Icons.Default.CheckCircle, Primary)
+            "pending"          -> Triple("Operacion iniciada · Sube tu comprobante", Icons.Default.CheckCircle, Primary)
+            "accepted"         -> Triple("Operacion iniciada · Sube tu comprobante", Icons.Default.CheckCircle, Primary)
             "voucher_uploaded" -> Triple("Verificando tu pago", Icons.Default.Pending, WarningColor)
             "completed"        -> Triple("Fondos liberados · Cierra o disputa", Icons.Default.CheckCircle, SuccessColor)
             else               -> Triple("En curso", Icons.Default.Info, TextMuted)

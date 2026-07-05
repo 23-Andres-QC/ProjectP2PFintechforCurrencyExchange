@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     dni_back_url     VARCHAR(500),
     selfie_url       VARCHAR(500),
     role             VARCHAR(20)  DEFAULT 'buyer',
-    kyc_verified     BOOLEAN      DEFAULT FALSE,
+    kyc_verified     BOOLEAN      DEFAULT TRUE,
     rating           FLOAT        DEFAULT 0.0,
     total_transactions INTEGER    DEFAULT 0,
     is_active        BOOLEAN      DEFAULT TRUE,

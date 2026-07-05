@@ -46,6 +46,8 @@ class DisputeService:
             evidence_url=evidence_url,
         )
         txn.status = 'disputed'
+        db.session.flush()
+        DisputeService._notify_admins_new_dispute(dispute, txn, reason)
         db.session.commit()
         return dispute
 
@@ -176,3 +178,23 @@ class DisputeService:
         offer.available_amount = min((offer.available_amount or 0) + txn.amount_from, offer.amount)
         if offer.status == 'closed' and offer.available_amount > 0:
             offer.status = 'active'
+
+    @staticmethod
+    def _notify_admins_new_dispute(dispute: Dispute, txn: Transaction, reason: str) -> None:
+        admins = User.query.filter_by(
+            role='admin',
+            is_active=True,
+            is_banned=False,
+        ).all()
+
+        for admin in admins:
+            notify(
+                user_id=admin.id,
+                type='dispute',
+                title='Nueva disputa abierta',
+                body=(
+                    f'Se abrio una disputa para la transaccion {txn.id[:8].upper()}. '
+                    f'Motivo: {reason}.'
+                ),
+                resource_id=dispute.id,
+            )

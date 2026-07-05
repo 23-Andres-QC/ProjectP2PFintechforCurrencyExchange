@@ -99,6 +99,9 @@ class TransactionService:
             vendor_payment_account=vendor_payment_account,
         )
 
+        txn.status = 'accepted'
+        txn.accepted_at = datetime.utcnow()
+
         db.session.flush()
 
         offer.available_amount -= amount_from
@@ -108,15 +111,18 @@ class TransactionService:
         notify(
             user_id=txn.buyer_id,
             type='transaction',
-            title='Transacción creada',
-            body='Tu solicitud de cambio está pendiente de confirmación por el vendedor.',
+            title='Operacion iniciada',
+            body='El monto fue reservado. Ya puedes realizar el pago y subir tu comprobante.',
             resource_id=txn.id,
         )
         notify(
             user_id=txn.vendor_id,
             type='transaction',
-            title='Nueva transacción pendiente',
-            body=f'Un comprador inició una transacción por {txn.amount_from} {offer.from_currency}. Revisa y confirma.',
+            title='Nueva venta iniciada',
+            body=(
+                f'Un comprador inicio una transaccion por {txn.amount_from} '
+                f'{offer.from_currency}. Espera su comprobante.'
+            ),
             resource_id=txn.id,
         )
 

@@ -87,10 +87,7 @@ tasks.whenTaskAdded {
             val sourceApk = File(apkDir, "app-debug.apk")
             val targetApk = File(apkDir, "P2PFINAL.apk")
             if (sourceApk.exists()) {
-                if (targetApk.exists()) {
-                    targetApk.delete()
-                }
-                sourceApk.renameTo(targetApk)
+                sourceApk.copyTo(targetApk, overwrite = true)
             }
         }
     }

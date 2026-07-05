@@ -64,8 +64,6 @@ fun VendorInboxScreen(
     val context = LocalContext.current
     val pendingTransactions by viewModel.pendingTransactions.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
-    var confirmAcceptTxnId by remember { mutableStateOf<String?>(null) }
-    var confirmCancelTxnId by remember { mutableStateOf<String?>(null) }
     var confirmingTransaction by remember { mutableStateOf<Transaction?>(null) }
 
     RefreshOnResume {
@@ -107,56 +105,6 @@ fun VendorInboxScreen(
         return
     }
 
-    confirmAcceptTxnId?.let { txnId ->
-        AlertDialog(
-            onDismissRequest = { confirmAcceptTxnId = null },
-            title = { Text("¿Estás seguro?", fontWeight = FontWeight.Bold, color = TextMain) },
-            text = { Text("¿Deseas aceptar esta orden de compra? El comprador será notificado para realizar el pago.", color = TextMuted, fontSize = 14.sp) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val id = txnId
-                        confirmAcceptTxnId = null
-                        viewModel.acceptTransaction(id,
-                            onSuccess = { Toast.makeText(context, "Orden aceptada. El comprador fue notificado.", Toast.LENGTH_SHORT).show() },
-                            onError = { err -> Toast.makeText(context, "Error al aceptar: $err", Toast.LENGTH_LONG).show() }
-                        )
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
-                ) { Text("Sí, aceptar", color = Color.White, fontWeight = FontWeight.Bold) }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmAcceptTxnId = null }) { Text("No", color = TextMuted) }
-            },
-            containerColor = SurfaceColor
-        )
-    }
-
-    confirmCancelTxnId?.let { txnId ->
-        AlertDialog(
-            onDismissRequest = { confirmCancelTxnId = null },
-            title = { Text("¿Estás seguro?", fontWeight = FontWeight.Bold, color = TextMain) },
-            text = { Text("¿Deseas rechazar esta orden de compra? La operación será cancelada.", color = TextMuted, fontSize = 14.sp) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val id = txnId
-                        confirmCancelTxnId = null
-                        viewModel.cancelTransaction(id,
-                            onSuccess = { Toast.makeText(context, "Orden rechazada.", Toast.LENGTH_SHORT).show() },
-                            onError = { err -> Toast.makeText(context, "Error al rechazar: $err", Toast.LENGTH_LONG).show() }
-                        )
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = DangerColor)
-                ) { Text("Sí, rechazar", color = Color.White, fontWeight = FontWeight.Bold) }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmCancelTxnId = null }) { Text("No", color = TextMuted) }
-            },
-            containerColor = SurfaceColor
-        )
-    }
-
     val bodyContent: @Composable (Modifier) -> Unit = { modifier ->
         Column(
             modifier = modifier
@@ -187,7 +135,6 @@ fun VendorInboxScreen(
                     items(pendingTransactions, key = { it.id }) { txn ->
                         VendorTransactionCard(
                             transaction = txn,
-                            onAccept = { confirmAcceptTxnId = txn.id },
                             onConfirm = { hasSellerVoucher ->
                                 if (hasSellerVoucher) {
                                     viewModel.confirmTransaction(
@@ -204,7 +151,6 @@ fun VendorInboxScreen(
                                     confirmingTransaction = txn
                                 }
                             },
-                            onCancel = { confirmCancelTxnId = txn.id },
                             onUploadVendorVoucher = { base64, onSuccess, onError ->
                                 viewModel.uploadVendorVoucherFromBase64(
                                     txn.id,
@@ -868,16 +814,13 @@ private fun VendorConfirmScreen(
 @Composable
 private fun VendorTransactionCard(
     transaction: Transaction,
-    onAccept: () -> Unit,
-    onCancel: () -> Unit = {},
     onUploadVendorVoucher: (String, () -> Unit, (String) -> Unit) -> Unit,
     onConfirm: (Boolean) -> Unit,
     onOpenDispute: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val isNewOrder = transaction.status == "pending"
-    val isAccepted = transaction.status == "accepted"
+    val isAccepted = transaction.status == "accepted" || transaction.status == "pending"
     val isVoucherUploaded = transaction.status == "voucher_uploaded"
     val isCompleted = transaction.status == "completed"
 
@@ -939,21 +882,21 @@ private fun VendorTransactionCard(
     }
 
     val statusLabel = when (transaction.status) {
-        "pending"          -> "NUEVA ORDEN DE COMPRA"
-        "accepted"         -> "ORDEN ACEPTADA · ESPERANDO PAGO"
+        "pending"          -> "ESPERANDO PAGO DEL COMPRADOR"
+        "accepted"         -> "ESPERANDO PAGO DEL COMPRADOR"
         "voucher_uploaded" -> "PAGO RECIBIDO · SUBE TU COMPROBANTE"
         "completed"        -> "FONDOS LIBERADOS · CERRAR"
         else               -> transaction.status.uppercase()
     }
     val statusColor = when (transaction.status) {
-        "pending"          -> Primary
+        "pending"          -> SuccessColor
         "accepted"         -> SuccessColor
         "voucher_uploaded" -> WarningColor
         "completed"        -> SuccessColor
         else               -> TextMuted
     }
     val cardTint = when (transaction.status) {
-        "accepted", "completed" -> SuccessColor
+        "pending", "accepted", "completed" -> SuccessColor
         else               -> Primary
     }
 
@@ -971,21 +914,6 @@ private fun VendorTransactionCard(
                 Text(transaction.id.take(8).uppercase(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextMain, modifier = Modifier.padding(top = 2.dp))
             }
 
-            // Banner nueva orden
-            if (isNewOrder) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                        .background(Primary.copy(alpha = 0.07f))
-                        .border(1.dp, Primary.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
-                        .padding(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(Icons.Default.ShoppingCart, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
-                    Text("Un comprador quiere comprarte divisas. Acepta para confirmar la operación.", fontSize = 11.sp, color = Primary, fontWeight = FontWeight.Medium)
-                }
-            }
-
             // Info comprador y monto
             Column(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(BackgroundApp).padding(12.dp),
@@ -1001,22 +929,6 @@ private fun VendorTransactionCard(
                 }
             }
 
-            // PENDING: aceptar / rechazar
-            if (isNewOrder) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onAccept, colors = ButtonDefaults.buttonColors(containerColor = Primary), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White)
-                        Spacer(Modifier.width(6.dp))
-                        Text("Aceptar orden de compra", color = Color.White, fontWeight = FontWeight.Bold)
-                    }
-                    OutlinedButton(onClick = onCancel, colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerColor), border = androidx.compose.foundation.BorderStroke(1.dp, DangerColor), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Default.Close, contentDescription = null, tint = DangerColor, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Rechazar orden", fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            }
-
             // ACCEPTED: esperando pago
             if (isAccepted) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1029,12 +941,7 @@ private fun VendorTransactionCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(Icons.Default.Schedule, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(16.dp))
-                        Text("Orden aceptada. Esperando que el comprador realice el pago y suba su comprobante.", fontSize = 11.sp, color = SuccessColor, fontWeight = FontWeight.Medium)
-                    }
-                    OutlinedButton(onClick = onCancel, colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerColor), border = androidx.compose.foundation.BorderStroke(1.dp, DangerColor), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Default.Cancel, contentDescription = null, tint = DangerColor, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Cancelar operación", fontWeight = FontWeight.SemiBold)
+                        Text("Monto reservado. Esperando que el comprador realice el pago y suba su comprobante.", fontSize = 11.sp, color = SuccessColor, fontWeight = FontWeight.Medium)
                     }
                 }
             }

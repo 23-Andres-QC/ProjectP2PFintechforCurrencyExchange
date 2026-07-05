@@ -52,6 +52,8 @@ class UserService:
             terms_version=terms_version or '2026-07-02',
             terms_accepted_at=datetime.utcnow(),
         )
+        user.kyc_status = 'approved'
+        user.kyc_verified = True
         db.session.commit()
         return user
 

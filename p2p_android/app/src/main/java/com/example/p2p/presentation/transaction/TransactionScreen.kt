@@ -169,7 +169,7 @@ fun TransactionScreen(
     val vendorAccountNumber = vendorBankParts.getOrNull(1)
     val statusText = when (txn?.status) {
         "pending" -> "ORDEN P2P EN CURSO"
-        "accepted" -> "VENDEDOR ACEPTÓ TU ORDEN"
+        "accepted" -> "OPERACION INICIADA"
         "voucher_uploaded" -> "VERIFICANDO PAGO"
         "completed", "closed" -> "COMPLETADA"
         "cancelled" -> "CANCELADA"
@@ -608,7 +608,7 @@ fun TransactionScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(18.dp))
-                            Text("El vendedor aceptó tu orden · Sube tu comprobante", fontSize = 12.sp, color = SuccessColor, fontWeight = FontWeight.SemiBold)
+                            Text("Monto reservado · Sube tu comprobante", fontSize = 12.sp, color = SuccessColor, fontWeight = FontWeight.SemiBold)
                         }
                     } else if (txn?.status == "pending" && selectedBitmap == null) {
                         Row(

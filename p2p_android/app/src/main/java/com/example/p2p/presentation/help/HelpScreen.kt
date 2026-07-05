@@ -163,7 +163,7 @@ fun HelpScreen(onBack: () -> Unit = {}) {
             )
             FaqItemExpanded(
                 question = "¿Cómo verifico mi identidad (KYC)?",
-                answer = "Desde tu perfil puedes iniciar la verificación KYC. Debes completar los datos solicitados y subir los documentos requeridos para que el equipo administrador los revise."
+                answer = "Al registrarte, tu cuenta queda verificada automaticamente para operar en la demo. Si luego subes documentos desde KYC, el sistema los guarda y mantiene tu estado verificado."
             )
             FaqItemExpanded(
                 question = "¿Qué hago si hay un problema con mi transacción?",
