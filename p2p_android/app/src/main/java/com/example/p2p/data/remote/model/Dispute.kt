@@ -7,7 +7,10 @@ data class DisputeTransaction(
     val exchange_rate: Double,
     val status: String,
     val buyer_id: String,
-    val vendor_id: String
+    val vendor_id: String,
+    val buyer_voucher_url: String? = null,
+    val seller_voucher_url: String? = null,
+    val vendor_voucher_url: String? = null
 )
 
 data class Dispute(

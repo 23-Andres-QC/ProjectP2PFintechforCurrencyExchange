@@ -175,6 +175,23 @@ fun DisputeDetailScreen(
                         DetailRow("Estado TX:", txn.status.uppercase(), isLast = true)
                     }
                 }
+
+                val buyerVoucherUrl = txn.buyer_voucher_url
+                val sellerVoucherUrl = txn.seller_voucher_url ?: txn.vendor_voucher_url
+                if (!buyerVoucherUrl.isNullOrBlank()) {
+                    VoucherEvidenceCard(
+                        title = "Voucher del comprador",
+                        subtitle = "Comprobante que el comprador adjunto para demostrar su pago.",
+                        imageUrl = buyerVoucherUrl
+                    )
+                }
+                if (!sellerVoucherUrl.isNullOrBlank()) {
+                    VoucherEvidenceCard(
+                        title = "Voucher del vendedor",
+                        subtitle = "Comprobante que el vendedor adjunto para demostrar el envio.",
+                        imageUrl = sellerVoucherUrl
+                    )
+                }
             }
 
             if (dispute?.status == "resolved") {
@@ -205,6 +222,34 @@ fun DisputeDetailScreen(
             }
 
             Spacer(Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun VoucherEvidenceCard(title: String, subtitle: String, imageUrl: String) {
+    GlassCard(
+        shape = RoundedCornerShape(16.dp),
+        elevation = 1.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Icon(Icons.Default.Image, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
+                Column {
+                    Text(title, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextMain)
+                    Text(subtitle, fontSize = 11.sp, color = TextMuted)
+                }
+            }
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop
+            )
         }
     }
 }

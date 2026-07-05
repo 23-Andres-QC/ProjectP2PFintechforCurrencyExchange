@@ -56,6 +56,20 @@ class Dispute(BaseModel):
         }
         if include_transaction and self.transaction:
             t = self.transaction
+            from app.models import Voucher
+
+            buyer_voucher = (
+                Voucher.query
+                .filter_by(transaction_id=t.id, sender_id=t.buyer_id)
+                .order_by(Voucher.created_at.desc())
+                .first()
+            )
+            seller_voucher = (
+                Voucher.query
+                .filter_by(transaction_id=t.id, sender_id=t.vendor_id)
+                .order_by(Voucher.created_at.desc())
+                .first()
+            )
             data['transaction'] = {
                 'id':           t.id,
                 'amount_from':  t.amount_from,
@@ -64,5 +78,8 @@ class Dispute(BaseModel):
                 'status':       t.status,
                 'buyer_id':     t.buyer_id,
                 'vendor_id':    t.vendor_id,
+                'buyer_voucher_url': buyer_voucher.image_url if buyer_voucher else None,
+                'seller_voucher_url': seller_voucher.image_url if seller_voucher else t.vendor_voucher_url,
+                'vendor_voucher_url': t.vendor_voucher_url,
             }
         return data

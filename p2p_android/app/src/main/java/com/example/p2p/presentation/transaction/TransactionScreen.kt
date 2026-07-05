@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.p2p.core.util.compressImageFromUri
 import com.example.p2p.presentation.common.RefreshOnResume
 import com.example.p2p.ui.components.GlassCard
@@ -649,6 +650,34 @@ fun TransactionScreen(
                         }
                     }
 
+                    val sellerVoucherUrl = txn.seller_voucher_url ?: txn.vendor_voucher_url
+                    if (!sellerVoucherUrl.isNullOrBlank()) {
+                        GlassCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(14.dp),
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(Icons.Filled.ReceiptLong, contentDescription = null, tint = SuccessColor, modifier = Modifier.size(16.dp))
+                                    Column {
+                                        Text("Voucher del vendedor", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = TextMain)
+                                        Text("Revisa este comprobante. Si el dinero no llego, abre una disputa.", fontSize = 10.sp, color = TextMuted)
+                                    }
+                                }
+                                AsyncImage(
+                                    model = sellerVoucherUrl,
+                                    contentDescription = "Voucher del vendedor",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(160.dp)
+                                        .clip(RoundedCornerShape(10.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+                    }
+
                     Button(
                         onClick = { onNavigateToDispute(transactionId ?: "") },
                         modifier = Modifier.fillMaxWidth(),
@@ -657,7 +686,15 @@ fun TransactionScreen(
                     ) {
                         Icon(Icons.Filled.Warning, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Abrir Disputa (vendedor no responde)", color = Color.White, fontSize = 13.sp)
+                        Text(
+                            if (sellerVoucherUrl.isNullOrBlank()) {
+                                "Abrir Disputa (vendedor no responde)"
+                            } else {
+                                "Abrir Disputa (no recibi el dinero)"
+                            },
+                            color = Color.White,
+                            fontSize = 13.sp
+                        )
                     }
                 }
             }

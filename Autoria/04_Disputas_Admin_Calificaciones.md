@@ -19,6 +19,14 @@ Disputas del usuario, panel de administracion, calificaciones (ratings), reclamo
 - **Estados no permitidos:** `completed`, `closed`, `cancelled`, `disputed`.
 - **Se espera:** si el vendedor abre disputa desde Ventas, la transaccion pasa a `disputed`, queda congelada, el admin puede verla en su panel y revisar el voucher/evidencia antes de resolver.
 
+### Nueva logica aplicada: comprador no recibio el dinero del vendedor
+
+- **Desde donde:** detalle de transaccion del comprador, en estado `voucher_uploaded`, cuando el vendedor ya subio su voucher/comprobante de transferencia.
+- **Debe hacer:** mostrar al comprador el **voucher del vendedor** para que pueda revisar el comprobante antes de decidir. Si el dinero no llego a su cuenta, el comprador puede tocar **"Abrir Disputa (no recibi el dinero)"**.
+- **Debe permitir:** que el comprador abra disputa aunque exista un voucher del vendedor, porque el voucher puede estar equivocado, no corresponder al monto/cuenta, o la transferencia puede no haberse reflejado.
+- **Debe ver en detalle de disputa:** voucher del comprador, voucher del vendedor, evidencia adjunta, motivo, descripcion, estado de la transaccion y resolucion del admin.
+- **Se espera:** el admin tenga ambos comprobantes visibles antes de resolver y el usuario pueda demostrar con evidencia adicional que el dinero no llego.
+
 ## Panel de administracion
 
 - **Debe hacer:** exigir rol admin en todo, dejar ver dashboard/usuarios/disputas/reclamos, resolver disputas con nota obligatoria, banear usuarios cortando su sesion, dejar rastro auditable de cada accion. El acceso al panel es una **pestana propia en la barra inferior** (visible solo para admin, junto a Mercado y Perfil), no una opcion escondida dentro del menu de Perfil.
@@ -28,11 +36,10 @@ Disputas del usuario, panel de administracion, calificaciones (ratings), reclamo
 
 ### Que significa resolver una disputa (no importa quien la abrio, comprador o vendedor)
 
-- **A favor del comprador:** significa que el comprador cumplio. La transaccion **no se completa sola** — vuelve al estado "comprobante subido" y se le avisa al vendedor con urgencia que debe liberar el pago ya (usando el flujo normal de confirmar, que es el que genera el recibo). El objetivo es presionar al vendedor a terminar, no forzar el cierre.
-- **A favor del vendedor:** significa que el comprobante del comprador no fue valido.
-  - **Primera vez** que pasa esto en esa transaccion: no se cancela. Se le da al comprador una **segunda oportunidad**: la transaccion vuelve al estado "aceptada" para que pueda subir el comprobante correcto, y se le notifica con advertencia.
-  - **Segunda vez** que se resuelve a favor del vendedor en la misma transaccion (el comprador fallo otra vez): recien ahi se **cancela de verdad** y se restaura el saldo disponible de la oferta.
-- Verificado con curl contra el backend real: favor comprador -> `voucher_uploaded`; favor vendedor 1ra vez -> `accepted` (oferta sin restaurar); favor vendedor 2da vez -> `cancelled` (oferta restaurada correctamente).
+- **A favor del comprador:** significa que el comprador tiene razon en que el dinero/voucher del vendedor no es suficiente o no llego. La transaccion **no se completa sola**; vuelve a `voucher_uploaded` y se notifica al vendedor para que suba el voucher correcto antes de liberar fondos.
+- **A favor del vendedor:** significa que el vendedor tiene razon o que el comprobante/proceso aun necesita tiempo para reflejarse. La transaccion vuelve a `voucher_uploaded` y se notifica al comprador que debe esperar un poco mas de tiempo.
+- **No debe hacer:** cancelar automaticamente la transaccion al resolver una disputa a favor del vendedor. Tampoco debe completar automaticamente la transaccion al resolver a favor del comprador.
+- **Se espera:** la resolucion del admin guie el siguiente paso mediante notificaciones: vendedor corrige voucher si gana el comprador; comprador espera si gana el vendedor.
 
 ## Calificaciones (ratings)
 

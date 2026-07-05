@@ -112,65 +112,57 @@ class DisputeService:
         txn: Transaction = dispute.transaction
         if txn:
             if resolution == 'favour_buyer':
-                # El comprador tiene la razon: no se completa solo, se presiona al
-                # vendedor a liberar el pago el mismo (por el flujo normal de confirmar,
-                # que ademas genera el recibo). Se deja la transaccion lista para que
-                # el vendedor solo tenga que confirmar.
                 txn.status = 'voucher_uploaded'
                 notify(
                     user_id=txn.vendor_id,
                     type='dispute',
-                    title='⚠️ Debes liberar esta operación con urgencia',
+                    title='Debes subir el voucher correcto',
                     body=(
-                        'Un administrador revisó la disputa y confirmó que el comprador '
-                        'cumplió con el pago. Revisa tu bandeja de pendientes y confirma '
-                        f'la operación de inmediato. Nota del admin: {resolution_note}'
+                        'Un administrador resolvio la disputa a favor del comprador. '
+                        'Revisa la operacion y sube un voucher correcto antes de liberar '
+                        f'los fondos. Nota del admin: {resolution_note}'
+                    ),
+                    resource_id=txn.id,
+                )
+                notify(
+                    user_id=txn.buyer_id,
+                    type='dispute',
+                    title='Disputa resuelta a tu favor',
+                    body=(
+                        'El vendedor fue notificado para subir un voucher correcto. '
+                        'Revisa la operacion cuando recibas la actualizacion. '
+                        f'Nota del admin: {resolution_note}'
                     ),
                     resource_id=txn.id,
                 )
             else:
-                prior_favour_vendor = DisputeRepository.count_resolved_favour_vendor(txn.id)
-                if prior_favour_vendor == 0:
-                    # Primera vez que el vendedor gana: se le da al comprador una
-                    # segunda oportunidad de subir el comprobante correcto, en vez
-                    # de cancelar de una.
-                    txn.status = 'accepted'
-                    notify(
-                        user_id=txn.buyer_id,
-                        type='dispute',
-                        title='⚠️ Tu comprobante no fue validado — última oportunidad',
-                        body=(
-                            'Un administrador revisó tu disputa y no pudo confirmar tu pago. '
-                            'Tienes una segunda oportunidad para subir el comprobante correcto '
-                            f'antes de que la operación se cancele. Nota del admin: {resolution_note}'
-                        ),
-                        resource_id=txn.id,
-                    )
-                else:
-                    # Segunda vez que el vendedor gana en la misma transaccion:
-                    # se cancela de verdad y se restaura el saldo de la oferta.
-                    DisputeService._restore_offer_amount(txn)
-                    txn.status = 'cancelled'
-                    notify(
-                        user_id=txn.buyer_id,
-                        type='dispute',
-                        title='Operación cancelada',
-                        body=(
-                            'Tras dos intentos, no se pudo validar tu comprobante de pago. '
-                            f'La operación fue cancelada. Nota del admin: {resolution_note}'
-                        ),
-                        resource_id=txn.id,
-                    )
-                    notify(
-                        user_id=txn.vendor_id,
-                        type='dispute',
-                        title='Operación cancelada a tu favor',
-                        body=(
-                            'La disputa se resolvió a tu favor tras dos intentos fallidos del '
-                            f'comprador. La operación fue cancelada. Nota del admin: {resolution_note}'
-                        ),
-                        resource_id=txn.id,
-                    )
+                txn.status = 'voucher_uploaded'
+                notify(
+                    user_id=txn.buyer_id,
+                    type='dispute',
+                    title='Espera un poco mas de tiempo',
+                    body=(
+                        'Un administrador resolvio la disputa a favor del vendedor. '
+                        'La operacion sigue en revision operativa; espera un poco mas '
+                        f'a que el dinero se refleje. Nota del admin: {resolution_note}'
+                    ),
+                    resource_id=txn.id,
+                )
+                notify(
+                    user_id=txn.vendor_id,
+                    type='dispute',
+                    title='Disputa resuelta a tu favor',
+                    body=(
+                        'El comprador fue notificado para esperar un poco mas de tiempo. '
+                        f'Nota del admin: {resolution_note}'
+                    ),
+                    resource_id=txn.id,
+                )
+
+            DisputeRepository.resolve(dispute, admin_id, resolution, resolution_note)
+            db.session.commit()
+            return dispute
+
 
         DisputeRepository.resolve(dispute, admin_id, resolution, resolution_note)
         db.session.commit()
